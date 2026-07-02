@@ -956,24 +956,55 @@ async function askAI(){
   }
 }
 
-// ── ЖИВЫЕ ДАННЫЕ (live.json обновляет бот-куратор) ──
+// ── ЖИВЫЕ ДАННЫЕ v3: обновляет известных + ДОБАВЛЯЕТ всех участников из чатов ──
 fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
   if(!live||!Array.isArray(live.authors)||!live.authors.length) return;
-  const norm=s=>String(s||'').toLowerCase().replace(/[^a-zа-яё0-9]/g,'');
-  const digits=s=>String(s||'').replace(/\D/g,'');
-  let matched=0;
+  const norm=x=>String(x||'').toLowerCase().replace(/[^a-zа-яё0-9]/g,'');
+  const digits=x=>String(x||'').replace(/\D/g,'');
+  const pretty=d=>d&&d.length>=11?('+'+d.slice(0,1)+' '+d.slice(1,4)+' '+d.slice(4,7)+' '+d.slice(7,9)+d.slice(9)):'не указан';
+  const match=(a,m)=>{
+    const ad=digits(a.phone||''), md=digits(m.phone||'');
+    if(ad&&md&&ad===md) return true;
+    const an=norm(a.name), mn=norm(m.name);
+    if(!an||!mn) return false;
+    if(an===mn) return true;
+    if(mn.length>=4&&an.startsWith(mn)) return true;
+    if(an.length>=4&&mn.startsWith(an)) return true;
+    return false;
+  };
+  let matched=0, added=0, nextId=1000;
   for(const a of live.authors){
-    const an=norm(a.name), ad=digits(a.phone||'');
-    const m=M.find(x=>(ad&&digits(x.phone)===ad)||(an&&norm(x.name)===an));
-    if(m){ m.pts=a.points|0; if(a.msgs) m.msgs.total=a.msgs; matched++; }
+    const c=a.cats||{};
+    const m=M.find(x=>match(a,x));
+    if(m){
+      m.pts=a.points|0; if(a.msgs) m.msgs.total=a.msgs;
+      m.useful=(c['обычное']||0)+(c['вопрос']||0)+(c['экспертный']||0)+(c['кейс']||0);
+      m.expert=(c['экспертный']||0); matched++;
+    } else if(a.msgs>0){
+      const tags=[];
+      if(c['кейс'])tags.push('кейсы ×'+c['кейс']);
+      if(c['экспертный'])tags.push('экспертные ×'+c['экспертный']);
+      if(c['вопрос'])tags.push('вопросы ×'+c['вопрос']);
+      const useful=(c['обычное']||0)+(c['вопрос']||0)+(c['экспертный']||0)+(c['кейс']||0);
+      M.push({id:nextId++,name:a.name,phone:a.phone?pretty(digits(a.phone)):'не указан',
+        niche:'—',company:'',role:'Участник ассоциации',
+        what:'Активность в чатах ассоциации: '+(a.msgs||0)+' оценённых сообщений.',
+        pro:tags.join(', '),summary:a.name+' — участник чатов ассоциации. Баллы: '+a.points+'. Сообщений: '+a.msgs+'. Вопросов: '+(c['вопрос']||0)+', экспертных ответов: '+(c['экспертный']||0)+', кейсов: '+(c['кейс']||0)+'.',
+        strong:tags.length?['Активен: '+tags.join(', ')]:[],opinion:'',etopics:tags,chats:['Чаты ассоциации'],
+        msgs:{day:0,week:0,month:0,total:a.msgs||0},useful:useful,ratio:a.msgs?useful/a.msgs:0,expert:(c['экспертный']||0),
+        pts:a.points|0,grow:0,rank:0,isNew:false,cats:[],ai:'',search:a.name+' '+tags.join(' '),hist:[]});
+      added++;
+    }
   }
-  if(matched){
-    M.sort((a,b)=>b.pts-a.pts); M.forEach((m,i)=>m.rank=i+1);
-    applyFilters();
-    document.getElementById('sExp').textContent=M.filter(m=>m.pts>300).length;
-    const d=new Date(live.updatedAt||Date.now());
-    document.getElementById('updTime').textContent=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  if(live.stats){
+    if(live.stats.members) document.getElementById('sTotal').textContent=live.stats.members;
+    if(live.stats.chats) document.getElementById('sChats').textContent=live.stats.chats;
   }
+  M.sort((a,b)=>b.pts-a.pts); M.forEach((m,i)=>m.rank=i+1);
+  applyFilters();
+  document.getElementById('sExp').textContent=M.filter(m=>m.pts>300).length;
+  const d=new Date(live.updatedAt||Date.now());
+  document.getElementById('updTime').textContent=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }).catch(()=>{});
 </script>
 </body>
