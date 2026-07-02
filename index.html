@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ассоциация системных продаж</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #09090B;
+  --bg2:   #111116;
+  --bg3:   #18181F;
+  --bg4:   #1E1E28;
+  --bdr:   rgba(255,255,255,0.07);
+  --bdr2:  rgba(255,255,255,0.13);
+  --red:   #E8000A;
+  --red2:  #FF1F3D;
+  --rdim:  rgba(232,0,10,0.14);
+  --text:  #F0F0F5;
+  --t2:    #A0A0B0;
+  --t3:    #555565;
+  --gold:  #F5A623;
+  --gld2:  #FFD700;
+  --grn:   #00C851;
+  --blu:   #4A9EFF;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Montserrat',sans-serif;
+  display:flex;flex-direction:column;
+}
+
+/* ── HEADER ── */
+header{
+  flex-shrink:0;
+  height:58px;
+  background:rgba(9,9,11,.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;padding:0 18px;gap:14px;
+  z-index:50;
+}
+.logo{
+  display:flex;align-items:center;gap:9px;flex-shrink:0;
+}
+.logo-icon{position:relative;width:28px;height:28px;flex-shrink:0}
+.logo-text{display:flex;flex-direction:column;line-height:1;gap:0}
+.logo-sup{font-family:'Montserrat',sans-serif;font-size:6.5px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1px}
+.logo-main{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;color:var(--text);white-space:nowrap}
+.logo-main em{color:var(--red);font-style:normal}
+.logo-sub{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:2px;color:var(--t3);white-space:nowrap}
+
+/* compact stats in header */
+.hstats{
+  display:flex;align-items:stretch;
+  flex:1;overflow:hidden;
+  height:42px;
+  margin:0 14px;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;
+}
+.hstat{
+  flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  padding:0 14px;border-right:1px solid var(--bdr);
+  gap:2px;
+}
+.hstat:last-child{border-right:none}
+.hstat-v{
+  font-family:'Bebas Neue',sans-serif;font-size:22px;line-height:.9;
+}
+.hstat-v.r{color:var(--red)}.hstat-v.g{color:var(--gold)}
+.hstat-l{font-family:'Montserrat',sans-serif;font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;line-height:1}
+
+.upd{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  color:var(--t3);background:var(--bg3);
+  padding:3px 9px;border-radius:16px;border:1px solid var(--bdr);
+  white-space:nowrap;flex-shrink:0;
+}
+.upd b{color:var(--grn)}
+.btn-ai-open{
+  background:var(--rdim);border:1px solid rgba(232,0,10,.3);
+  color:var(--red);font-family:'Montserrat',sans-serif;
+  font-size:11px;font-weight:700;padding:5px 12px;
+  border-radius:7px;cursor:pointer;transition:.2s;
+  text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;flex-shrink:0;
+}
+.btn-ai-open:hover{background:var(--red);color:#fff}
+
+/* ── FILTER BAR (2 rows) ── */
+.filter-bar{
+  flex-shrink:0;
+  display:flex;flex-direction:column;gap:5px;
+  padding:6px 18px 6px;
+  border-bottom:1px solid var(--bdr);
+}
+.filter-row{display:flex;gap:5px;align-items:center;flex-wrap:nowrap;overflow:hidden;height:28px}
+.filter-cats{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:1px 0}
+.srch-wrap{position:relative;min-width:150px;width:175px;flex-shrink:0}
+.srch-wrap input{
+  width:100%;height:28px;
+  background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:6px;padding:0 10px 0 26px;
+  color:var(--text);font-family:'Montserrat',sans-serif;font-size:11px;outline:none;
+  transition:border .2s;
+}
+.srch-wrap input:focus{border-color:var(--red)}
+.srch-ico{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:11px}
+select.fsel{
+  height:28px;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;
+  padding:0 10px;color:var(--t2);font-family:'Montserrat',sans-serif;
+  font-size:10px;outline:none;cursor:pointer;flex-shrink:0;
+}
+select.fsel:focus{border-color:var(--red)}
+.chip{
+  height:28px;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;
+  padding:0 10px;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;color:var(--t2);
+  cursor:pointer;transition:.2s;white-space:nowrap;flex-shrink:0;
+  display:flex;align-items:center;
+}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.chip.on{background:var(--rdim);border-color:var(--red);color:var(--red)}
+/* category chips — second row */
+.cchip{
+  height:22px;
+  background:var(--bg4);border:1px solid var(--bdr);border-radius:5px;
+  padding:0 8px;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--t3);
+  cursor:pointer;transition:.2s;white-space:nowrap;letter-spacing:.2px;
+  display:inline-flex;align-items:center;
+}
+.cchip:hover{border-color:var(--red);color:var(--red)}
+.cchip.on{background:var(--rdim);border-color:var(--red);color:var(--red)}
+
+/* ── global scrollbar ── */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.09);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.18)}
+
+/* ── MAIN GRID ── */
+.main{
+  flex:1;overflow:hidden;
+  display:grid;
+  grid-template-columns:1fr 272px;
+  grid-template-rows:1fr;
+  gap:8px;padding:8px 18px 10px;
+}
+
+/* ── LEFT: members ── */
+.col-left{
+  display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;
+}
+.col-hdr{
+  display:grid;
+  grid-template-columns:24px 144px 96px 68px 44px 116px 28px 30px 30px 1fr 44px;
+  gap:4px;padding:6px 12px;
+  font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.7px;
+  border-bottom:1px solid var(--bdr);flex-shrink:0;
+}
+.members-list{flex:1;overflow-y:auto;padding:2px 0}
+
+.mrow{
+  display:grid;
+  grid-template-columns:24px 144px 96px 68px 44px 116px 28px 30px 30px 1fr 44px;
+  gap:4px;padding:5px 12px;align-items:center;
+  transition:.15s;border-bottom:1px solid var(--bdr);
+}
+.mrow:last-child{border:none}
+.mrow:hover{background:var(--bg4)}
+.mrow.t1{background:rgba(245,166,35,.04)}
+.mrow.t2{background:rgba(192,192,192,.02)}
+.mrow.t3{background:rgba(184,115,51,.02)}
+
+.rnk{
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:12px;
+  background:var(--bg4);color:var(--t3);border:1px solid var(--bdr);
+}
+.rnk.r1{background:rgba(245,166,35,.15);color:var(--gld2);border-color:rgba(245,166,35,.4)}
+.rnk.r2{background:rgba(192,192,192,.1);color:#C0C0C0;border-color:rgba(192,192,192,.3)}
+.rnk.r3{background:rgba(184,115,51,.1);color:#CD7F32;border-color:rgba(184,115,51,.3)}
+
+.minfo .mn{font-family:'Montserrat',sans-serif;font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mphone{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0}
+a.walink{color:var(--grn);text-decoration:none;transition:.15s}
+a.walink:hover{color:#fff;text-decoration:underline}
+.mniche{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpts{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--red);line-height:1}
+.mmsgs{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;color:var(--t2);text-align:center}
+.mmsgw{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--t3);text-align:center}
+.mmsgm{font-family:'Montserrat',sans-serif;font-size:10px;color:var(--t3);text-align:center;font-weight:500}
+
+.sbadge{
+  display:block;padding:3px 5px;border-radius:5px;
+  font-family:'Montserrat',sans-serif;
+  font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.2px;
+  overflow:hidden;text-overflow:ellipsis;text-align:center;white-space:nowrap;
+  width:100%;
+}
+.s0{background:rgba(80,80,100,.2);color:var(--t3);border:1px solid rgba(80,80,100,.3)}
+.s1{background:rgba(74,158,255,.12);color:var(--blu);border:1px solid rgba(74,158,255,.3)}
+.s2{background:rgba(0,200,81,.1);color:var(--grn);border:1px solid rgba(0,200,81,.3)}
+.s3{background:rgba(232,0,10,.13);color:var(--red);border:1px solid rgba(232,0,10,.3)}
+.s4{background:rgba(245,166,35,.13);color:var(--gold);border:1px solid rgba(245,166,35,.35)}
+
+.btn-i{
+  background:var(--rdim);border:1px solid rgba(232,0,10,.25);
+  color:var(--red);font-family:'Montserrat',sans-serif;
+  font-size:9px;font-weight:700;padding:4px 10px;
+  border-radius:6px;cursor:pointer;transition:.2s;white-space:nowrap;
+}
+.btn-i:hover{background:var(--red);color:#fff}
+
+/* ── RIGHT COLUMNS ── */
+.col-right,.col-right2{
+  display:flex;flex-direction:column;gap:6px;overflow:hidden;
+}
+
+/* Right panels */
+.panel{
+  background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:12px;flex-shrink:0;
+}
+.panel-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px 6px;border-bottom:1px solid var(--bdr);
+}
+.panel-title{
+  font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;
+}
+.panel-title span{color:var(--red)}
+.panel-badge{
+  font-size:9px;font-weight:700;color:var(--t3);
+  background:var(--bg4);padding:2px 8px;border-radius:10px;
+  border:1px solid var(--bdr);
+}
+
+/* Rating panel */
+.rat-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 14px;border-bottom:1px solid var(--bdr);
+  transition:.15s;
+}
+.rat-row:last-child{border:none}
+.rat-row:hover{background:var(--bg4)}
+.rat-num{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  width:20px;text-align:center;color:var(--t3);flex-shrink:0;
+}
+.rat-num.n1{color:var(--gld2)}.rat-num.n2{color:#C0C0C0}.rat-num.n3{color:#CD7F32}
+.rat-info{flex:1;min-width:0}
+.rat-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rat-niche{font-size:9px;color:var(--t3)}
+.rat-pts{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--red);flex-shrink:0}
+.rat-grow{font-size:9px;color:var(--grn);flex-shrink:0;font-family:'JetBrains Mono',monospace}
+
+/* Calendar panel */
+.ev{
+  display:flex;gap:8px;align-items:flex-start;
+  padding:6px 12px;border-bottom:1px solid var(--bdr);
+}
+.ev:last-child{border:none}
+.ev-date{
+  min-width:36px;text-align:center;
+  background:var(--bg4);border-radius:6px;padding:5px;flex-shrink:0;
+}
+.ev-date .d{font-family:'Bebas Neue',sans-serif;font-size:20px;line-height:1}
+.ev-date .m{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:1px}
+.ev-body{flex:1;min-width:0}
+.ev-title{font-size:11px;font-weight:700;line-height:1.3;margin-bottom:3px}
+.ev-meta{display:flex;gap:5px;flex-wrap:wrap}
+.ev-chip{
+  font-size:8px;font-weight:700;padding:2px 6px;border-radius:8px;
+  letter-spacing:.3px;text-transform:uppercase;
+}
+.ec-live{background:rgba(232,0,10,.13);color:var(--red)}
+.ec-online{background:rgba(74,158,255,.13);color:var(--blu)}
+.ec-ann{background:rgba(245,166,35,.13);color:var(--gold)}
+.ec-time{background:var(--bg4);color:var(--t3)}
+
+/* Bonuses panel */
+.bon-grid{display:flex;flex-direction:column;gap:0}
+.bon-row{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 12px;border-bottom:1px solid var(--bdr);transition:.15s;
+}
+.bon-row:last-child{border:none}
+.bon-row:hover{background:var(--bg4)}
+.bon-ico{font-size:15px;flex-shrink:0;width:20px;text-align:center}
+.bon-info{flex:1;min-width:0}
+.bon-name{
+  font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;
+  color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:2px;
+}
+.bon-desc{
+  font-family:'Montserrat',sans-serif;font-size:9px;color:var(--t2);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;line-height:1.4;
+}
+.bon-pts{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  color:var(--red);flex-shrink:0;white-space:nowrap;min-width:36px;text-align:right;
+}
+.bon-pts.av{color:var(--grn)}
+
+/* prize column in member row */
+.mprize{display:flex;align-items:center;gap:4px;min-width:0}
+.mprize-ico{font-size:13px;flex-shrink:0}
+.mprize-info{min-width:0}
+.mprize-name{font-size:9px;font-weight:700;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mprize-pts{font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+.mprize.done .mprize-name{color:var(--grn)}
+.mprize.done .mprize-ico{filter:grayscale(0)}
+
+/* inline category tags in row */
+.mcats{display:flex;gap:3px;flex-wrap:wrap;align-items:flex-start;padding:1px 0}
+.mcat{
+  display:inline-block;padding:2px 6px;border-radius:8px;
+  font-family:'Montserrat',sans-serif;
+  font-size:8px;font-weight:700;color:var(--t3);
+  background:var(--bg4);border:1px solid var(--bdr);
+  white-space:nowrap;line-height:1.5;
+}
+.mcat.hi{color:var(--red);background:var(--rdim);border-color:rgba(232,0,10,.25)}
+
+/* ── MODAL: member card ── */
+.overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(0,0,0,.82);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;padding:16px;
+}
+.overlay.open{display:flex;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal{
+  background:var(--bg2);border:1px solid var(--bdr2);
+  border-radius:16px;width:100%;max-width:640px;max-height:90vh;
+  overflow-y:auto;position:relative;
+}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+.modal-h{
+  position:sticky;top:0;z-index:5;
+  background:var(--bg2);border-bottom:1px solid var(--bdr);
+  padding:18px 22px 14px;border-radius:16px 16px 0 0;
+  display:flex;justify-content:space-between;align-items:flex-start;
+}
+.modal-nm{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px}
+.modal-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.mcl{
+  background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:50%;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;color:var(--t2);transition:.2s;flex-shrink:0;
+}
+.mcl:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.modal-b{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.mg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mb{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:12px}
+.mb-t{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--bdr)}
+.sr:last-child{border:none}
+.sr .k{font-size:11px;color:var(--t3)}.sr .v{font-size:12px;font-weight:600}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{background:var(--bg4);border:1px solid var(--bdr);padding:3px 8px;border-radius:16px;font-size:10px;color:var(--t2)}
+.tag.r{background:var(--rdim);border-color:rgba(232,0,10,.3);color:var(--red)}
+.ai-note{background:linear-gradient(135deg,rgba(232,0,10,.07),rgba(74,158,255,.04));border:1px solid rgba(232,0,10,.18);border-radius:10px;padding:12px}
+.ai-note-t{font-size:9px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.ai-note p{font-size:12px;color:var(--t2);line-height:1.7}
+.hbars{display:flex;gap:3px;align-items:flex-end;height:36px}
+.hbar{flex:1;background:var(--red);border-radius:2px;min-height:3px}
+
+/* ── MODAL: AI search — dropdown from top ── */
+.ai-overlay{
+  display:none;position:fixed;
+  top:52px;right:18px;
+  z-index:300;
+  width:520px;max-width:calc(100vw - 36px);
+}
+.ai-overlay.open{display:block;animation:slideDown .22s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.ai-win{
+  background:var(--bg2);border:1px solid var(--bdr2);
+  border-radius:0 0 16px 16px;border-top:2px solid var(--red);
+  width:100%;
+  padding:20px 22px 22px;position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+}
+.ai-win-t{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:2px}
+.ai-win-s{font-size:11px;color:var(--t3);margin-bottom:14px}
+.ai-exs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.ai-ex{
+  background:var(--bg3);border:1px solid var(--bdr);padding:4px 10px;
+  border-radius:14px;font-size:10px;color:var(--t2);cursor:pointer;transition:.2s;
+}
+.ai-ex:hover{border-color:var(--red);color:var(--text)}
+.ai-row{display:flex;gap:8px;margin-bottom:12px}
+.ai-inp{
+  flex:1;background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:10px;padding:12px 16px;
+  color:var(--text);font-family:'Montserrat',sans-serif;font-size:13px;
+  outline:none;transition:border .2s;
+}
+.ai-inp:focus{border-color:var(--red)}
+.ai-btn{
+  background:var(--red);border:none;border-radius:10px;
+  padding:12px 20px;color:#fff;
+  font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;transition:.2s;white-space:nowrap;text-transform:uppercase;
+}
+.ai-btn:hover{background:var(--red2)}
+.ai-btn:disabled{opacity:.5;cursor:not-allowed}
+.ai-res{
+  display:none;background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:10px;padding:12px;max-height:200px;overflow-y:auto;
+}
+.ai-res.show{display:block}
+.ai-res-t{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.ai-res-c{font-size:13px;color:var(--t2);line-height:1.8}
+.spin{width:14px;height:14px;border:2px solid var(--bdr2);border-top-color:var(--red);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.close-btn{
+  position:absolute;top:16px;right:16px;
+  background:var(--bg3);border:1px solid var(--bdr);
+  color:var(--t2);width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;transition:.2s;
+}
+.close-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* empty */
+.empty{text-align:center;padding:40px;color:var(--t3);font-size:13px}
+
+/* top5 in rating panel */
+.top5-strip{
+  display:flex;gap:0;border-bottom:1px solid var(--bdr);overflow:hidden;
+}
+.t5c{
+  flex:1;padding:8px 6px;text-align:center;border-right:1px solid var(--bdr);
+}
+.t5c:last-child{border:none}
+.t5r{font-family:'Bebas Neue',sans-serif;font-size:16px}
+.t5r.n1{color:var(--gld2)}.t5r.n2{color:#C0C0C0}.t5r.n3{color:#CD7F32}
+.t5n{font-size:9px;font-weight:700;margin:1px 0}
+.t5p{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <!-- Система ОП circle icon -->
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="14" cy="4"  r="1.5" fill="#E8000A"/>
+      <circle cx="20" cy="6"  r="1.3" fill="#E8000A"/>
+      <circle cx="24" cy="11" r="1.1" fill="#E8000A"/>
+      <circle cx="24" cy="17" r="1.0" fill="rgba(232,0,10,0.5)"/>
+      <circle cx="20" cy="22" r="1.0" fill="rgba(232,0,10,0.4)"/>
+      <circle cx="14" cy="24" r="1.3" fill="rgba(255,255,255,0.25)"/>
+      <circle cx="8"  cy="22" r="1.1" fill="rgba(255,255,255,0.2)"/>
+      <circle cx="4"  cy="17" r="1.0" fill="rgba(255,255,255,0.15)"/>
+      <circle cx="4"  cy="11" r="1.0" fill="rgba(255,255,255,0.12)"/>
+      <circle cx="8"  cy="6"  r="1.1" fill="rgba(255,255,255,0.18)"/>
+    </svg>
+    <div class="logo-text">
+      <div class="logo-sup">СИСТЕМА ОП</div>
+      <div class="logo-main">АССОЦИАЦИЯ <em>СИСТЕМНЫХ</em></div>
+      <div class="logo-sub">ПРОДАЖ</div>
+    </div>
+  </div>
+  <!-- compact stats -->
+  <div class="hstats">
+    <div class="hstat">
+      <div class="hstat-v" id="sTotal">15</div>
+      <div class="hstat-l">Участников (топ-42)</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-v r" id="sMsgs">0</div>
+      <div class="hstat-l">Сообщений сегодня</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-v g" id="sExp">0</div>
+      <div class="hstat-l">Экспертов</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-v" id="sChats">8</div>
+      <div class="hstat-l">Активных чатов</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-v" id="sNew">0</div>
+      <div class="hstat-l">Новых участников</div>
+    </div>
+  </div>
+  <button class="btn-ai-open" onclick="openAI()">🤖 ИИ-поиск</button>
+  <div class="upd">Обновлено: <b id="updTime">30.05 06:00</b></div>
+</header>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <!-- Row 1: search + dropdowns + quick chips -->
+  <div class="filter-row">
+    <div class="srch-wrap">
+      <span class="srch-ico">🔍</span>
+      <input type="text" id="srchH" placeholder="Поиск участника..." oninput="applyFilters()">
+    </div>
+    <select class="fsel" id="nicheF" onchange="applyFilters()">
+      <option value="">Все ниши</option>
+      <option>CRM</option><option>Продажи</option><option>Маркетинг</option>
+      <option>AI</option><option>Найм</option><option>Логистика</option>
+      <option>Медицина</option><option>Недвижимость</option><option>Образование</option>
+      <option>Консалтинг</option><option>Красота и здоровье</option><option>Автосфера</option><option>Благотворительность</option>
+    </select>
+    <select class="fsel" id="statusF" onchange="applyFilters()">
+      <option value="">Все статусы</option>
+      <option>Новичок</option><option>Активный участник</option>
+      <option>Полезный участник</option><option>Эксперт ассоциации</option><option>Амбассадор</option>
+    </select>
+    <div style="width:1px;height:18px;background:var(--bdr);flex-shrink:0"></div>
+    <button class="chip on" onclick="setChip('all',this)">Все</button>
+    <button class="chip"    onclick="setChip('top5',this)">Топ-5</button>
+    <button class="chip"    onclick="setChip('top10',this)">Топ-10</button>
+    <button class="chip"    onclick="setChip('active',this)">Активны сегодня</button>
+    <button class="chip"    onclick="setChip('new',this)">Новые</button>
+    <button class="chip"    onclick="setChip('exp',this)">Эксперты</button>
+    <button class="chip"    onclick="setChip('week',this)">Топ недели</button>
+  </div>
+  <!-- Row 2: category chips -->
+  <div class="filter-cats">
+    <span style="font-size:9px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-right:4px;flex-shrink:0">Категории:</span>
+    <button class="cchip" onclick="setCat('',this)">Сбросить</button>
+    <button class="cchip" onclick="setCat('CRM',this)">CRM</button>
+    <button class="cchip" onclick="setCat('Продажи',this)">Продажи</button>
+    <button class="cchip" onclick="setCat('Маркетинг',this)">Маркетинг</button>
+    <button class="cchip" onclick="setCat('AI',this)">AI</button>
+    <button class="cchip" onclick="setCat('Найм',this)">Найм</button>
+    <button class="cchip" onclick="setCat('Логистика',this)">Логистика</button>
+    <button class="cchip" onclick="setCat('Медицина',this)">Медицина</button>
+    <button class="cchip" onclick="setCat('Недвижимость',this)">Недвижимость</button>
+    <button class="cchip" onclick="setCat('Образование',this)">Образование</button>
+    <button class="cchip" onclick="setCat('Консалтинг',this)">Консалтинг</button>
+    <button class="cchip" onclick="setCat('Красота и здоровье',this)">Красота</button>
+    <button class="cchip" onclick="setCat('Автосфера',this)">Авто</button>
+    <button class="cchip" onclick="setCat('Благотворительность',this)">НКО</button>
+    <button class="cchip" onclick="setCat('РОП',this)">РОП</button>
+    <button class="cchip" onclick="setCat('Интегратор',this)">Интегратор</button>
+    <button class="cchip" onclick="setCat('Собственник бизнеса',this)">Собственник</button>
+    <button class="cchip" onclick="setCat('Эксперт',this)">Эксперт</button>
+    <button class="cchip" onclick="setCat('Обучение',this)">Обучение</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: Members list -->
+  <div class="col-left">
+    <div class="col-hdr">
+      <div>#</div><div>Участник</div><div>Телефон</div>
+      <div>Ниша</div><div>Баллы</div><div>Статус</div>
+      <div style="text-align:center">День</div><div style="text-align:center">Нед.</div><div style="text-align:center">Общ.</div>
+      <div>Категории</div><div></div>
+    </div>
+    <div class="members-list" id="mList"></div>
+  </div>
+
+  <!-- RIGHT: Bonuses -->
+  <div class="col-right">
+
+    <!-- BONUSES -->
+    <div class="panel" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="panel-hdr">
+        <div class="panel-title">🎁 <span>Бонусы</span></div>
+        <div class="panel-badge">За активность</div>
+      </div>
+      <div class="bon-grid" id="bonList" style="overflow-y:auto;flex:1"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: Member Card -->
+<div class="overlay" id="cardOverlay" onclick="closeCard(event)">
+  <div class="modal" id="cardModal">
+    <div class="modal-h">
+      <div>
+        <div class="modal-nm" id="mNm"></div>
+        <div class="modal-meta" id="mMt"></div>
+      </div>
+      <button class="mcl" onclick="closeCardDirect()">✕</button>
+    </div>
+    <div class="modal-b" id="mBd"></div>
+  </div>
+</div>
+
+<!-- MODAL: AI Search -->
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-win">
+    <button class="close-btn" onclick="closeAIDirect()">✕</button>
+    <div class="ai-win-t">🤖 ИИ-поиск</div>
+    <div class="ai-win-s">Спросите, кто из участников может помочь с вашим запросом</div>
+    <div class="ai-exs">
+      <div class="ai-ex" onclick="setQ('Кто разбирается в amoCRM и мессенджерах?')">amoCRM + мессенджеры</div>
+      <div class="ai-ex" onclick="setQ('Кто поможет с WABA и Wazzup?')">WABA / Wazzup</div>
+      <div class="ai-ex" onclick="setQ('Кто эксперт по ОКК и контролю звонков?')">ОКК / звонки</div>
+      <div class="ai-ex" onclick="setQ('Кто силён в AI и автоматизации?')">AI / автоматизация</div>
+      <div class="ai-ex" onclick="setQ('Кто разбирается в управлении отделом продаж?')">Управление ОП</div>
+      <div class="ai-ex" onclick="setQ('Кто эксперт по найму РОПа?')">Найм РОПа</div>
+      <div class="ai-ex" onclick="setQ('Кто силён в продажах в товарке?')">Товарка</div>
+    </div>
+    <div class="ai-row">
+      <input type="text" class="ai-inp" id="aiQ" placeholder="Задайте вопрос по базе участников...">
+      <button class="ai-btn" id="aiBtn" onclick="askAI()">Спросить</button>
+    </div>
+    <div class="ai-res" id="aiRes">
+      <div class="ai-res-t">Ответ ИИ</div>
+      <div class="ai-res-c" id="aiRc"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════ DATA ═══════════════════
+const M = [
+  {"id": 1, "name": "Влад", "phone": "+7 705 966 4458", "niche": "AI", "company": "Система ОП", "role": "Основатель / AI-эксперт", "what": "Разрабатывает AI-инструменты для анализа отделов продаж и ОКК. Строит панели аналитики, чат-ботов, автоматизацию.", "pro": "AI-инструменты, Claude, Codex, ОКК-аналитика, n8n, автоматизация, панели аналитики", "summary": "Влад — участник Ассоциации системных продаж с нишей «AI». За период написал 1113 сообщений, из них 505 несут профессиональную пользу (45% полезности). Дал 135 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП, мессенджеры, образование, AI/нейросети. Делился практическими кейсами (10). Рекомендуется для запросов по темам: маркетинг, РОП, мессенджеры, образование.", "strong": ["Даёт много экспертных ответов в чате", "Делится практическими кейсами из своего опыта", "Хорошо разбирается в темах: маркетинг, РОП, мессенджеры", "Один из самых активных участников сообщества"], "opinion": "AI-инструменты для ОП лучше строить миксом: Claude для визуала, Codex для кода", "etopics": ["AI-инструменты", "Claude", "Codex", "ОКК-аналитика", "n8n", "автоматизация", "панели аналитики"], "chats": ["Ассоциация СП"], "msgs": {"day": 22, "week": 104, "month": 251, "total": 1113}, "useful": 505, "ratio": 0.45, "expert": 135, "pts": 4358, "grow": 104, "rank": 1, "isNew": false, "cats": ["AI", "CRM", "Собственник бизнеса", "Интегратор"], "ai": "Основатель ассоциации. Эксперт по AI-инструментам и ОКК-аналитике. Рекомендован для вопросов по Claude, Codex, автоматизации и построению панелей.", "search": "Влад. AI, Основатель / AI-эксперт, AI, CRM, Собственник бизнеса, Интегратор. AI-инструменты, Claude, Codex, ОКК-аналитика, n8n, автоматизация, панели аналитики. Рекомендовать: AI-инструменты, Claude, Codex, ОКК-аналитика, n8n, автоматизация, панели аналитики.", "hist": [546, 366, 302, 247, 205, 146, 104]},
+  {"id": 2, "name": "Айдар", "phone": "+7 707 882 0998", "niche": "Продажи", "company": "", "role": "Сооснователь / Продажи", "what": "Помогает с построением отделов продаж, мотивацией, наймом и системными процессами.", "pro": "продажи, управление ОП, мотивация, найм, маркетинг", "summary": "Айдар — участник Ассоциации системных продаж с нишей «Продажи». За период написал 973 сообщений, из них 269 несут профессиональную пользу (27% полезности). Дал 50 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП, KPI/мотивация, ОКК, amoCRM. Активен в обсуждениях, но доля чисто экспертных сообщений умеренная. Рекомендуется для запросов по темам: маркетинг, РОП, KPI/мотивация, ОКК.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: маркетинг, РОП, KPI/мотивация", "Один из самых активных участников сообщества"], "opinion": "Системные продажи строятся от процессов и людей, а не от инструментов", "etopics": ["продажи", "управление ОП", "мотивация", "найм", "маркетинг"], "chats": ["Ассоциация СП"], "msgs": {"day": 5, "week": 39, "month": 386, "total": 973}, "useful": 269, "ratio": 0.28, "expert": 50, "pts": 2121, "grow": 39, "rank": 2, "isNew": false, "cats": ["Продажи", "РОП", "Маркетинг"], "ai": "Один из лидеров активности. Рекомендован по вопросам построения и управления отделом продаж.", "search": "Айдар. Продажи, Сооснователь / Продажи, Продажи, РОП, Маркетинг. продажи, управление ОП, мотивация, найм, маркетинг. Рекомендовать: продажи, управление ОП, мотивация, найм, маркетинг.", "hist": [604, 484, 433, 325, 211, 84, 39]},
+  {"id": 3, "name": "Daniyar MICE Tour", "phone": "не указан", "niche": "Продажи", "company": "MICE Tour", "role": "Собственник / MICE & события", "what": "Продажи в сфере MICE, корпоративных событий и делового туризма.", "pro": "MICE, событийный бизнес, продажи услуг, маркетинг, туризм", "summary": "Daniyar MICE Tour — участник Ассоциации системных продаж с нишей «Продажи». За период написал 427 сообщений, из них 165 несут профессиональную пользу (38% полезности). Дал 11 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП, ОКК, звонки, оплаты mail.ru. Делился практическими кейсами (3). Рекомендуется для запросов по темам: маркетинг, РОП, ОКК, звонки.", "strong": ["Даёт много экспертных ответов в чате", "Делится практическими кейсами из своего опыта", "Хорошо разбирается в темах: маркетинг, РОП, ОКК", "Один из самых активных участников сообщества"], "opinion": "В событийном бизнесе продажа держится на доверии и сервисе, а не на скидках", "etopics": ["MICE", "событийный бизнес", "продажи услуг", "маркетинг", "туризм"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 1, "month": 7, "total": 427}, "useful": 165, "ratio": 0.39, "expert": 11, "pts": 1231, "grow": 1, "rank": 3, "isNew": false, "cats": ["Продажи", "Маркетинг", "Собственник бизнеса"], "ai": "Собственник в сфере MICE/событий. Рекомендован по продажам услуг и событийному маркетингу.", "search": "Daniyar MICE Tour. Продажи, Собственник / MICE & события, Продажи, Маркетинг, Собственник бизнеса. MICE, событийный бизнес, продажи услуг, маркетинг, туризм. Рекомендовать: MICE, событийный бизнес, продажи услуг, маркетинг, туризм.", "hist": [105, 60, 12, 7, 7, 3, 1]},
+  {"id": 4, "name": "Даулет Окк По Звонкам", "phone": "+7 707 801 1190", "niche": "AI", "company": "", "role": "ОКК по звонкам", "what": "Контроль качества звонков (ОКК), анализ и оценка работы менеджеров по критериям.", "pro": "ОКК, контроль качества звонков, анализ звонков, скрипты, аналитика продаж", "summary": "Даулет Окк По Звонкам — участник Ассоциации системных продаж с нишей «AI». За период написал 320 сообщений, из них 109 несут профессиональную пользу (34% полезности). Дал 28 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: ОКК, РОП, найм, логистика, образование. Рекомендуется для запросов по темам: ОКК, РОП, найм, логистика.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: ОКК, РОП, найм", "Один из самых активных участников сообщества"], "opinion": "Контроль качества звонков должен опираться на конкретные критерии, а не на субъективную оценку", "etopics": ["ОКК", "контроль качества звонков", "анализ звонков", "скрипты", "аналитика продаж"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 8, "month": 40, "total": 320}, "useful": 109, "ratio": 0.34, "expert": 28, "pts": 966, "grow": 8, "rank": 4, "isNew": false, "cats": ["AI", "Продажи"], "ai": "Эксперт по ОКК и контролю качества звонков. Рекомендован для построения системы оценки звонков.", "search": "Даулет Окк По Звонкам. AI, ОКК по звонкам, AI, Продажи. ОКК, контроль качества звонков, анализ звонков, скрипты, аналитика продаж. Рекомендовать: ОКК, контроль качества звонков, анализ звонков, скрипты, аналитика продаж.", "hist": [107, 91, 58, 36, 16, 12, 8]},
+  {"id": 5, "name": "Илья курский", "phone": "+7 777 759 7020", "niche": "CRM", "company": "", "role": "PM / Интегратор", "what": "Интеграция CRM с проектным управлением. Выстраивает коммуникацию клиент—интегратор через PM.", "pro": "CRM-интеграции, project management, внедрение, клиентская коммуникация, n8n", "summary": "Илья курский — участник Ассоциации системных продаж с нишей «CRM». За период написал 143 сообщений, из них 95 несут профессиональную пользу (66% полезности). Дал 22 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, найм, n8n, B2B продажи, недвижимость. Делился практическими кейсами (2). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: маркетинг, найм, n8n, B2B продажи.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 66% сообщений профессиональны", "Делится практическими кейсами из своего опыта", "Хорошо разбирается в темах: маркетинг, найм, n8n"], "opinion": "PM должен быть буфером между клиентом и интегратором — это снимает хаос на проекте", "etopics": ["CRM-интеграции", "project management", "внедрение", "клиентская коммуникация", "n8n"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 31, "total": 143}, "useful": 95, "ratio": 0.66, "expert": 22, "pts": 817, "grow": 0, "rank": 5, "isNew": false, "cats": ["CRM", "Интегратор", "Консалтинг"], "ai": "Лучший процент пользы (66%). Рекомендован для проектного управления CRM-внедрениями.", "search": "Илья курский. CRM, PM / Интегратор, CRM, Интегратор, Консалтинг. CRM-интеграции, project management, внедрение, клиентская коммуникация, n8n. Рекомендовать: CRM-интеграции, project management, внедрение, клиентская коммуникация, n8n.", "hist": [98, 75, 41, 30, 24, 19, 0]},
+  {"id": 6, "name": "Nurbol Nazarov", "phone": "+7 707 276 3015", "niche": "CRM", "company": "", "role": "Интегратор / CRM-эксперт", "what": "Настройка amoCRM, воронки, интеграция мессенджеров. Помогает с корпоративной почтой и оплатами mail.ru из Казахстана.", "pro": "amoCRM, воронки продаж, мессенджеры в CRM, mail.ru бизнес, корпоративная почта, оплаты из Казахстана", "summary": "Nurbol Nazarov — участник Ассоциации системных продаж с нишей «CRM». За период написал 209 сообщений, из них 100 несут профессиональную пользу (47% полезности). Дал 18 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП, KPI/мотивация, образование, недвижимость. Делился практическими кейсами (1). Рекомендуется для запросов по темам: маркетинг, РОП, KPI/мотивация, образование.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: маркетинг, РОП, KPI/мотивация", "Один из самых активных участников сообщества"], "opinion": "В CRM нельзя автоматизировать хаос — сначала процессы, потом автоматизация", "etopics": ["amoCRM", "воронки продаж", "мессенджеры в CRM", "mail.ru бизнес", "корпоративная почта", "оплаты из Казахстана"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 17, "month": 78, "total": 209}, "useful": 100, "ratio": 0.48, "expert": 18, "pts": 808, "grow": 17, "rank": 6, "isNew": false, "cats": ["CRM", "Интегратор", "Продажи"], "ai": "Топ по CRM. Рекомендован для вопросов по amoCRM, мессенджерам, воронкам и корпоративной почте.", "search": "Nurbol Nazarov. CRM, Интегратор / CRM-эксперт, CRM, Интегратор, Продажи. amoCRM, воронки продаж, мессенджеры в CRM, mail.ru бизнес, корпоративная почта, оплаты из Казахстана. Рекомендовать: amoCRM, воронки продаж, мессенджеры в CRM, mail.ru бизнес, корпоративная почта, оплаты из Казахстана.", "hist": [124, 95, 94, 72, 61, 51, 17]},
+  {"id": 7, "name": "Нура РОП Товарка Space", "phone": "+7 701 779 8088", "niche": "Продажи", "company": "Space", "role": "РОП / Товарный бизнес", "what": "Руководитель отдела продаж в товарном бизнесе. Управление командой, планы, найм.", "pro": "РОП, товарный бизнес, управление командой, план продаж, найм менеджеров", "summary": "Нура РОП Товарка Space — участник Ассоциации системных продаж с нишей «Продажи». За период написал 193 сообщений, из них 72 несут профессиональную пользу (37% полезности). Дал 20 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, образование, маркетинг, amoCRM, товарка. Рекомендуется для запросов по темам: РОП, образование, маркетинг, amoCRM.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: РОП, образование, маркетинг"], "opinion": "В товарке план продаж держится на ежедневном контроле и декомпозиции", "etopics": ["РОП", "товарный бизнес", "управление командой", "план продаж", "найм менеджеров"], "chats": ["Ассоциация СП"], "msgs": {"day": 17, "week": 42, "month": 54, "total": 193}, "useful": 72, "ratio": 0.37, "expert": 20, "pts": 623, "grow": 42, "rank": 7, "isNew": false, "cats": ["Продажи", "РОП"], "ai": "РОП в товарном бизнесе. Рекомендована по управлению отделом продаж в товарке.", "search": "Нура РОП Товарка Space. Продажи, РОП / Товарный бизнес, Продажи, РОП. РОП, товарный бизнес, управление командой, план продаж, найм менеджеров. Рекомендовать: РОП, товарный бизнес, управление командой, план продаж, найм менеджеров.", "hist": [71, 63, 56, 53, 53, 47, 42]},
+  {"id": 8, "name": "Алина Ассоциация Ропов", "phone": "+7 702 385 6570", "niche": "Продажи", "company": "", "role": "РОП / Ассоциация", "what": "Профессионально проявляется в темах: РОП, маркетинг, amoCRM, звонки.", "pro": "РОП, маркетинг, amoCRM, звонки, KPI/мотивация, AI/нейросети", "summary": "Алина Ассоциация Ропов — участник Ассоциации системных продаж с нишей «Продажи». За период написал 124 сообщений, из них 69 несут профессиональную пользу (55% полезности). Дал 23 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, маркетинг, amoCRM, звонки, KPI/мотивация. Делился практическими кейсами (1). Рекомендуется для запросов по темам: РОП, маркетинг, amoCRM, звонки.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: РОП, маркетинг, amoCRM"], "opinion": "РОП", "etopics": ["РОП", "маркетинг", "amoCRM", "звонки", "KPI/мотивация", "AI/нейросети"], "chats": ["Ассоциация СП"], "msgs": {"day": 4, "week": 9, "month": 74, "total": 124}, "useful": 69, "ratio": 0.56, "expert": 23, "pts": 608, "grow": 9, "rank": 8, "isNew": false, "cats": ["РОП", "Продажи"], "ai": "Эксперт АСП по нише Продажи. Рекомендован для вопросов по РОП, маркетинг, amoCRM. ", "search": "Алина Ассоциация Ропов. Продажи, РОП / Ассоциация, РОП, Продажи. РОП, маркетинг, amoCRM, звонки, KPI/мотивация, AI/нейросети. Рекомендовать по запросам: РОП, маркетинг, amoCRM, звонки, KPI/мотивация, AI/нейросети.", "hist": [104, 93, 77, 59, 58, 16, 9]},
+  {"id": 9, "name": "Maximus", "phone": "не указан", "niche": "Продажи", "company": "", "role": "РОП / Продажи", "what": "Управление отделом продаж, построение KPI и системы мотивации.", "pro": "управление ОП, KPI, мотивация, скрипты, звонки", "summary": "Maximus — участник Ассоциации системных продаж с нишей «Продажи». За период написал 86 сообщений, из них 61 несут профессиональную пользу (70% полезности). Дал 24 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, KPI/мотивация, маркетинг, звонки, воронки продаж. Делился практическими кейсами (1). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: РОП, KPI/мотивация, маркетинг, звонки.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 70% сообщений профессиональны", "Хорошо разбирается в темах: РОП, KPI/мотивация, маркетинг"], "opinion": "Найм РОПа без KPI и зоны ответственности бессмысленен", "etopics": ["управление ОП", "KPI", "мотивация", "скрипты", "звонки"], "chats": ["Ассоциация СП"], "msgs": {"day": 7, "week": 22, "month": 88, "total": 86}, "useful": 61, "ratio": 0.71, "expert": 24, "pts": 591, "grow": 22, "rank": 9, "isNew": true, "cats": ["Продажи", "РОП", "Обучение"], "ai": "Высокая концентрация пользы (71%). Рекомендован по управлению ОП и KPI.", "search": "Maximus. Продажи, РОП / Продажи, Продажи, РОП, Обучение. управление ОП, KPI, мотивация, скрипты, звонки. Рекомендовать: управление ОП, KPI, мотивация, скрипты, звонки.", "hist": [88, 88, 88, 88, 88, 39, 22]},
+  {"id": 10, "name": "Амина Маркетолог МК", "phone": "+7 708 125 9232", "niche": "Маркетинг", "company": "", "role": "Маркетолог", "what": "Маркетинг, лидогенерация, воронки и трафик для отделов продаж.", "pro": "маркетинг, воронки, лидогенерация, трафик, контент", "summary": "Амина Маркетолог МК — участник Ассоциации системных продаж с нишей «Маркетинг». За период написал 151 сообщений, из них 75 несут профессиональную пользу (49% полезности). Дал 16 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, воронки продаж, оплаты mail.ru, РОП, KPI/мотивация. Рекомендуется для запросов по темам: маркетинг, воронки продаж, оплаты mail.ru, РОП.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: маркетинг, воронки продаж, оплаты mail.ru"], "opinion": "Маркетинг и продажи нельзя разрывать — лиды без обработки сгорают", "etopics": ["маркетинг", "воронки", "лидогенерация", "трафик", "контент"], "chats": ["Ассоциация СП"], "msgs": {"day": 1, "week": 16, "month": 44, "total": 151}, "useful": 75, "ratio": 0.5, "expert": 16, "pts": 559, "grow": 16, "rank": 10, "isNew": false, "cats": ["Маркетинг", "Продажи"], "ai": "Маркетолог сообщества. Рекомендована по лидогенерации, воронкам и трафику.", "search": "Амина Маркетолог МК. Маркетинг, Маркетолог, Маркетинг, Продажи. маркетинг, воронки, лидогенерация, трафик, контент. Рекомендовать: маркетинг, воронки, лидогенерация, трафик, контент.", "hist": [95, 61, 55, 42, 39, 29, 16]},
+  {"id": 11, "name": "Айдана РОП МК3", "phone": "+7 747 022 4332", "niche": "Продажи", "company": "", "role": "РОП", "what": "Профессионально проявляется в темах: РОП, маркетинг, звонки, воронки продаж.", "pro": "РОП, маркетинг, звонки, воронки продаж", "summary": "Айдана РОП МК3 — участник Ассоциации системных продаж с нишей «Продажи». За период написал 137 сообщений, из них 56 несут профессиональную пользу (40% полезности). Дал 17 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, маркетинг, звонки, воронки продаж. Делился практическими кейсами (1). Рекомендуется для запросов по темам: РОП, маркетинг, звонки, воронки продаж.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: РОП, маркетинг, звонки"], "opinion": "РОП", "etopics": ["РОП", "маркетинг", "звонки", "воронки продаж"], "chats": ["Ассоциация СП"], "msgs": {"day": 2, "week": 25, "month": 73, "total": 137}, "useful": 56, "ratio": 0.41, "expert": 17, "pts": 516, "grow": 25, "rank": 11, "isNew": false, "cats": ["РОП", "Продажи"], "ai": "Эксперт АСП по нише Продажи. Рекомендован для вопросов по РОП, маркетинг, звонки. ", "search": "Айдана РОП МК3. Продажи, РОП, РОП, Продажи. РОП, маркетинг, звонки, воронки продаж. Рекомендовать по запросам: РОП, маркетинг, звонки, воронки продаж.", "hist": [122, 91, 86, 67, 51, 29, 25]},
+  {"id": 12, "name": "AI Helpers", "phone": "не указан", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, звонки, AI/нейросети, n8n.", "pro": "РОП, звонки, AI/нейросети, n8n, мессенджеры, KPI/мотивация", "summary": "AI Helpers — участник Ассоциации системных продаж с нишей «Продажи». За период написал 92 сообщений, из них 54 несут профессиональную пользу (58% полезности). Дал 23 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, звонки, AI/нейросети, n8n, мессенджеры. Делился практическими кейсами (1). Рекомендуется для запросов по темам: РОП, звонки, AI/нейросети, n8n.", "strong": ["Даёт много экспертных ответов в чате", "Хорошо разбирается в темах: РОП, звонки, AI/нейросети"], "opinion": "РОП", "etopics": ["РОП", "звонки", "AI/нейросети", "n8n", "мессенджеры", "KPI/мотивация"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 2, "month": 93, "total": 92}, "useful": 54, "ratio": 0.59, "expert": 23, "pts": 511, "grow": 2, "rank": 12, "isNew": true, "cats": ["РОП", "Продажи", "AI", "CRM"], "ai": "Эксперт АСП по нише Продажи. Рекомендован для вопросов по РОП, звонки, AI/нейросети. ", "search": "AI Helpers. Продажи, Участник, РОП, Продажи, AI, CRM. РОП, звонки, AI/нейросети, n8n, мессенджеры, KPI/мотивация. Рекомендовать по запросам: РОП, звонки, AI/нейросети, n8n, мессенджеры, KPI/мотивация.", "hist": [93, 93, 93, 93, 93, 2, 2]},
+  {"id": 13, "name": "Бакжан Косумбаева", "phone": "+7 776 696 0595", "niche": "Продажи", "company": "", "role": "РОП / Обучение продажам", "what": "Управление отделом продаж, обучение и развитие менеджеров.", "pro": "управление ОП, обучение менеджеров, скрипты, мотивация, найм", "summary": "Бакжан Косумбаева — участник Ассоциации системных продаж с нишей «Продажи». За период написал 74 сообщений, из них 52 несут профессиональную пользу (70% полезности). Дал 15 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, KPI/мотивация, образование, найм, маркетинг. Делился практическими кейсами (3). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: РОП, KPI/мотивация, образование, найм.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 70% сообщений профессиональны", "Делится практическими кейсами из своего опыта", "Хорошо разбирается в темах: РОП, KPI/мотивация, образование"], "opinion": "Обучение менеджера должно идти через разбор его реальных звонков", "etopics": ["управление ОП", "обучение менеджеров", "скрипты", "мотивация", "найм"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 12, "total": 74}, "useful": 52, "ratio": 0.7, "expert": 15, "pts": 493, "grow": 0, "rank": 13, "isNew": false, "cats": ["РОП", "Обучение", "Продажи"], "ai": "РОП с фокусом на обучение (70% пользы). Рекомендована по обучению и развитию менеджеров.", "search": "Бакжан Косумбаева. Продажи, РОП / Обучение продажам, РОП, Обучение, Продажи. управление ОП, обучение менеджеров, скрипты, мотивация, найм. Рекомендовать: управление ОП, обучение менеджеров, скрипты, мотивация, найм.", "hist": [20, 19, 12, 12, 6, 4, 0]},
+  {"id": 14, "name": "Meruert", "phone": "+7 707 422 3591", "niche": "CRM", "company": "Wazzup", "role": "Специалист Wazzup", "what": "Техподдержка и интеграция Wazzup с CRM. Помогает с авторизацией и синхронизацией.", "pro": "Wazzup, интеграция WhatsApp, amoCRM, авторизация, техподдержка", "summary": "Meruert — участник Ассоциации системных продаж с нишей «CRM». За период написал 63 сообщений, из них 44 несут профессиональную пользу (69% полезности). Дал 20 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, маркетинг, KPI/мотивация, товарка, найм. Делился практическими кейсами (1). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: РОП, маркетинг, KPI/мотивация, товарка.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 69% сообщений профессиональны", "Хорошо разбирается в темах: РОП, маркетинг, KPI/мотивация"], "opinion": "Связку WhatsApp с CRM надо настраивать через стабильную авторизацию, иначе теряются данные", "etopics": ["Wazzup", "интеграция WhatsApp", "amoCRM", "авторизация", "техподдержка"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 5, "month": 36, "total": 63}, "useful": 44, "ratio": 0.7, "expert": 20, "pts": 442, "grow": 5, "rank": 14, "isNew": false, "cats": ["CRM", "Интегратор"], "ai": "Специалист Wazzup (70% пользы). Рекомендована по WhatsApp+CRM интеграции.", "search": "Meruert. CRM, Специалист Wazzup, CRM, Интегратор. Wazzup, интеграция WhatsApp, amoCRM, авторизация, техподдержка. Рекомендовать: Wazzup, интеграция WhatsApp, amoCRM, авторизация, техподдержка.", "hist": [62, 39, 39, 36, 20, 6, 5]},
+  {"id": 15, "name": "Malgozhdarova Altynai", "phone": "+7 776 226 0003", "niche": "AI", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: ОКК, РОП, маркетинг, KPI/мотивация.", "pro": "ОКК, РОП, маркетинг, KPI/мотивация", "summary": "Malgozhdarova Altynai — участник Ассоциации системных продаж с нишей «AI». За период написал 253 сообщений, из них 48 несут профессиональную пользу (19% полезности). Дал 8 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: ОКК, РОП, маркетинг, KPI/мотивация. Активен в обсуждениях, но доля чисто экспертных сообщений умеренная. Рекомендуется для запросов по темам: ОКК, РОП, маркетинг, KPI/мотивация.", "strong": ["Хорошо разбирается в темах: ОКК, РОП, маркетинг", "Один из самых активных участников сообщества"], "opinion": "ОКК", "etopics": ["ОКК", "РОП", "маркетинг", "KPI/мотивация"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 7, "month": 12, "total": 253}, "useful": 48, "ratio": 0.19, "expert": 8, "pts": 386, "grow": 7, "rank": 15, "isNew": false, "cats": ["AI", "Продажи", "РОП", "Маркетинг"], "ai": "Эксперт АСП по нише AI. Рекомендован для вопросов по ОКК, РОП, маркетинг. ", "search": "Malgozhdarova Altynai. AI, Участник, AI, Продажи, РОП, Маркетинг. ОКК, РОП, маркетинг, KPI/мотивация. Рекомендовать по запросам: ОКК, РОП, маркетинг, KPI/мотивация.", "hist": [21, 15, 12, 11, 10, 9, 7]},
+  {"id": 16, "name": "Ксения Князева", "phone": "+7 701 408 1010", "niche": "Маркетинг", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: маркетинг, образование, оплаты mail.ru, РОП.", "pro": "маркетинг, образование, оплаты mail.ru, РОП, звонки, amoCRM", "summary": "Ксения Князева — участник Ассоциации системных продаж с нишей «Маркетинг». За период написал 143 сообщений, из них 56 несут профессиональную пользу (39% полезности). Чаще всего проявлял экспертизу в темах: маркетинг, образование, оплаты mail.ru, РОП, звонки. Рекомендуется для запросов по темам: маркетинг, образование, оплаты mail.ru, РОП.", "strong": ["Хорошо разбирается в темах: маркетинг, образование, оплаты mail.ru"], "opinion": "маркетинг", "etopics": ["маркетинг", "образование", "оплаты mail.ru", "РОП", "звонки", "amoCRM"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 3, "month": 6, "total": 143}, "useful": 56, "ratio": 0.39, "expert": 2, "pts": 381, "grow": 3, "rank": 16, "isNew": false, "cats": ["Маркетинг", "Образование", "CRM", "РОП"], "ai": "Эксперт АСП по нише Маркетинг. Рекомендован для вопросов по маркетинг, образование, оплаты mail.ru. ", "search": "Ксения Князева. Маркетинг, Участник, Маркетинг, Образование, CRM, РОП. маркетинг, образование, оплаты mail.ru, РОП, звонки, amoCRM. Рекомендовать по запросам: маркетинг, образование, оплаты mail.ru, РОП, звонки, amoCRM.", "hist": [47, 20, 11, 6, 5, 4, 3]},
+  {"id": 17, "name": "_ARGENTUM_", "phone": "не указан", "niche": "Маркетинг", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: маркетинг, РОП, B2B продажи, мессенджеры.", "pro": "маркетинг, РОП, B2B продажи, мессенджеры, amoCRM, KPI/мотивация", "summary": "_ARGENTUM_ — участник Ассоциации системных продаж с нишей «Маркетинг». За период написал 77 сообщений, из них 53 несут профессиональную пользу (68% полезности). Дал 10 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП, B2B продажи, мессенджеры, amoCRM. Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: маркетинг, РОП, B2B продажи, мессенджеры.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 68% сообщений профессиональны", "Хорошо разбирается в темах: маркетинг, РОП, B2B продажи"], "opinion": "маркетинг", "etopics": ["маркетинг", "РОП", "B2B продажи", "мессенджеры", "amoCRM", "KPI/мотивация"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 0, "total": 77}, "useful": 53, "ratio": 0.69, "expert": 10, "pts": 371, "grow": 0, "rank": 17, "isNew": false, "cats": ["Маркетинг", "РОП", "Продажи", "CRM"], "ai": "Эксперт АСП по нише Маркетинг. Рекомендован для вопросов по маркетинг, РОП, B2B продажи. Высокий процент полезных ответов.", "search": "_ARGENTUM_. Маркетинг, Участник, Маркетинг, РОП, Продажи, CRM. маркетинг, РОП, B2B продажи, мессенджеры, amoCRM, KPI/мотивация. Рекомендовать по запросам: маркетинг, РОП, B2B продажи, мессенджеры, amoCRM, KPI/мотивация.", "hist": [1, 0, 0, 0, 0, 0, 0]},
+  {"id": 18, "name": "Asselya", "phone": "не указан", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, маркетинг, образование, ОКК.", "pro": "РОП, маркетинг, образование, ОКК, товарка, KPI/мотивация", "summary": "Asselya — участник Ассоциации системных продаж с нишей «Продажи». За период написал 85 сообщений, из них 34 несут профессиональную пользу (40% полезности). Дал 9 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, маркетинг, образование, ОКК, товарка. Рекомендуется для запросов по темам: РОП, маркетинг, образование, ОКК.", "strong": ["Хорошо разбирается в темах: РОП, маркетинг, образование"], "opinion": "РОП", "etopics": ["РОП", "маркетинг", "образование", "ОКК", "товарка", "KPI/мотивация"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 1, "month": 22, "total": 85}, "useful": 34, "ratio": 0.4, "expert": 9, "pts": 313, "grow": 1, "rank": 18, "isNew": false, "cats": ["РОП", "Продажи", "Маркетинг", "Образование"], "ai": "Эксперт АСП по нише Продажи. Рекомендован для вопросов по РОП, маркетинг, образование. ", "search": "Asselya. Продажи, Участник, РОП, Продажи, Маркетинг, Образование. РОП, маркетинг, образование, ОКК, товарка, KPI/мотивация. Рекомендовать по запросам: РОП, маркетинг, образование, ОКК, товарка, KPI/мотивация.", "hist": [37, 25, 22, 22, 16, 15, 1]},
+  {"id": 19, "name": "Галымжан Ассоциация", "phone": "+7 705 427 7383", "niche": "Продажи", "company": "", "role": "Участник ассоциации", "what": "Профессионально проявляется в темах: РОП, медицина, образование, KPI/мотивация.", "pro": "РОП, медицина, образование, KPI/мотивация, ОКК, логистика", "summary": "Галымжан Ассоциация — участник Ассоциации системных продаж с нишей «Продажи». За период написал 121 сообщений, из них 40 несут профессиональную пользу (33% полезности). Чаще всего проявлял экспертизу в темах: РОП, медицина, образование, KPI/мотивация, ОКК. Рекомендуется для запросов по темам: РОП, медицина, образование, KPI/мотивация.", "strong": ["Хорошо разбирается в темах: РОП, медицина, образование"], "opinion": "РОП", "etopics": ["РОП", "медицина", "образование", "KPI/мотивация", "ОКК", "логистика"], "chats": ["Ассоциация СП"], "msgs": {"day": 1, "week": 1, "month": 10, "total": 121}, "useful": 40, "ratio": 0.33, "expert": 3, "pts": 304, "grow": 1, "rank": 19, "isNew": false, "cats": ["Продажи", "РОП"], "ai": "Эксперт АСП по нише Продажи. Рекомендован для вопросов по РОП, медицина, образование. ", "search": "Галымжан Ассоциация. Продажи, Участник ассоциации, Продажи, РОП. РОП, медицина, образование, KPI/мотивация, ОКК, логистика. Рекомендовать по запросам: РОП, медицина, образование, KPI/мотивация, ОКК, логистика.", "hist": [37, 21, 10, 10, 10, 4, 1]},
+  {"id": 20, "name": "Сахиба Ассоциация", "phone": "+7 700 232 0466", "niche": "CRM", "company": "", "role": "amoCRM / Продажи", "what": "Профессионально проявляется в темах: РОП, amoCRM, маркетинг, мессенджеры.", "pro": "РОП, amoCRM, маркетинг, мессенджеры, Bitrix24, AI/нейросети", "summary": "Сахиба Ассоциация — участник Ассоциации системных продаж с нишей «CRM». За период написал 43 сообщений, из них 32 несут профессиональную пользу (74% полезности). Дал 14 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, amoCRM, маркетинг, мессенджеры, Bitrix24. Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: РОП, amoCRM, маркетинг, мессенджеры.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 74% сообщений профессиональны", "Хорошо разбирается в темах: РОП, amoCRM, маркетинг"], "opinion": "РОП", "etopics": ["РОП", "amoCRM", "маркетинг", "мессенджеры", "Bitrix24", "AI/нейросети"], "chats": ["Ассоциация СП"], "msgs": {"day": 5, "week": 9, "month": 35, "total": 43}, "useful": 32, "ratio": 0.74, "expert": 14, "pts": 283, "grow": 9, "rank": 20, "isNew": false, "cats": ["CRM", "Продажи"], "ai": "Полезный по нише CRM. Рекомендован для вопросов по РОП, amoCRM, маркетинг. Высокий процент полезных ответов.", "search": "Сахиба Ассоциация. CRM, amoCRM / Продажи, CRM, Продажи. РОП, amoCRM, маркетинг, мессенджеры, Bitrix24, AI/нейросети. Рекомендовать по запросам: РОП, amoCRM, маркетинг, мессенджеры, Bitrix24, AI/нейросети.", "hist": [42, 42, 41, 35, 32, 11, 9]},
+  {"id": 21, "name": "O", "phone": "не указан", "niche": "Маркетинг", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: маркетинг, РОП, WABA, образование.", "pro": "маркетинг, РОП, WABA, образование", "summary": "O — участник Ассоциации системных продаж с нишей «Маркетинг». За период написал 41 сообщений, из них 27 несут профессиональную пользу (65% полезности). Дал 11 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП, WABA, образование. Делился практическими кейсами (1). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: маркетинг, РОП, WABA, образование.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 65% сообщений профессиональны", "Хорошо разбирается в темах: маркетинг, РОП, WABA"], "opinion": "маркетинг", "etopics": ["маркетинг", "РОП", "WABA", "образование"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 10, "month": 42, "total": 41}, "useful": 27, "ratio": 0.66, "expert": 11, "pts": 275, "grow": 10, "rank": 21, "isNew": true, "cats": ["Маркетинг", "РОП", "Продажи", "CRM"], "ai": "Полезный по нише Маркетинг. Рекомендован для вопросов по маркетинг, РОП, WABA. Высокий процент полезных ответов.", "search": "O. Маркетинг, Участник, Маркетинг, РОП, Продажи, CRM. маркетинг, РОП, WABA, образование. Рекомендовать по запросам: маркетинг, РОП, WABA, образование.", "hist": [42, 42, 42, 42, 42, 42, 10]},
+  {"id": 22, "name": "Андрей Проджект", "phone": "не указан", "niche": "CRM", "company": "Проджект", "role": "Интегратор CRM", "what": "Интеграция CRM, настройка Wazzup, техническая поддержка. Команда Проджект.", "pro": "amoCRM, Bitrix24, Wazzup, интеграции, техподдержка", "summary": "Андрей Проджект — участник Ассоциации системных продаж с нишей «CRM». За период написал 48 сообщений, из них 27 несут профессиональную пользу (56% полезности). Дал 7 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: Bitrix24, найм, B2B продажи, недвижимость, воронки продаж. Делился практическими кейсами (1). Рекомендуется для запросов по темам: Bitrix24, найм, B2B продажи, недвижимость.", "strong": ["Хорошо разбирается в темах: Bitrix24, найм, B2B продажи"], "opinion": "Большинство сбоев CRM решается переподключением — не надо паниковать", "etopics": ["amoCRM", "Bitrix24", "Wazzup", "интеграции", "техподдержка"], "chats": ["Ассоциация СП"], "msgs": {"day": 1, "week": 1, "month": 5, "total": 48}, "useful": 27, "ratio": 0.56, "expert": 7, "pts": 248, "grow": 1, "rank": 22, "isNew": false, "cats": ["CRM", "Интегратор"], "ai": "Технический интегратор команды Проджект. Рекомендован по настройке CRM и Wazzup.", "search": "Андрей Проджект. CRM, Интегратор CRM, CRM, Интегратор. amoCRM, Bitrix24, Wazzup, интеграции, техподдержка. Рекомендовать: amoCRM, Bitrix24, Wazzup, интеграции, техподдержка.", "hist": [13, 7, 6, 4, 4, 2, 1]},
+  {"id": 23, "name": "Laura Maliq", "phone": "+7 702 763 3336", "niche": "Недвижимость", "company": "", "role": "Недвижимость / Продажи", "what": "Профессионально проявляется в темах: недвижимость, медицина, маркетинг.", "pro": "недвижимость, медицина, маркетинг", "summary": "Laura Maliq — участник Ассоциации системных продаж с нишей «Недвижимость». За период написал 50 сообщений, из них 27 несут профессиональную пользу (54% полезности). Дал 5 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: недвижимость, медицина, маркетинг. Рекомендуется для запросов по темам: недвижимость, медицина, маркетинг.", "strong": ["Хорошо разбирается в темах: недвижимость, медицина, маркетинг"], "opinion": "недвижимость", "etopics": ["недвижимость", "медицина", "маркетинг"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 27, "month": 27, "total": 50}, "useful": 27, "ratio": 0.54, "expert": 5, "pts": 233, "grow": 27, "rank": 23, "isNew": false, "cats": ["Недвижимость", "Продажи"], "ai": "Полезный по нише Недвижимость. Рекомендован для вопросов по недвижимость, медицина, маркетинг. ", "search": "Laura Maliq. Недвижимость, Недвижимость / Продажи, Недвижимость, Продажи. недвижимость, медицина, маркетинг. Рекомендовать по запросам: недвижимость, медицина, маркетинг.", "hist": [35, 27, 27, 27, 27, 27, 27]},
+  {"id": 24, "name": "Мария Ассоциация Ропов Vassil’evna", "phone": "не указан", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, AI/нейросети, найм, ОКК.", "pro": "РОП, AI/нейросети, найм, ОКК, маркетинг, медицина", "summary": "Мария Ассоциация Ропов Vassil’evna — участник Ассоциации системных продаж с нишей «Продажи». За период написал 75 сообщений, из них 27 несут профессиональную пользу (36% полезности). Чаще всего проявлял экспертизу в темах: РОП, AI/нейросети, найм, ОКК, маркетинг. Рекомендуется для запросов по темам: РОП, AI/нейросети, найм, ОКК.", "strong": ["Хорошо разбирается в темах: РОП, AI/нейросети, найм"], "opinion": "РОП", "etopics": ["РОП", "AI/нейросети", "найм", "ОКК", "маркетинг", "медицина"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 3, "month": 10, "total": 75}, "useful": 27, "ratio": 0.36, "expert": 3, "pts": 230, "grow": 3, "rank": 24, "isNew": false, "cats": ["РОП", "Продажи", "AI", "Найм"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по РОП, AI/нейросети, найм. ", "search": "Мария Ассоциация Ропов Vassil’evna. Продажи, Участник, РОП, Продажи, AI, Найм. РОП, AI/нейросети, найм, ОКК, маркетинг, медицина. Рекомендовать по запросам: РОП, AI/нейросети, найм, ОКК, маркетинг, медицина.", "hist": [30, 13, 10, 10, 9, 9, 3]},
+  {"id": 25, "name": "Райымбек Комдир Жанамен", "phone": "не указан", "niche": "Найм", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: найм, РОП, маркетинг, KPI/мотивация.", "pro": "найм, РОП, маркетинг, KPI/мотивация, звонки, ОКК", "summary": "Райымбек Комдир Жанамен — участник Ассоциации системных продаж с нишей «Найм». За период написал 49 сообщений, из них 30 несут профессиональную пользу (61% полезности). Чаще всего проявлял экспертизу в темах: найм, РОП, маркетинг, KPI/мотивация, звонки. Делился практическими кейсами (2). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: найм, РОП, маркетинг, KPI/мотивация.", "strong": ["Высокий процент пользы — 61% сообщений профессиональны", "Делится практическими кейсами из своего опыта", "Хорошо разбирается в темах: найм, РОП, маркетинг"], "opinion": "найм", "etopics": ["найм", "РОП", "маркетинг", "KPI/мотивация", "звонки", "ОКК"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 6, "total": 49}, "useful": 30, "ratio": 0.61, "expert": 3, "pts": 226, "grow": 0, "rank": 25, "isNew": false, "cats": ["Найм", "РОП", "Продажи", "Маркетинг"], "ai": "Полезный по нише Найм. Рекомендован для вопросов по найм, РОП, маркетинг. Высокий процент полезных ответов.", "search": "Райымбек Комдир Жанамен. Найм, Участник, Найм, РОП, Продажи, Маркетинг. найм, РОП, маркетинг, KPI/мотивация, звонки, ОКК. Рекомендовать по запросам: найм, РОП, маркетинг, KPI/мотивация, звонки, ОКК.", "hist": [34, 20, 7, 6, 6, 0, 0]},
+  {"id": 26, "name": "Хава", "phone": "+7 776 639 1952", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: KPI/мотивация, РОП.", "pro": "KPI/мотивация, РОП", "summary": "Хава — участник Ассоциации системных продаж с нишей «Продажи». За период написал 76 сообщений, из них 25 несут профессиональную пользу (32% полезности). Чаще всего проявлял экспертизу в темах: KPI/мотивация, РОП. Делился практическими кейсами (2). Рекомендуется для запросов по темам: KPI/мотивация, РОП.", "strong": ["Делится практическими кейсами из своего опыта", "Хорошо разбирается в темах: KPI/мотивация, РОП"], "opinion": "KPI/мотивация", "etopics": ["KPI/мотивация", "РОП"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 5, "total": 76}, "useful": 25, "ratio": 0.33, "expert": 2, "pts": 223, "grow": 0, "rank": 26, "isNew": false, "cats": ["Продажи", "РОП"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по KPI/мотивация, РОП. ", "search": "Хава. Продажи, Участник, Продажи, РОП. KPI/мотивация, РОП. Рекомендовать по запросам: KPI/мотивация, РОП.", "hist": [59, 11, 5, 5, 5, 4, 0]},
+  {"id": 27, "name": "Хард", "phone": "не указан", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, звонки, Wazzup, WABA.", "pro": "РОП, звонки, Wazzup, WABA, ОКК, маркетинг", "summary": "Хард — участник Ассоциации системных продаж с нишей «Продажи». За период написал 43 сообщений, из них 24 несут профессиональную пользу (55% полезности). Чаще всего проявлял экспертизу в темах: РОП, звонки, Wazzup, WABA, ОКК. Делился практическими кейсами (1). Рекомендуется для запросов по темам: РОП, звонки, Wazzup, WABA.", "strong": ["Хорошо разбирается в темах: РОП, звонки, Wazzup"], "opinion": "РОП", "etopics": ["РОП", "звонки", "Wazzup", "WABA", "ОКК", "маркетинг"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 0, "total": 43}, "useful": 24, "ratio": 0.56, "expert": 4, "pts": 219, "grow": 0, "rank": 27, "isNew": false, "cats": ["РОП", "Продажи", "CRM", "Интегратор"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по РОП, звонки, Wazzup. ", "search": "Хард. Продажи, Участник, РОП, Продажи, CRM, Интегратор. РОП, звонки, Wazzup, WABA, ОКК, маркетинг. Рекомендовать по запросам: РОП, звонки, Wazzup, WABA, ОКК, маркетинг.", "hist": [8, 6, 0, 0, 0, 0, 0]},
+  {"id": 28, "name": "Ербол", "phone": "не указан", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, amoCRM, мессенджеры, n8n.", "pro": "РОП, amoCRM, мессенджеры, n8n, AI/нейросети, образование", "summary": "Ербол — участник Ассоциации системных продаж с нишей «Продажи». За период написал 38 сообщений, из них 21 несут профессиональную пользу (55% полезности). Дал 5 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, amoCRM, мессенджеры, n8n, AI/нейросети. Делился практическими кейсами (2). Рекомендуется для запросов по темам: РОП, amoCRM, мессенджеры, n8n.", "strong": ["Делится практическими кейсами из своего опыта", "Хорошо разбирается в темах: РОП, amoCRM, мессенджеры"], "opinion": "РОП", "etopics": ["РОП", "amoCRM", "мессенджеры", "n8n", "AI/нейросети", "образование"], "chats": ["Ассоциация СП"], "msgs": {"day": 18, "week": 18, "month": 20, "total": 38}, "useful": 21, "ratio": 0.55, "expert": 5, "pts": 212, "grow": 18, "rank": 28, "isNew": false, "cats": ["РОП", "Продажи", "CRM", "Интегратор"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по РОП, amoCRM, мессенджеры. ", "search": "Ербол. Продажи, Участник, РОП, Продажи, CRM, Интегратор. РОП, amoCRM, мессенджеры, n8n, AI/нейросети, образование. Рекомендовать по запросам: РОП, amoCRM, мессенджеры, n8n, AI/нейросети, образование.", "hist": [23, 20, 20, 20, 18, 18, 18]},
+  {"id": 29, "name": "Nursultan Zhanatuly", "phone": "+7 778 222 6406", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, найм.", "pro": "РОП, найм", "summary": "Nursultan Zhanatuly — участник Ассоциации системных продаж с нишей «Продажи». За период написал 60 сообщений, из них 23 несут профессиональную пользу (38% полезности). Чаще всего проявлял экспертизу в темах: РОП, найм. Рекомендуется для запросов по темам: РОП, найм.", "strong": ["Хорошо разбирается в темах: РОП, найм"], "opinion": "РОП", "etopics": ["РОП", "найм"], "chats": ["Ассоциация СП"], "msgs": {"day": 1, "week": 11, "month": 33, "total": 60}, "useful": 23, "ratio": 0.38, "expert": 4, "pts": 210, "grow": 11, "rank": 29, "isNew": false, "cats": ["РОП", "Продажи", "Найм"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по РОП, найм. ", "search": "Nursultan Zhanatuly. Продажи, Участник, РОП, Продажи, Найм. РОП, найм. Рекомендовать по запросам: РОП, найм.", "hist": [39, 36, 34, 33, 32, 27, 11]},
+  {"id": 30, "name": "Адлет Бейсеналы", "phone": "не указан", "niche": "CRM", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: amoCRM, товарка, маркетинг, KPI/мотивация.", "pro": "amoCRM, товарка, маркетинг, KPI/мотивация, РОП", "summary": "Адлет Бейсеналы — участник Ассоциации системных продаж с нишей «CRM». За период написал 29 сообщений, из них 21 несут профессиональную пользу (72% полезности). Дал 9 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: amoCRM, товарка, маркетинг, KPI/мотивация, РОП. Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: amoCRM, товарка, маркетинг, KPI/мотивация.", "strong": ["Высокий процент пользы — 72% сообщений профессиональны", "Хорошо разбирается в темах: amoCRM, товарка, маркетинг"], "opinion": "amoCRM", "etopics": ["amoCRM", "товарка", "маркетинг", "KPI/мотивация", "РОП"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 14, "total": 29}, "useful": 21, "ratio": 0.72, "expert": 9, "pts": 208, "grow": 0, "rank": 30, "isNew": false, "cats": ["CRM", "Интегратор", "Продажи", "Маркетинг"], "ai": "Полезный по нише CRM. Рекомендован для вопросов по amoCRM, товарка, маркетинг. Высокий процент полезных ответов.", "search": "Адлет Бейсеналы. CRM, Участник, CRM, Интегратор, Продажи, Маркетинг. amoCRM, товарка, маркетинг, KPI/мотивация, РОП. Рекомендовать по запросам: amoCRM, товарка, маркетинг, KPI/мотивация, РОП.", "hist": [29, 15, 14, 14, 14, 14, 0]},
+  {"id": 31, "name": "Yerkebulan", "phone": "+7 707 705 1660", "niche": "Образование", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: образование, РОП, KPI/мотивация, Bitrix24.", "pro": "образование, РОП, KPI/мотивация, Bitrix24", "summary": "Yerkebulan — участник Ассоциации системных продаж с нишей «Образование». За период написал 45 сообщений, из них 23 несут профессиональную пользу (51% полезности). Дал 5 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: образование, РОП, KPI/мотивация, Bitrix24. Рекомендуется для запросов по темам: образование, РОП, KPI/мотивация, Bitrix24.", "strong": ["Хорошо разбирается в темах: образование, РОП, KPI/мотивация"], "opinion": "образование", "etopics": ["образование", "РОП", "KPI/мотивация", "Bitrix24"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 2, "month": 2, "total": 45}, "useful": 23, "ratio": 0.51, "expert": 5, "pts": 198, "grow": 2, "rank": 31, "isNew": false, "cats": ["Образование", "РОП", "Продажи", "CRM"], "ai": "Полезный по нише Образование. Рекомендован для вопросов по образование, РОП, KPI/мотивация. ", "search": "Yerkebulan. Образование, Участник, Образование, РОП, Продажи, CRM. образование, РОП, KPI/мотивация, Bitrix24. Рекомендовать по запросам: образование, РОП, KPI/мотивация, Bitrix24.", "hist": [5, 5, 2, 2, 2, 2, 2]},
+  {"id": 32, "name": "Дамир", "phone": "не указан", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, KPI/мотивация, n8n, найм.", "pro": "РОП, KPI/мотивация, n8n, найм", "summary": "Дамир — участник Ассоциации системных продаж с нишей «Продажи». За период написал 37 сообщений, из них 21 несут профессиональную пользу (56% полезности). Дал 7 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, KPI/мотивация, n8n, найм. Рекомендуется для запросов по темам: РОП, KPI/мотивация, n8n, найм.", "strong": ["Хорошо разбирается в темах: РОП, KPI/мотивация, n8n"], "opinion": "РОП", "etopics": ["РОП", "KPI/мотивация", "n8n", "найм"], "chats": ["Ассоциация СП"], "msgs": {"day": 2, "week": 15, "month": 37, "total": 37}, "useful": 21, "ratio": 0.57, "expert": 7, "pts": 189, "grow": 15, "rank": 32, "isNew": true, "cats": ["РОП", "Продажи", "AI", "Найм"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по РОП, KPI/мотивация, n8n. ", "search": "Дамир. Продажи, Участник, РОП, Продажи, AI, Найм. РОП, KPI/мотивация, n8n, найм. Рекомендовать по запросам: РОП, KPI/мотивация, n8n, найм.", "hist": [39, 39, 37, 37, 37, 16, 15]},
+  {"id": 33, "name": "Даниил Проджект", "phone": "+7 747 059 8217", "niche": "AI", "company": "Проджект", "role": "ОКК / Интегратор", "what": "Контроль качества (ОКК), анализ звонков, CRM-интеграции. Команда Проджект.", "pro": "ОКК, анализ звонков, CRM-интеграции, аналитика", "summary": "Даниил Проджект — участник Ассоциации системных продаж с нишей «AI». За период написал 24 сообщений, из них 18 несут профессиональную пользу (75% полезности). Дал 10 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: ОКК, РОП. Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: ОКК, РОП.", "strong": ["Даёт много экспертных ответов в чате", "Высокий процент пользы — 75% сообщений профессиональны", "Хорошо разбирается в темах: ОКК, РОП"], "opinion": "ОКК даёт результат только если по нему принимают управленческие решения", "etopics": ["ОКК", "анализ звонков", "CRM-интеграции", "аналитика"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 6, "total": 24}, "useful": 18, "ratio": 0.75, "expert": 10, "pts": 186, "grow": 0, "rank": 33, "isNew": false, "cats": ["AI", "CRM"], "ai": "ОКК и аналитика (75% пользы). Рекомендован по контролю качества и CRM.", "search": "Даниил Проджект. AI, ОКК / Интегратор, AI, CRM. ОКК, анализ звонков, CRM-интеграции, аналитика. Рекомендовать: ОКК, анализ звонков, CRM-интеграции, аналитика.", "hist": [20, 18, 10, 6, 2, 0, 0]},
+  {"id": 34, "name": "Жигер", "phone": "+7 702 870 4686", "niche": "AI", "company": "", "role": "Предприниматель / AI", "what": "Профессионально проявляется в темах: маркетинг, РОП.", "pro": "маркетинг, РОП", "summary": "Жигер — участник Ассоциации системных продаж с нишей «AI». За период написал 41 сообщений, из них 18 несут профессиональную пользу (43% полезности). Дал 9 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП. Рекомендуется для запросов по темам: маркетинг, РОП.", "strong": ["Хорошо разбирается в темах: маркетинг, РОП"], "opinion": "маркетинг", "etopics": ["маркетинг", "РОП"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 4, "month": 21, "total": 41}, "useful": 18, "ratio": 0.44, "expert": 9, "pts": 180, "grow": 4, "rank": 34, "isNew": false, "cats": ["AI", "CRM"], "ai": "Полезный по нише AI. Рекомендован для вопросов по маркетинг, РОП. ", "search": "Жигер. AI, Предприниматель / AI, AI, CRM. маркетинг, РОП. Рекомендовать по запросам: маркетинг, РОП.", "hist": [24, 24, 22, 21, 16, 16, 4]},
+  {"id": 35, "name": "Мирон", "phone": "не указан", "niche": "Маркетинг", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: маркетинг, РОП, AI/нейросети, оплаты mail.ru.", "pro": "маркетинг, РОП, AI/нейросети, оплаты mail.ru", "summary": "Мирон — участник Ассоциации системных продаж с нишей «Маркетинг». За период написал 29 сообщений, из них 17 несут профессиональную пользу (58% полезности). Дал 5 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: маркетинг, РОП, AI/нейросети, оплаты mail.ru. Делился практическими кейсами (1). Рекомендуется для запросов по темам: маркетинг, РОП, AI/нейросети, оплаты mail.ru.", "strong": ["Хорошо разбирается в темах: маркетинг, РОП, AI/нейросети"], "opinion": "маркетинг", "etopics": ["маркетинг", "РОП", "AI/нейросети", "оплаты mail.ru"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 27, "total": 29}, "useful": 17, "ratio": 0.59, "expert": 5, "pts": 172, "grow": 0, "rank": 35, "isNew": false, "cats": ["Маркетинг", "РОП", "Продажи", "AI"], "ai": "Полезный по нише Маркетинг. Рекомендован для вопросов по маркетинг, РОП, AI/нейросети. ", "search": "Мирон. Маркетинг, Участник, Маркетинг, РОП, Продажи, AI. маркетинг, РОП, AI/нейросети, оплаты mail.ru. Рекомендовать по запросам: маркетинг, РОП, AI/нейросети, оплаты mail.ru.", "hist": [30, 30, 30, 11, 10, 1, 0]},
+  {"id": 36, "name": "Adiuframe", "phone": "+7 707 435 1899", "niche": "CRM", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: воронки продаж, найм, образование.", "pro": "воронки продаж, найм, образование", "summary": "Adiuframe — участник Ассоциации системных продаж с нишей «CRM». За период написал 42 сообщений, из них 19 несут профессиональную пользу (45% полезности). Чаще всего проявлял экспертизу в темах: воронки продаж, найм, образование. Рекомендуется для запросов по темам: воронки продаж, найм, образование.", "strong": ["Хорошо разбирается в темах: воронки продаж, найм, образование"], "opinion": "воронки продаж", "etopics": ["воронки продаж", "найм", "образование"], "chats": ["Ассоциация СП"], "msgs": {"day": 1, "week": 1, "month": 3, "total": 42}, "useful": 19, "ratio": 0.45, "expert": 3, "pts": 165, "grow": 1, "rank": 36, "isNew": false, "cats": ["CRM", "Продажи", "Найм", "Образование"], "ai": "Полезный по нише CRM. Рекомендован для вопросов по воронки продаж, найм, образование. ", "search": "Adiuframe. CRM, Участник, CRM, Продажи, Найм, Образование. воронки продаж, найм, образование. Рекомендовать по запросам: воронки продаж, найм, образование.", "hist": [26, 5, 5, 3, 3, 3, 1]},
+  {"id": 37, "name": "Алишер РОП TOPCARS", "phone": "+7 747 347 5648", "niche": "Продажи", "company": "TOPCARS", "role": "РОП / Автосфера", "what": "Профессионально проявляется в темах: маркетинг, РОП, AI/нейросети, ОКК.", "pro": "маркетинг, РОП, AI/нейросети, ОКК, B2B продажи, образование", "summary": "Алишер РОП TOPCARS — участник Ассоциации системных продаж с нишей «Продажи». За период написал 30 сообщений, из них 20 несут профессиональную пользу (66% полезности). Чаще всего проявлял экспертизу в темах: маркетинг, РОП, AI/нейросети, ОКК, B2B продажи. Делился практическими кейсами (1). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: маркетинг, РОП, AI/нейросети, ОКК.", "strong": ["Высокий процент пользы — 66% сообщений профессиональны", "Хорошо разбирается в темах: маркетинг, РОП, AI/нейросети"], "opinion": "маркетинг", "etopics": ["маркетинг", "РОП", "AI/нейросети", "ОКК", "B2B продажи", "образование"], "chats": ["Ассоциация СП"], "msgs": {"day": 1, "week": 5, "month": 18, "total": 30}, "useful": 20, "ratio": 0.67, "expert": 2, "pts": 163, "grow": 5, "rank": 37, "isNew": false, "cats": ["РОП", "Автосфера", "Продажи"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по маркетинг, РОП, AI/нейросети. Высокий процент полезных ответов.", "search": "Алишер РОП TOPCARS. Продажи, РОП / Автосфера, РОП, Автосфера, Продажи. маркетинг, РОП, AI/нейросети, ОКК, B2B продажи, образование. Рекомендовать по запросам: маркетинг, РОП, AI/нейросети, ОКК, B2B продажи, образование.", "hist": [28, 24, 18, 15, 13, 5, 5]},
+  {"id": 38, "name": "Sales Lead S", "phone": "+7 777 384 0232", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, KPI/мотивация.", "pro": "РОП, KPI/мотивация", "summary": "Sales Lead S — участник Ассоциации системных продаж с нишей «Продажи». За период написал 23 сообщений, из них 15 несут профессиональную пользу (65% полезности). Дал 7 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, KPI/мотивация. Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: РОП, KPI/мотивация.", "strong": ["Высокий процент пользы — 65% сообщений профессиональны", "Хорошо разбирается в темах: РОП, KPI/мотивация"], "opinion": "РОП", "etopics": ["РОП", "KPI/мотивация"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 20, "total": 23}, "useful": 15, "ratio": 0.65, "expert": 7, "pts": 159, "grow": 0, "rank": 38, "isNew": false, "cats": ["РОП", "Продажи"], "ai": "Полезный по нише Продажи. Рекомендован для вопросов по РОП, KPI/мотивация. Высокий процент полезных ответов.", "search": "Sales Lead S. Продажи, Участник, РОП, Продажи. РОП, KPI/мотивация. Рекомендовать по запросам: РОП, KPI/мотивация.", "hist": [24, 24, 24, 20, 1, 1, 0]},
+  {"id": 39, "name": "Диас Проджект", "phone": "+7 707 836 0465", "niche": "CRM", "company": "Проджект", "role": "Интегратор CRM", "what": "Профессионально проявляется в темах: РОП, маркетинг, образование, AI/нейросети.", "pro": "РОП, маркетинг, образование, AI/нейросети", "summary": "Диас Проджект — участник Ассоциации системных продаж с нишей «CRM». За период написал 33 сообщений, из них 20 несут профессиональную пользу (60% полезности). Дал 5 развёрнутых экспертных ответов. Чаще всего проявлял экспертизу в темах: РОП, маркетинг, образование, AI/нейросети. Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: РОП, маркетинг, образование, AI/нейросети.", "strong": ["Высокий процент пользы — 60% сообщений профессиональны", "Хорошо разбирается в темах: РОП, маркетинг, образование"], "opinion": "РОП", "etopics": ["РОП", "маркетинг", "образование", "AI/нейросети"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 0, "month": 0, "total": 33}, "useful": 20, "ratio": 0.61, "expert": 5, "pts": 156, "grow": 0, "rank": 39, "isNew": false, "cats": ["CRM", "Интегратор"], "ai": "Полезный по нише CRM. Рекомендован для вопросов по РОП, маркетинг, образование. Высокий процент полезных ответов.", "search": "Диас Проджект. CRM, Интегратор CRM, CRM, Интегратор. РОП, маркетинг, образование, AI/нейросети. Рекомендовать по запросам: РОП, маркетинг, образование, AI/нейросети.", "hist": [18, 2, 0, 0, 0, 0, 0]},
+  {"id": 40, "name": "A Z", "phone": "+7 775 517 8483", "niche": "Найм", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: найм, РОП, ОКК, оплаты mail.ru.", "pro": "найм, РОП, ОКК, оплаты mail.ru, маркетинг", "summary": "A Z — участник Ассоциации системных продаж с нишей «Найм». За период написал 32 сообщений, из них 21 несут профессиональную пользу (65% полезности). Чаще всего проявлял экспертизу в темах: найм, РОП, ОКК, оплаты mail.ru, маркетинг. Делился практическими кейсами (1). Отличается высокой концентрацией пользы — почти каждое второе сообщение по делу. Рекомендуется для запросов по темам: найм, РОП, ОКК, оплаты mail.ru.", "strong": ["Высокий процент пользы — 65% сообщений профессиональны", "Хорошо разбирается в темах: найм, РОП, ОКК"], "opinion": "найм", "etopics": ["найм", "РОП", "ОКК", "оплаты mail.ru", "маркетинг"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 2, "month": 10, "total": 32}, "useful": 21, "ratio": 0.66, "expert": 3, "pts": 146, "grow": 2, "rank": 40, "isNew": false, "cats": ["Найм", "РОП", "Продажи", "AI"], "ai": "Активный по нише Найм. Рекомендован для вопросов по найм, РОП, ОКК. Высокий процент полезных ответов.", "search": "A Z. Найм, Участник, Найм, РОП, Продажи, AI. найм, РОП, ОКК, оплаты mail.ru, маркетинг. Рекомендовать по запросам: найм, РОП, ОКК, оплаты mail.ru, маркетинг.", "hist": [29, 13, 10, 10, 7, 5, 2]},
+  {"id": 41, "name": "Amir Arsenovich", "phone": "не указан", "niche": "Продажи", "company": "", "role": "Участник", "what": "Профессионально проявляется в темах: РОП, KPI/мотивация.", "pro": "РОП, KPI/мотивация", "summary": "Amir Arsenovich — участник Ассоциации системных продаж с нишей «Продажи». За период написал 41 сообщений, из них 15 несут профессиональную пользу (36% полезности). Чаще всего проявлял экспертизу в темах: РОП, KPI/мотивация. Рекомендуется для запросов по темам: РОП, KPI/мотивация.", "strong": ["Хорошо разбирается в темах: РОП, KPI/мотивация"], "opinion": "РОП", "etopics": ["РОП", "KPI/мотивация"], "chats": ["Ассоциация СП"], "msgs": {"day": 1, "week": 1, "month": 4, "total": 41}, "useful": 15, "ratio": 0.37, "expert": 3, "pts": 127, "grow": 1, "rank": 41, "isNew": false, "cats": ["РОП", "Продажи"], "ai": "Активный по нише Продажи. Рекомендован для вопросов по РОП, KPI/мотивация. ", "search": "Amir Arsenovich. Продажи, Участник, РОП, Продажи. РОП, KPI/мотивация. Рекомендовать по запросам: РОП, KPI/мотивация.", "hist": [12, 12, 5, 4, 4, 3, 1]},
+  {"id": 42, "name": "Ольга РОП Diskurs", "phone": "не указан", "niche": "Продажи", "company": "Diskurs", "role": "РОП", "what": "Профессионально проявляется в темах: маркетинг, РОП, образование, оплаты mail.ru.", "pro": "маркетинг, РОП, образование, оплаты mail.ru", "summary": "Ольга РОП Diskurs — участник Ассоциации системных продаж с нишей «Продажи». За период написал 23 сообщений, из них 12 несут профессиональную пользу (52% полезности). Чаще всего проявлял экспертизу в темах: маркетинг, РОП, образование, оплаты mail.ru. Делился практическими кейсами (1). Рекомендуется для запросов по темам: маркетинг, РОП, образование, оплаты mail.ru.", "strong": ["Хорошо разбирается в темах: маркетинг, РОП, образование"], "opinion": "маркетинг", "etopics": ["маркетинг", "РОП", "образование", "оплаты mail.ru"], "chats": ["Ассоциация СП"], "msgs": {"day": 0, "week": 3, "month": 7, "total": 23}, "useful": 12, "ratio": 0.52, "expert": 4, "pts": 125, "grow": 3, "rank": 42, "isNew": false, "cats": ["РОП", "Продажи"], "ai": "Активный по нише Продажи. Рекомендован для вопросов по маркетинг, РОП, образование. ", "search": "Ольга РОП Diskurs. Продажи, РОП, РОП, Продажи. маркетинг, РОП, образование, оплаты mail.ru. Рекомендовать по запросам: маркетинг, РОП, образование, оплаты mail.ru.", "hist": [8, 7, 7, 7, 7, 7, 3]}
+];
+
+const EVENTS = [
+  {title:"Разбор: AI-инструменты для ОКК",date:"2026-05-28",time:"15:04",type:"online",desc:"Влад: миксовать Claude (визуал) и Codex (код). Панели за 3 минуты.",format:"Чат АСП"},
+  {title:"Кейс: WhatsApp vs обычные звонки",date:"2026-03-22",time:"20:40",type:"online",desc:"Дозвон в WA 70-80% против 20-30% обычных звонков.",format:"Чат АСП"},
+  {title:"Обсуждение: ОКК по звонкам",date:"2026-05-20",time:"12:00",type:"online",desc:"Даулет: контроль качества звонков по чётким критериям.",format:"Чат АСП"},
+  {title:"Опрос: Какой CRM используете?",date:"2026-03-22",time:"20:09",type:"ann",desc:"amoCRM лидирует, Bitrix24 на втором месте.",format:"Чат АСП"},
+  {title:"PM как буфер клиент—интегратор",date:"2026-04-15",time:"11:00",type:"online",desc:"Илья курский: PM снимает хаос на CRM-проектах.",format:"Чат АСП"},
+  {title:"Wazzup: техработы и авторизация",date:"2026-05-28",time:"09:48",type:"ann",desc:"Meruert: при сбоях — переавторизация в ЛК Wazzup.",format:"Wazzup"},
+];
+
+const BONUSES = [
+  {ico:"📌",name:"Закрепление поста",pts:50,desc:"Пост в топ главного чата на 24ч"},
+  {ico:"💼",name:"Размещение вакансии",pts:75,desc:"Вакансия в чатах ассоциации"},
+  {ico:"⭐",name:"Топ недели",pts:100,desc:"Попасть в еженедельный дайджест"},
+  {ico:"📚",name:"Публикация инструкции",pts:120,desc:"Ваш материал в библиотеку знаний"},
+  {ico:"🎙️",name:"Мини-разбор в эфире",pts:200,desc:"15 мин разбор кейса в прямом эфире"},
+  {ico:"🤝",name:"Приглашение на встречу",pts:250,desc:"Личное приглашение на оффлайн"},
+  {ico:"💰",name:"Скидка 20% у партнёра",pts:300,desc:"Скидка на обучение или инструмент"},
+  {ico:"🔒",name:"Закрытый чат экспертов",pts:350,desc:"Вступление в закрытый чат лучших"},
+  {ico:"🌟",name:"Рекомендация от АСП",pts:400,desc:"Личная рекомендация вашего проекта"},
+  {ico:"📢",name:"Публикация в анонсах",pts:450,desc:"Ваш проект в еженедельный анонс"},
+  {ico:"🎥",name:"Интервью для канала",pts:500,desc:"Снимем интервью на канал АСП"},
+  {ico:"📞",name:"Созвон с организатором",pts:650,desc:"30-мин консультация с основателем"},
+  {ico:"🏆",name:"Партнёрский бейдж",pts:700,desc:"Официальный статус партнёра АСП"},
+  {ico:"🥇",name:"Статус Амбассадор",pts:700,desc:"Высший статус активности"},
+  {ico:"📊",name:"Аудит отдела продаж",pts:800,desc:"Бесплатный аудит ОП от эксперта"},
+  {ico:"🎤",name:"Слот спикера",pts:850,desc:"Выступление на мероприятии АСП"},
+  {ico:"💎",name:"Медиа-упоминание",pts:900,desc:"Публикация о вас на всех площадках"},
+  {ico:"🔑",name:"База контактов АСП",pts:950,desc:"Расширенная база партнёров"},
+  {ico:"🚀",name:"Совместный запуск",pts:1000,desc:"Запуск продукта совместно с АСП"},
+  {ico:"👑",name:"Почётный член",pts:1500,desc:"Высший знак признания ассоциации"},
+];
+
+// ════════════ HELPERS ════════════
+function waPhone(p){
+  const d=String(p||'').replace(/\D/g,'');
+  if(d.length<10) return p; // «не указан» и т.п.
+  return `<a class="walink" href="https://wa.me/${d}" target="_blank" rel="noopener" title="Написать в WhatsApp">${p}</a>`;
+}
+
+function status(pts){
+  if(pts>300) return{l:"Эксперт АСП",c:"s3"};
+  if(pts>150) return{l:"Полезный",c:"s2"};
+  if(pts>50)  return{l:"Активный",c:"s1"};
+  if(pts>0)   return{l:"Новичок",c:"s0"};
+  return{l:"Новичок",c:"s0"};
+}
+
+// ════════════ STATS ════════════
+(function renderStats(){
+  document.getElementById('sTotal').textContent = 168; // всего участников в базе чата
+  document.getElementById('sMsgs').textContent  = M.reduce((s,m)=>s+m.msgs.day,0);
+  document.getElementById('sExp').textContent   = M.filter(m=>m.pts>300).length;
+  document.getElementById('sChats').textContent = 1;
+  document.getElementById('sNew').textContent   = M.filter(m=>m.isNew).length;
+})();
+
+// ════════════ MEMBERS LIST ════════════
+let chipFilter = 'all';
+let catFilter  = '';
+
+function applyFilters(){
+  const q  = document.getElementById('srchH').value.toLowerCase();
+  const ni = document.getElementById('nicheF').value;
+  const st = document.getElementById('statusF').value;
+
+  let list = [...M];
+  if(chipFilter==='top5')   list = M.slice(0,5);
+  else if(chipFilter==='top10')  list = M.slice(0,10);
+  else if(chipFilter==='active') list = [...M].sort((a,b)=>b.msgs.day-a.msgs.day).slice(0,10);
+  else if(chipFilter==='new')    list = M.filter(m=>m.isNew);
+  else if(chipFilter==='exp')    list = M.filter(m=>m.pts>300);
+  else if(chipFilter==='week')   list = [...M].sort((a,b)=>b.grow-a.grow).slice(0,10);
+
+  if(catFilter) list = list.filter(m=>m.cats.includes(catFilter));
+  if(q)  list = list.filter(m=>m.name.toLowerCase().includes(q)||m.phone.includes(q)||m.niche.toLowerCase().includes(q)||m.what.toLowerCase().includes(q)||m.cats.some(c=>c.toLowerCase().includes(q)));
+  if(ni) list = list.filter(m=>m.niche===ni);
+  if(st) list = list.filter(m=>status(m.pts).l===st);
+
+  renderList(list);
+}
+
+function setChip(f, btn){
+  chipFilter = f;
+  document.querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  applyFilters();
+}
+
+function setCat(cat, btn){
+  catFilter = cat;
+  document.querySelectorAll('.cchip').forEach(b=>b.classList.remove('on'));
+  if(cat) btn.classList.add('on');
+  applyFilters();
+}
+
+function renderList(list){
+  const el = document.getElementById('mList');
+  if(!list.length){el.innerHTML='<div class="empty">Участники не найдены 🔍</div>';return}
+  el.innerHTML = list.map(m=>{
+    const s = status(m.pts);
+    const rc = m.rank===1?'r1':m.rank===2?'r2':m.rank===3?'r3':'';
+    const rw = m.rank===1?'t1':m.rank===2?'t2':m.rank===3?'t3':'';
+    return `<div class="mrow ${rw}">
+      <div class="rnk ${rc}">${m.rank||M.indexOf(m)+1}</div>
+      <div class="minfo">
+        <div class="mn">${m.name}${m.isNew?' <span style="font-size:8px;color:var(--grn);font-weight:700">NEW</span>':''}</div>
+      </div>
+      <div class="mphone">${waPhone(m.phone)}</div>
+      <div class="mniche">${m.niche}</div>
+      <div class="mpts">${m.pts}</div>
+      <div><span class="sbadge ${s.c}">${s.l}</span></div>
+      <div class="mmsgs">${m.msgs.day}</div>
+      <div class="mmsgw">${m.msgs.week}</div>
+      <div class="mmsgw">${m.msgs.month}</div>
+      <div class="mcats">${m.cats.map((c,i)=>`<span class="mcat${i===0?' hi':''}">${c}</span>`).join('')}</div>
+      <button class="btn-i" onclick="openCard(${m.id})">Инфо</button>
+    </div>`;
+  }).join('');
+}
+
+// update badge date
+(function(){
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2,'0');
+  const mo = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('updTime').textContent = `${d}.${mo} 06:00`;
+})();
+
+// assign rank
+M.forEach((m,i)=>m.rank=i+1);
+applyFilters();
+
+// рейтинг убран из правой колонки
+
+// календарь убран
+
+// ════════════ BONUSES ════════════
+(function renderBonuses(){
+  const topPts = M[0].pts;
+  document.getElementById('bonList').innerHTML = BONUSES.map(b=>{
+    const can = topPts >= b.pts;
+    return `<div class="bon-row">
+      <div class="bon-ico">${b.ico}</div>
+      <div class="bon-info">
+        <div class="bon-name">${b.name}</div>
+        <div class="bon-desc">${b.desc}</div>
+      </div>
+      <div class="bon-pts ${can?'av':''}">${b.pts}</div>
+    </div>`;
+  }).join('');
+})();
+
+// ════════════ CARD MODAL ════════════
+function openCard(id){
+  const m = M.find(x=>x.id===id); if(!m) return;
+  const s = status(m.pts);
+  document.getElementById('mNm').textContent = m.name;
+  document.getElementById('mMt').innerHTML =
+    `<span class="sbadge ${s.c}">${s.l}</span>
+     <span class="tag">#${m.rank} в рейтинге</span>
+     <span class="tag">${m.niche}</span>`;
+
+  const hmax = Math.max(...m.hist);
+  const bars = m.hist.map(v=>`<div class="hbar" style="height:${Math.round(v/hmax*32)+4}px"></div>`).join('');
+
+  document.getElementById('mBd').innerHTML=`
+    <div class="mg2">
+      <div class="mb">
+        <div class="mb-t">Контакты</div>
+        <div class="sr"><span class="k">Телефон</span><span class="v" style="font-family:'JetBrains Mono',monospace;font-size:11px">${waPhone(m.phone)}</span></div>
+        <div class="sr"><span class="k">Компания</span><span class="v">${m.company||'—'}</span></div>
+        <div class="sr"><span class="k">Роль</span><span class="v">${m.role}</span></div>
+      </div>
+      <div class="mb">
+        <div class="mb-t">Рейтинг и польза</div>
+        <div class="sr"><span class="k">Баллы</span><span class="v" style="color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:22px">${m.pts}</span></div>
+        <div class="sr"><span class="k">Место</span><span class="v">#${m.rank}</span></div>
+        <div class="sr"><span class="k">Полезных сообщений</span><span class="v">${m.useful}</span></div>
+        <div class="sr"><span class="k">Процент пользы</span><span class="v" style="color:var(--gold)">${Math.round((m.ratio||0)*100)}%</span></div>
+        <div class="sr"><span class="k">Экспертных ответов</span><span class="v">${m.expert||0}</span></div>
+      </div>
+    </div>
+    <div class="mb">
+      <div class="mb-t">Специализация</div>
+      <div class="sr"><span class="k">Чем занимается</span><span class="v" style="text-align:right;max-width:60%">${m.what}</span></div>
+      <div class="sr"><span class="k">В чём профи</span><span class="v" style="text-align:right;max-width:60%">${m.pro}</span></div>
+    </div>
+    <div class="mb">
+      <div class="mb-t">Темы экспертизы</div>
+      <div class="tags">${(m.etopics||[]).map(t=>`<span class="tag r">${t}</span>`).join('')||'<span style="font-size:11px;color:var(--t3)">Недостаточно данных</span>'}</div>
+    </div>
+    <div class="mb">
+      <div class="mb-t">Насыщенная сводка</div>
+      <p style="font-size:12px;color:var(--t2);line-height:1.65">${m.summary}</p>
+    </div>
+    <div class="mb">
+      <div class="mb-t">Сильные стороны</div>
+      ${(m.strong||[]).map(s=>`<div class="sr" style="border:none;padding:3px 0"><span class="v" style="font-size:12px">✓ ${s}</span></div>`).join('')||'<span style="font-size:11px;color:var(--t3)">Недостаточно данных</span>'}
+    </div>
+    <div class="ai-note" style="border-color:rgba(245,166,35,.25);background:linear-gradient(135deg,rgba(245,166,35,.07),rgba(232,0,10,.04))">
+      <div class="ai-note-t" style="color:var(--gold)">💡 Самое сильное экспертное мнение</div>
+      <p style="font-style:italic">«${m.opinion||'Недостаточно данных'}»</p>
+    </div>
+    <div class="mg2">
+      <div class="mb">
+        <div class="mb-t">Сообщения</div>
+        <div class="sr"><span class="k">Сегодня (24ч)</span><span class="v">${m.msgs.day}</span></div>
+        <div class="sr"><span class="k">Неделя</span><span class="v">${m.msgs.week}</span></div>
+        <div class="sr"><span class="k">Месяц</span><span class="v">${m.msgs.month}</span></div>
+        <div class="sr"><span class="k">Всего</span><span class="v">${m.msgs.total}</span></div>
+      </div>
+      <div class="mb">
+        <div class="mb-t">Рост активности (7 нед.)</div>
+        <div class="hbars">${bars}</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:4px">Накопительно по неделям</div>
+      </div>
+    </div>
+    <div class="mb">
+      <div class="mb-t">Чаты (${m.chats.length})</div>
+      <div class="tags">${m.chats.map(c=>`<span class="tag">${c}</span>`).join('')}</div>
+    </div>
+    <div class="mb">
+      <div class="mb-t">Категории</div>
+      <div class="tags">${m.cats.map((c,i)=>`<span class="tag${i===0?' r':''}">${c}</span>`).join('')}</div>
+    </div>
+    <div class="ai-note">
+      <div class="ai-note-t">🤖 Заметка ИИ — кому рекомендовать</div>
+      <p>${m.ai}</p>
+    </div>`;
+  document.getElementById('cardOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeCard(e){ if(e.target===document.getElementById('cardOverlay')) closeCardDirect(); }
+function closeCardDirect(){ document.getElementById('cardOverlay').classList.remove('open'); document.body.style.overflow=''; }
+
+// ════════════ AI MODAL ════════════
+function openAI(){ document.getElementById('aiOverlay').classList.add('open'); }
+function closeAI(e){ if(e.target===document.getElementById('aiOverlay')) closeAIDirect(); }
+function closeAIDirect(){ document.getElementById('aiOverlay').classList.remove('open'); }
+function setQ(q){ document.getElementById('aiQ').value=q; }
+
+// close AI dropdown when clicking outside
+document.addEventListener('click',function(e){
+  const ov=document.getElementById('aiOverlay');
+  const btn=document.querySelector('.btn-ai-open');
+  if(ov.classList.contains('open') && !ov.contains(e.target) && e.target!==btn){
+    ov.classList.remove('open');
+  }
+});
+
+document.getElementById('aiQ').addEventListener('keydown',e=>{ if(e.key==='Enter') askAI(); });
+
+async function askAI(){
+  const q = document.getElementById('aiQ').value.trim(); if(!q) return;
+  const btn=document.getElementById('aiBtn');
+  const res=document.getElementById('aiRes');
+  const rc=document.getElementById('aiRc');
+  btn.disabled=true;
+  res.classList.add('show');
+  rc.innerHTML='<span class="spin"></span>Анализирую базу участников...';
+
+  const ctx = M.map(m=>`${m.name} | Тел: ${m.phone} | Ниша: ${m.niche} | Роль: ${m.role} | Статус: ${status(m.pts).l} | Баллы: ${m.pts} | #${m.rank} | Польза: ${Math.round((m.ratio||0)*100)}% | Категории: ${m.cats.join(', ')} | Экспертиза: ${(m.etopics||[]).join(', ')} | Мнение: ${m.opinion||'—'} | Поиск: ${m.search||''}`).join('\n');
+
+  try{
+    const r = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1000,
+        system:`Ты — ИИ-поиск по базе участников Ассоциации системных продаж. База (профили из анализа чатов):\n\n${ctx}\n\nПользователь ищет, к кому обратиться по профессиональному запросу. Верни 2-5 наиболее подходящих участников по реальной экспертизе из чатов, НЕ только по активности. Не придумывай экспертизу — если данных мало, скажи честно. Формат по каждому:\n**Имя** — Роль / Ниша, #Рейтинг\nПочему подходит (1-2 предложения по реальной экспертизе и темам).\nТелефон | Категории | Статус | Уверенность (высокая/средняя/низкая).\nТолько русский язык.`,
+        messages:[{role:"user",content:q}]
+      })
+    });
+    const d = await r.json();
+    const t = d.content?.map(i=>i.text||'').join('')||'Ошибка';
+    rc.innerHTML = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  }catch(e){
+    rc.innerHTML='<span style="color:var(--t3)">Ошибка подключения к ИИ.</span>';
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+// ── ЖИВЫЕ ДАННЫЕ (live.json обновляет бот-куратор) ──
+fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
+  if(!live||!Array.isArray(live.authors)||!live.authors.length) return;
+  const norm=s=>String(s||'').toLowerCase().replace(/[^a-zа-яё0-9]/g,'');
+  const digits=s=>String(s||'').replace(/\D/g,'');
+  let matched=0;
+  for(const a of live.authors){
+    const an=norm(a.name), ad=digits(a.phone||'');
+    const m=M.find(x=>(ad&&digits(x.phone)===ad)||(an&&norm(x.name)===an));
+    if(m){ m.pts=a.points|0; if(a.msgs) m.msgs.total=a.msgs; matched++; }
+  }
+  if(matched){
+    M.sort((a,b)=>b.pts-a.pts); M.forEach((m,i)=>m.rank=i+1);
+    applyFilters();
+    document.getElementById('sExp').textContent=M.filter(m=>m.pts>300).length;
+    const d=new Date(live.updatedAt||Date.now());
+    document.getElementById('updTime').textContent=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+}).catch(()=>{});
+</script>
+</body>
+</html>
+
