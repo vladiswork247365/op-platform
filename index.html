@@ -984,11 +984,12 @@ fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
   for(const a of authors){
     const c=a.cats||{};
     const useful=(c['обычное']||0)+(c['вопрос']||0)+(c['экспертный']||0)+(c['кейс']||0);
+    const act=a.act||{d:0,w:0,m:0}; // живая активность из журналов бота: 24ч / 7 дней / 30 дней
     const mi=M.findIndex((m,i)=>!used.has(i)&&strictMatch(a,m));
     if(mi>=0){
       used.add(mi);
       const m=M[mi];
-      m.pts=a.points|0; m.msgs.total=a.msgs||m.msgs.total; m.useful=useful; m.expert=(c['экспертный']||0);
+      m.pts=a.points|0; m.msgs={day:act.d,week:act.w,month:act.m,total:a.msgs||m.msgs.total}; m.grow=act.w; m.useful=useful; m.expert=(c['экспертный']||0);
       rows.push(m);
     } else {
       const tags=[];
@@ -1001,12 +1002,12 @@ fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
         pro:tags.join(', '),
         summary:esc(a.name)+' — участник чатов ассоциации. Баллы: '+a.points+'. Сообщений: '+a.msgs+'. Вопросов: '+(c['вопрос']||0)+', экспертных ответов: '+(c['экспертный']||0)+', кейсов: '+(c['кейс']||0)+'.',
         strong:tags.length?['Активен: '+tags.join(', ')]:[],opinion:'',etopics:tags,chats:['Чаты ассоциации'],
-        msgs:{day:0,week:0,month:0,total:a.msgs||0},useful:useful,ratio:a.msgs?useful/a.msgs:0,expert:(c['экспертный']||0),
-        pts:a.points|0,grow:0,rank:0,isNew:false,cats:[],ai:'',search:esc(a.name)+' '+tags.join(' '),hist:[]});
+        msgs:{day:act.d,week:act.w,month:act.m,total:a.msgs||0},useful:useful,ratio:a.msgs?useful/a.msgs:0,expert:(c['экспертный']||0),
+        pts:a.points|0,grow:act.w,rank:0,isNew:false,cats:[],ai:'',search:esc(a.name)+' '+tags.join(' '),hist:[]});
     }
   }
-  // профили без живых баллов (не писали) — в конец, баллы честно 0
-  M.forEach((m,i)=>{ if(!used.has(i)){ m.pts=0; rows.push(m); } });
+  // профили без живых баллов (не писали) — в конец, баллы и активность честно 0
+  M.forEach((m,i)=>{ if(!used.has(i)){ m.pts=0; m.grow=0; m.msgs={day:0,week:0,month:0,total:0}; m.hist=[]; rows.push(m); } });
   M.length=0; Array.prototype.push.apply(M,rows);
   M.sort((a,b)=>b.pts-a.pts); M.forEach((m,i)=>m.rank=i+1);
   if(live.stats){
