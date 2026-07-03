@@ -156,7 +156,7 @@ select.fsel:focus{border-color:var(--red)}
 }
 .col-hdr{
   display:grid;
-  grid-template-columns:24px 144px 96px 68px 44px 116px 28px 30px 30px 1fr 44px;
+  grid-template-columns:24px 156px 116px 48px 120px 30px 32px 34px 1fr 44px;
   gap:4px;padding:6px 12px;
   font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--t3);
   text-transform:uppercase;letter-spacing:.7px;
@@ -166,7 +166,7 @@ select.fsel:focus{border-color:var(--red)}
 
 .mrow{
   display:grid;
-  grid-template-columns:24px 144px 96px 68px 44px 116px 28px 30px 30px 1fr 44px;
+  grid-template-columns:24px 156px 116px 48px 120px 30px 32px 34px 1fr 44px;
   gap:4px;padding:5px 12px;align-items:center;
   transition:.15s;border-bottom:1px solid var(--bdr);
 }
@@ -519,8 +519,7 @@ a.walink:hover{color:#fff;text-decoration:underline}
     </select>
     <select class="fsel" id="statusF" onchange="applyFilters()">
       <option value="">Все статусы</option>
-      <option>Новичок</option><option>Активный участник</option>
-      <option>Полезный участник</option><option>Эксперт ассоциации</option><option>Амбассадор</option>
+      <option>Новичок</option><option>Активный</option><option>Эксперт</option>
     </select>
     <div style="width:1px;height:18px;background:var(--bdr);flex-shrink:0"></div>
     <button class="chip on" onclick="setChip('all',this)">Все</button>
@@ -563,7 +562,7 @@ a.walink:hover{color:#fff;text-decoration:underline}
   <div class="col-left">
     <div class="col-hdr">
       <div>#</div><div>Участник</div><div>Телефон</div>
-      <div>Ниша</div><div>Баллы</div><div>Статус</div>
+      <div>Баллы</div><div>Статус</div>
       <div style="text-align:center">День</div><div style="text-align:center">Нед.</div><div style="text-align:center">Общ.</div>
       <div>Категории</div><div></div>
     </div>
@@ -681,27 +680,22 @@ const EVENTS = [
   {title:"Wazzup: техработы и авторизация",date:"2026-05-28",time:"09:48",type:"ann",desc:"Meruert: при сбоях — переавторизация в ЛК Wazzup.",format:"Wazzup"},
 ];
 
+// Бонусы ассоциации. name = краткий заголовок, desc = формулировка из документа «Призы для ассоциации».
 const BONUSES = [
-  {ico:"📌",name:"Закрепление поста",pts:50,desc:"Пост в топ главного чата на 24ч"},
-  {ico:"💼",name:"Размещение вакансии",pts:75,desc:"Вакансия в чатах ассоциации"},
-  {ico:"⭐",name:"Топ недели",pts:100,desc:"Попасть в еженедельный дайджест"},
-  {ico:"📚",name:"Публикация инструкции",pts:120,desc:"Ваш материал в библиотеку знаний"},
-  {ico:"🎙️",name:"Мини-разбор в эфире",pts:200,desc:"15 мин разбор кейса в прямом эфире"},
-  {ico:"🤝",name:"Приглашение на встречу",pts:250,desc:"Личное приглашение на оффлайн"},
-  {ico:"💰",name:"Скидка 20% у партнёра",pts:300,desc:"Скидка на обучение или инструмент"},
-  {ico:"🔒",name:"Закрытый чат экспертов",pts:350,desc:"Вступление в закрытый чат лучших"},
-  {ico:"🌟",name:"Рекомендация от АСП",pts:400,desc:"Личная рекомендация вашего проекта"},
-  {ico:"📢",name:"Публикация в анонсах",pts:450,desc:"Ваш проект в еженедельный анонс"},
-  {ico:"🎥",name:"Интервью для канала",pts:500,desc:"Снимем интервью на канал АСП"},
-  {ico:"📞",name:"Созвон с организатором",pts:650,desc:"30-мин консультация с основателем"},
-  {ico:"🏆",name:"Партнёрский бейдж",pts:700,desc:"Официальный статус партнёра АСП"},
-  {ico:"🥇",name:"Статус Амбассадор",pts:700,desc:"Высший статус активности"},
-  {ico:"📊",name:"Аудит отдела продаж",pts:800,desc:"Бесплатный аудит ОП от эксперта"},
-  {ico:"🎤",name:"Слот спикера",pts:850,desc:"Выступление на мероприятии АСП"},
-  {ico:"💎",name:"Медиа-упоминание",pts:900,desc:"Публикация о вас на всех площадках"},
-  {ico:"🔑",name:"База контактов АСП",pts:950,desc:"Расширенная база партнёров"},
-  {ico:"🚀",name:"Совместный запуск",pts:1000,desc:"Запуск продукта совместно с АСП"},
-  {ico:"👑",name:"Почётный член",pts:1500,desc:"Высший знак признания ассоциации"},
+  {ico:"💡",name:"Коллекция лайфхаков",pts:50,desc:"Вся коллекция лайфхаков со всех чатов ассоциации"},
+  {ico:"📇",name:"База контактов",pts:100,desc:"Вся коллекция полезных контактов со всех чатов ассоциации"},
+  {ico:"🗂️",name:"Полезные материалы",pts:150,desc:"Вся коллекция полезных материалов со всех чатов ассоциации"},
+  {ico:"🎧",name:"Доступ к онлайн-встречам",pts:200,desc:"Доступ ко всем онлайн-встречам ассоциации"},
+  {ico:"📕",name:"Книга основателя",pts:300,desc:"Электронная книга основателя ассоциации «Отдел продаж. Другой подход»"},
+  {ico:"📊",name:"Библиотека аудитов ОП",pts:400,desc:"Вся библиотека аудитов для отделов продаж"},
+  {ico:"📢",name:"Нативная реклама в чате",pts:500,desc:"Нативное рекламирование в главном чате"},
+  {ico:"⭐",name:"Реклама на платформе",pts:600,desc:"Реклама в платформе участников (1 неделя)"},
+  {ico:"📣",name:"Реклама в «Самореклама»",pts:700,desc:"Персональная реклама в «САМОРЕКЛАМА» от Влада"},
+  {ico:"💸",name:"Скидка 15% на ОКК",pts:800,desc:"Скидка 15% на ОКК на первый месяц"},
+  {ico:"✅",name:"Экспресс-аудит ОП",pts:900,desc:"Экспресс-аудит отдела продаж через чек-листинг (270 пунктов)"},
+  {ico:"👕",name:"Мерч ассоциации",pts:1000,desc:"Мерч от ассоциации"},
+  {ico:"🗄️",name:"Все архивы чатов",pts:1200,desc:"Все архивированные чаты разом"},
+  {ico:"👑",name:"Личный разбор от Влада",pts:1500,desc:"Личный разбор от Влада и ещё 3 профессионалов в продажах"},
 ];
 
 // ════════════ HELPERS ════════════
@@ -712,10 +706,8 @@ function waPhone(p){
 }
 
 function status(pts){
-  if(pts>300) return{l:"Эксперт АСП",c:"s3"};
-  if(pts>150) return{l:"Полезный",c:"s2"};
-  if(pts>50)  return{l:"Активный",c:"s1"};
-  if(pts>0)   return{l:"Новичок",c:"s0"};
+  if(pts>=500) return{l:"Эксперт",c:"s4"};
+  if(pts>=100) return{l:"Активный",c:"s2"};
   return{l:"Новичок",c:"s0"};
 }
 
@@ -723,7 +715,7 @@ function status(pts){
 (function renderStats(){
   document.getElementById('sTotal').textContent = 168; // всего участников в базе чата
   document.getElementById('sMsgs').textContent  = M.reduce((s,m)=>s+m.msgs.day,0);
-  document.getElementById('sExp').textContent   = M.filter(m=>m.pts>300).length;
+  document.getElementById('sExp').textContent   = M.filter(m=>m.pts>=500).length;
   document.getElementById('sChats').textContent = 1;
   document.getElementById('sNew').textContent   = M.filter(m=>m.isNew).length;
 })();
@@ -742,7 +734,7 @@ function applyFilters(){
   else if(chipFilter==='top10')  list = M.slice(0,10);
   else if(chipFilter==='active') list = [...M].sort((a,b)=>b.msgs.day-a.msgs.day).slice(0,10);
   else if(chipFilter==='new')    list = M.filter(m=>m.isNew);
-  else if(chipFilter==='exp')    list = M.filter(m=>m.pts>300);
+  else if(chipFilter==='exp')    list = M.filter(m=>m.pts>=500);
   else if(chipFilter==='week')   list = [...M].sort((a,b)=>b.grow-a.grow).slice(0,10);
 
   if(catFilter) list = list.filter(m=>m.cats.includes(catFilter));
@@ -780,7 +772,6 @@ function renderList(list){
         <div class="mn">${m.name}${m.isNew?' <span style="font-size:8px;color:var(--grn);font-weight:700">NEW</span>':''}</div>
       </div>
       <div class="mphone">${waPhone(m.phone)}</div>
-      <div class="mniche">${m.niche}</div>
       <div class="mpts">${m.pts}</div>
       <div><span class="sbadge ${s.c}">${s.l}</span></div>
       <div class="mmsgs">${m.msgs.day}</div>
@@ -1015,7 +1006,7 @@ fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
     if(live.stats.chats) document.getElementById('sChats').textContent=live.stats.chats;
   }
   applyFilters();
-  document.getElementById('sExp').textContent=M.filter(m=>m.pts>300).length;
+  document.getElementById('sExp').textContent=M.filter(m=>m.pts>=500).length;
   document.getElementById('sMsgs').textContent=M.reduce((s,m)=>s+((m.msgs&&m.msgs.day)|0),0);
   // пересчёт доступности бонусов по живому лидеру (а не по статике)
   const topPts=(M[0]&&M[0].pts)|0;
