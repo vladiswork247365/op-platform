@@ -1016,6 +1016,7 @@ fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
   }
   applyFilters();
   document.getElementById('sExp').textContent=M.filter(m=>m.pts>300).length;
+  document.getElementById('sMsgs').textContent=M.reduce((s,m)=>s+((m.msgs&&m.msgs.day)|0),0);
   // пересчёт доступности бонусов по живому лидеру (а не по статике)
   const topPts=(M[0]&&M[0].pts)|0;
   document.querySelectorAll('#bonList .bon-pts').forEach(el=>{const v=parseInt((el.textContent||'').replace(/\D/g,''))||0;el.classList.toggle('av',topPts>=v)});
