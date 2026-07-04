@@ -776,7 +776,7 @@ function renderList(list){
       <div><span class="sbadge ${s.c}">${s.l}</span></div>
       <div class="mmsgs">${m.msgs.day}</div>
       <div class="mmsgw">${m.msgs.week}</div>
-      <div class="mmsgw">${m.msgs.month}</div>
+      <div class="mmsgw">${m.msgs.total}</div>
       <div class="mcats">${m.cats.map((c,i)=>`<span class="mcat${i===0?' hi':''}">${c}</span>`).join('')}</div>
       <button class="btn-i" onclick="openCard(${m.id})">Инфо</button>
     </div>`;
