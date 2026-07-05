@@ -156,7 +156,7 @@ select.fsel:focus{border-color:var(--red)}
 }
 .col-hdr{
   display:grid;
-  grid-template-columns:24px 156px 116px 48px 120px 30px 32px 34px 1fr 44px;
+  grid-template-columns:24px 210px 52px 124px 34px 36px 40px 1fr 48px;
   gap:4px;padding:6px 12px;
   font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--t3);
   text-transform:uppercase;letter-spacing:.7px;
@@ -166,7 +166,7 @@ select.fsel:focus{border-color:var(--red)}
 
 .mrow{
   display:grid;
-  grid-template-columns:24px 156px 116px 48px 120px 30px 32px 34px 1fr 44px;
+  grid-template-columns:24px 210px 52px 124px 34px 36px 40px 1fr 48px;
   gap:4px;padding:5px 12px;align-items:center;
   transition:.15s;border-bottom:1px solid var(--bdr);
 }
@@ -561,7 +561,7 @@ a.walink:hover{color:#fff;text-decoration:underline}
   <!-- LEFT: Members list -->
   <div class="col-left">
     <div class="col-hdr">
-      <div>#</div><div>Участник</div><div>Телефон</div>
+      <div>#</div><div>Участник / WhatsApp</div>
       <div>Баллы</div><div>Статус</div>
       <div style="text-align:center">День</div><div style="text-align:center">Нед.</div><div style="text-align:center">Общ.</div>
       <div>Категории</div><div></div>
@@ -769,9 +769,8 @@ function renderList(list){
     return `<div class="mrow ${rw}">
       <div class="rnk ${rc}">${m.rank||M.indexOf(m)+1}</div>
       <div class="minfo">
-        <div class="mn">${m.name}${m.isNew?' <span style="font-size:8px;color:var(--grn);font-weight:700">NEW</span>':''}</div>
+        <div class="mn">${(String(m.phone||'').replace(/\D/g,'').length>=10)?waPhone(m.phone):m.name}${m.isNew?' <span style="font-size:8px;color:var(--grn);font-weight:700">NEW</span>':''}</div>
       </div>
-      <div class="mphone">${waPhone(m.phone)}</div>
       <div class="mpts">${m.pts}</div>
       <div><span class="sbadge ${s.c}">${s.l}</span></div>
       <div class="mmsgs">${m.msgs.day}</div>
