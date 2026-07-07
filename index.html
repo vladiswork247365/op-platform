@@ -987,6 +987,7 @@ Promise.all([
       used.add(mi);
       const m=M[mi];
       m.pts=a.points|0; m.msgs={day:act.d,week:act.w,month:act.m,total:a.msgs||m.msgs.total}; m.grow=act.w; m.useful=useful; m.expert=(c['экспертный']||0);
+      if((!m.phone||m.phone==='не указан')&&a.phone) m.phone=pretty(digits(a.phone)); // живой номер важнее «не указан»
       rows.push(m);
     } else {
       const tags=[];
@@ -1005,7 +1006,7 @@ Promise.all([
         etopics:(p&&p.etopics&&p.etopics.length)?p.etopics.map(esc):tags,
         chats:(p&&p.chats&&p.chats.length)?p.chats.map(esc):['Чаты ассоциации'],
         msgs:{day:act.d,week:act.w,month:act.m,total:a.msgs||0},useful:useful,ratio:a.msgs?useful/a.msgs:0,expert:(c['экспертный']||0),
-        pts:a.points|0,grow:act.w,rank:0,isNew:false,cats:[],ai:'',search:esc(a.name)+' '+((p&&p.pro)||'')+' '+((p&&p.niche)||'')+' '+tags.join(' '),hist:[]});
+        pts:a.points|0,grow:act.w,rank:0,isNew:false,cats:(p&&p.cats&&p.cats.length)?p.cats:[],ai:'',search:esc(a.name)+' '+((p&&p.pro)||'')+' '+((p&&p.niche)||'')+' '+tags.join(' '),hist:[]});
     }
   }
   // профили без живых баллов (не писали) — в конец, баллы и активность честно 0
