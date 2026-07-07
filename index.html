@@ -947,7 +947,11 @@ async function askAI(){
 }
 
 // ── ЖИВЫЕ ДАННЫЕ v4: список строится ИЗ базы баллов (каждый участник — своя строка) ──
-fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
+Promise.all([
+  fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null),
+  fetch('profiles.json?'+Date.now()).then(r=>r.ok?r.json():{}).catch(()=>({}))
+]).then(([live,PROF])=>{
+  PROF=PROF||{};
   if(!live||!Array.isArray(live.authors)||!live.authors.length) return;
   const norm=x=>String(x||'').toLowerCase().replace(/[^a-zа-яё0-9]/g,'');
   const digits=x=>String(x||'').replace(/\D/g,'');
@@ -955,6 +959,9 @@ fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
   const esc=x=>String(x||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
   // транслит лат→кир для сравнения имён (Nurbol ↔ Нурбол)
   const tr=x=>{let t=norm(x);const D=[['shch','щ'],['zh','ж'],['kh','х'],['ts','ц'],['ch','ч'],['sh','ш'],['yu','ю'],['ya','я'],['yo','ё'],['ye','е']];for(const[a,b]of D)t=t.split(a).join(b);const M1={a:'а',b:'б',v:'в',g:'г',d:'д',e:'е',z:'з',i:'и',j:'й',k:'к',l:'л',m:'м',n:'н',o:'о',p:'п',r:'р',s:'с',t:'т',u:'у',f:'ф',h:'х',c:'к',q:'к',w:'в',x:'кс',y:'ы'};return t.split('').map(ch=>M1[ch]||ch).join('')};
+  // индекс профилей (из profiles.json) по телефону + функция поиска профиля участника
+  const PROF_PH={}; for(const k in PROF){ const p=PROF[k]; if(p&&p.phone){ PROF_PH[digits(p.phone)]=p } }
+  const profOf=a=>{ const d=digits(a.phone); if(d&&PROF_PH[d]) return PROF_PH[d]; return PROF[norm(a.name)]||PROF[tr(a.name)]||null; };
   const strictMatch=(a,m)=>{
     const ad=digits(a.phone||''), md=digits(m.phone||'');
     if(ad&&md&&ad===md) return true;
@@ -986,14 +993,19 @@ fetch('live.json?'+Date.now()).then(r=>r.ok?r.json():null).then(live=>{
       if(c['кейс'])tags.push('кейсы ×'+c['кейс']);
       if(c['экспертный'])tags.push('экспертные ×'+c['экспертный']);
       if(c['вопрос'])tags.push('вопросы ×'+c['вопрос']);
+      const p=profOf(a);
+      const genSum=esc(a.name)+' — участник чатов ассоциации. Баллы: '+a.points+'. Сообщений: '+a.msgs+'. Вопросов: '+(c['вопрос']||0)+', экспертных ответов: '+(c['экспертный']||0)+', кейсов: '+(c['кейс']||0)+'.';
       rows.push({id:nextId++,name:esc(a.name),phone:a.phone?pretty(digits(a.phone)):'не указан',
-        niche:'—',company:'',role:'Участник ассоциации',
-        what:'Активность в чатах ассоциации: '+(a.msgs||0)+' оценённых сообщений.',
-        pro:tags.join(', '),
-        summary:esc(a.name)+' — участник чатов ассоциации. Баллы: '+a.points+'. Сообщений: '+a.msgs+'. Вопросов: '+(c['вопрос']||0)+', экспертных ответов: '+(c['экспертный']||0)+', кейсов: '+(c['кейс']||0)+'.',
-        strong:tags.length?['Активен: '+tags.join(', ')]:[],opinion:'',etopics:tags,chats:['Чаты ассоциации'],
+        niche:(p&&esc(p.niche))||'—',company:(p&&esc(p.company))||'',role:(p&&esc(p.role))||'Участник ассоциации',
+        what:(p&&p.what)?esc(p.what):('Активность в чатах ассоциации: '+(a.msgs||0)+' оценённых сообщений.'),
+        pro:(p&&p.pro)?esc(p.pro):tags.join(', '),
+        summary:(p&&p.summary)?(esc(p.summary)+' '+genSum):genSum,
+        strong:(p&&p.strong&&p.strong.length)?p.strong.map(esc):(tags.length?['Активен: '+tags.join(', ')]:[]),
+        opinion:(p&&p.opinion)?esc(p.opinion):'',
+        etopics:(p&&p.etopics&&p.etopics.length)?p.etopics.map(esc):tags,
+        chats:(p&&p.chats&&p.chats.length)?p.chats.map(esc):['Чаты ассоциации'],
         msgs:{day:act.d,week:act.w,month:act.m,total:a.msgs||0},useful:useful,ratio:a.msgs?useful/a.msgs:0,expert:(c['экспертный']||0),
-        pts:a.points|0,grow:act.w,rank:0,isNew:false,cats:[],ai:'',search:esc(a.name)+' '+tags.join(' '),hist:[]});
+        pts:a.points|0,grow:act.w,rank:0,isNew:false,cats:[],ai:'',search:esc(a.name)+' '+((p&&p.pro)||'')+' '+((p&&p.niche)||'')+' '+tags.join(' '),hist:[]});
     }
   }
   // профили без живых баллов (не писали) — в конец, баллы и активность честно 0
