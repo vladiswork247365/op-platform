@@ -320,15 +320,17 @@ a.walink:hover{color:#fff;text-decoration:underline}
 .mprize.done .mprize-ico{filter:grayscale(0)}
 
 /* inline category tags in row */
-.mcats{display:flex;gap:3px;flex-wrap:wrap;align-items:flex-start;padding:1px 0}
+.mcats{display:flex;gap:4px;flex-wrap:wrap;align-content:center;
+  height:34px;overflow:hidden;padding:1px 0;position:relative}
 .mcat{
-  display:inline-block;padding:2px 6px;border-radius:8px;
+  display:inline-flex;align-items:center;height:15px;box-sizing:border-box;
+  padding:0 7px;border-radius:7px;
   font-family:'Montserrat',sans-serif;
-  font-size:8px;font-weight:700;color:var(--t3);
+  font-size:8px;font-weight:600;letter-spacing:.2px;color:var(--t2);
   background:var(--bg4);border:1px solid var(--bdr);
-  white-space:nowrap;line-height:1.5;
+  white-space:nowrap;
 }
-.mcat.hi{color:var(--red);background:var(--rdim);border-color:rgba(232,0,10,.25)}
+.mcat.hi{color:var(--t2);background:var(--bg4);border-color:var(--bdr)}
 
 /* ── MODAL: member card ── */
 .overlay{
