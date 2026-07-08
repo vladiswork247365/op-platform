@@ -98,17 +98,18 @@ header{
 .filter-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
 .filter-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .filter-cats{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:1px 0}
-/* Рекламный блок справа — 2 баннера */
-.ad-slot{width:272px;flex-shrink:0;display:flex;flex-direction:column;gap:7px;min-height:72px}
-.ad-banner{flex:1;display:flex;flex-direction:column;justify-content:center;gap:3px;
-  padding:9px 13px;border-radius:12px;text-decoration:none;border:1px solid var(--bdr);
-  transition:.15s ease;position:relative;overflow:hidden}
-.ad-banner:hover{transform:translateY(-1px);border-color:var(--red);box-shadow:0 5px 16px rgba(0,0,0,.28)}
-.ad-bt{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.8px;line-height:1.03;color:#fff}
-.ad-bs{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:600;color:var(--t2);opacity:.9}
-.ad-banner.b1{background:linear-gradient(135deg,rgba(232,0,10,.20),rgba(232,0,10,.04))}
-.ad-banner.b1 .ad-bt{color:#fff}
-.ad-banner.b2{background:linear-gradient(135deg,rgba(245,166,35,.18),rgba(245,166,35,.04))}
+/* Рекламный блок справа — 2 баннера (красные, компактные) */
+.ad-slot{width:272px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;min-height:72px}
+.ad-banner{flex:1;display:flex;align-items:center;gap:8px;
+  padding:10px 14px;border-radius:12px;text-decoration:none;
+  border:1px solid rgba(232,0,10,.38);
+  background:linear-gradient(135deg,rgba(232,0,10,.30),rgba(232,0,10,.06));
+  transition:.15s ease}
+.ad-banner:hover{border-color:var(--red);transform:translateY(-1px);
+  background:linear-gradient(135deg,rgba(232,0,10,.46),rgba(232,0,10,.12));
+  box-shadow:0 6px 18px rgba(232,0,10,.22)}
+.ad-bt{flex:1;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.5px;line-height:1.06;color:#fff}
+.ad-arrow{flex-shrink:0;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;color:var(--red)}
 @media(max-width:940px){.filter-bar{flex-direction:column}.ad-slot{width:auto}}
 .srch-wrap{position:relative;min-width:150px;width:175px;flex-shrink:0}
 .srch-wrap input{
@@ -607,13 +608,13 @@ a.walink:hover{color:#fff;text-decoration:underline}
  </div>
  <!-- Рекламные баннеры -->
  <div class="ad-slot" id="adSlot">
-   <a class="ad-banner b1" href="https://systemop.pro/demo-login" target="_blank" rel="noopener">
-     <div class="ad-bt">Панель управления для РОП-ов</div>
-     <div class="ad-bs">Демо-доступ — открыть панель →</div>
+   <a class="ad-banner" href="https://panel.systemop.top/" target="_blank" rel="noopener">
+     <span class="ad-bt">Панель управления для РОП-ов</span>
+     <span class="ad-arrow">→</span>
    </a>
-   <a class="ad-banner b2" href="https://systemop.top" target="_blank" rel="noopener">
-     <div class="ad-bt">Экосистема ОП</div>
-     <div class="ad-bs">Все сервисы для отделов продаж →</div>
+   <a class="ad-banner" href="https://systemop.top/" target="_blank" rel="noopener">
+     <span class="ad-bt">Экосистема ОП</span>
+     <span class="ad-arrow">→</span>
    </a>
  </div>
 </div>
