@@ -320,17 +320,26 @@ a.walink:hover{color:#fff;text-decoration:underline}
 .mprize.done .mprize-ico{filter:grayscale(0)}
 
 /* inline category tags in row */
-.mcats{display:flex;gap:4px;flex-wrap:wrap;align-content:center;
-  height:34px;overflow:hidden;padding:1px 0;position:relative}
+.mcats{display:flex;gap:4px;flex-wrap:nowrap;align-items:center;
+  height:18px;overflow:hidden;padding:0 26px 0 0;position:relative}
+.mcats.open{flex-wrap:wrap;align-content:center;height:auto;min-height:18px;
+  overflow:visible;padding:3px 26px 3px 0}
 .mcat{
   display:inline-flex;align-items:center;height:15px;box-sizing:border-box;
-  padding:0 7px;border-radius:7px;
+  padding:0 7px;border-radius:7px;flex:0 0 auto;
   font-family:'Montserrat',sans-serif;
   font-size:8px;font-weight:600;letter-spacing:.2px;color:var(--t2);
   background:var(--bg4);border:1px solid var(--bdr);
   white-space:nowrap;
 }
 .mcat.hi{color:var(--t2);background:var(--bg4);border-color:var(--bdr)}
+.mcat-more{position:absolute;right:2px;top:50%;transform:translateY(-50%);
+  cursor:pointer;user-select:none;display:inline-flex;align-items:center;justify-content:center;
+  height:15px;min-width:20px;padding:0 5px;border-radius:7px;
+  font-family:'Montserrat',sans-serif;font-size:9px;font-weight:800;line-height:1;
+  color:var(--t2);background:var(--bg3);border:1px solid var(--bdr);transition:.12s}
+.mcat-more:hover{color:var(--red);border-color:rgba(232,0,10,.35)}
+.mcats.open .mcat-more{top:6px;transform:none}
 
 /* ── MODAL: member card ── */
 .overlay{
@@ -804,7 +813,7 @@ function renderList(list){
       <div class="mmsgs">${m.msgs.day}</div>
       <div class="mmsgw">${m.msgs.week}</div>
       <div class="mmsgw">${m.msgs.total}</div>
-      <div class="mcats">${m.cats.map((c,i)=>`<span class="mcat${i===0?' hi':''}">${c}</span>`).join('')}</div>
+      <div class="mcats">${m.cats.map(c=>`<span class="mcat">${c}</span>`).join('')}${(m.cats&&m.cats.length>=4)?`<span class="mcat-more" title="Показать все категории" onclick="const p=this.parentNode;const o=p.classList.toggle('open');this.textContent=o?'✕':'···'">···</span>`:''}</div>
       <button class="btn-i" onclick="openCard(${m.id})">Инфо</button>
     </div>`;
   }).join('');
