@@ -1037,7 +1037,9 @@ async function askAI(){
     });
     const d = await r.json();
     const t = d.text || 'Ошибка ИИ.';
-    rc.innerHTML = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    let html = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    html = html.replace(/\+?\d[\d\s\-()]{8,16}\d/g, m=>{ const dg=m.replace(/\D/g,''); return (dg.length>=11 && dg.length<=15) ? `<a class="walink" href="https://wa.me/${dg}" target="_blank" rel="noopener">${m.trim()} · WhatsApp</a>` : m; });
+    rc.innerHTML = html.replace(/\n/g,'<br>');
   }catch(e){
     rc.innerHTML='<span style="color:var(--t3)">Ошибка подключения к ИИ.</span>';
   }finally{
