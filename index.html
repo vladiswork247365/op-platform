@@ -131,7 +131,9 @@ select.fsel{
 }
 select.fsel:focus{border-color:var(--red)}
 .niche-wrap{position:relative;flex-shrink:0}
-.niche-btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
+.niche-btn{height:28px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;padding:0 10px;color:var(--t2);font-family:'Montserrat',sans-serif;font-size:10px;outline:none;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;-webkit-appearance:none;appearance:none}
+.niche-btn:hover,.niche-btn:focus{border-color:var(--red)}
+.niche-panel.open ~ .niche-btn,.niche-wrap:has(.niche-panel.open) .niche-btn{border-color:var(--red)}
 .niche-car{font-size:8px;color:var(--t3)}
 .niche-panel{position:absolute;top:calc(100% + 8px);left:0;z-index:60;display:none;
   background:linear-gradient(180deg,var(--bg2),var(--bg3));border:1px solid var(--bdr);border-radius:14px;
