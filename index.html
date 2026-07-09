@@ -989,21 +989,14 @@ async function askAI(){
   res.classList.add('show');
   rc.innerHTML='<span class="spin"></span>Анализирую базу участников...';
 
-  const ctx = M.map(m=>`${m.name} | Тел: ${m.phone} | Ниша: ${m.niche} | Роль: ${m.role} | Статус: ${status(m.pts).l} | Баллы: ${m.pts} | #${m.rank} | Польза: ${Math.round((m.ratio||0)*100)}% | Категории: ${m.cats.join(', ')} | Экспертиза: ${(m.etopics||[]).join(', ')} | Мнение: ${m.opinion||'—'} | Поиск: ${m.search||''}`).join('\n');
-
   try{
-    const r = await fetch("https://api.anthropic.com/v1/messages",{
+    const r = await fetch("https://bot.systemop.top/ai",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"claude-sonnet-4-20250514",
-        max_tokens:1000,
-        system:`Ты — ИИ-поиск по базе участников Ассоциации системных продаж. База (профили из анализа чатов):\n\n${ctx}\n\nПользователь ищет, к кому обратиться по профессиональному запросу. Верни 2-5 наиболее подходящих участников по реальной экспертизе из чатов, НЕ только по активности. Не придумывай экспертизу — если данных мало, скажи честно. Формат по каждому:\n**Имя** — Роль / Ниша, #Рейтинг\nПочему подходит (1-2 предложения по реальной экспертизе и темам).\nТелефон | Категории | Статус | Уверенность (высокая/средняя/низкая).\nТолько русский язык.`,
-        messages:[{role:"user",content:q}]
-      })
+      body:JSON.stringify({q})
     });
     const d = await r.json();
-    const t = d.content?.map(i=>i.text||'').join('')||'Ошибка';
+    const t = d.text || 'Ошибка ИИ.';
     rc.innerHTML = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
   }catch(e){
     rc.innerHTML='<span style="color:var(--t3)">Ошибка подключения к ИИ.</span>';
