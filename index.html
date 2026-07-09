@@ -130,6 +130,20 @@ select.fsel{
   font-size:10px;outline:none;cursor:pointer;flex-shrink:0;
 }
 select.fsel:focus{border-color:var(--red)}
+.niche-wrap{position:relative;flex-shrink:0}
+.niche-btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
+.niche-car{font-size:8px;color:var(--t3)}
+.niche-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:60;display:none;background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;box-shadow:0 14px 44px rgba(0,0,0,.55);width:min(72vw,640px)}
+.niche-panel.open{display:block}
+.niche-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.niche-head span{font-size:9px;font-weight:700;letter-spacing:.6px;color:var(--t3);text-transform:uppercase}
+.niche-reset{background:var(--bg4);border:1px solid var(--bdr);border-radius:6px;color:var(--t2);font-family:'Montserrat',sans-serif;font-size:9px;padding:3px 8px;cursor:pointer;flex-shrink:0}
+.niche-reset:hover{border-color:var(--red);color:var(--red)}
+.niche-list{column-count:4;column-gap:8px}
+@media(max-width:940px){.niche-list{column-count:2}.niche-panel{width:88vw}}
+.ncat{display:block;width:100%;text-align:left;break-inside:avoid;margin:0 0 5px;padding:4px 8px;border-radius:6px;background:var(--bg4);border:1px solid var(--bdr);color:var(--t2);font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:.12s}
+.ncat:hover{border-color:var(--red)}
+.ncat.on{background:var(--rdim);border-color:var(--red);color:var(--red)}
 .chip{
   height:28px;
   background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;
@@ -506,7 +520,7 @@ a.walink:hover{color:#fff;text-decoration:underline}
   <div class="hstats">
     <div class="hstat">
       <div class="hstat-v" id="sTotal">15</div>
-      <div class="hstat-l">Участников (топ-42)</div>
+      <div class="hstat-l">Участников</div>
     </div>
     <div class="hstat">
       <div class="hstat-v r" id="sMsgs">0</div>
@@ -538,13 +552,13 @@ a.walink:hover{color:#fff;text-decoration:underline}
       <span class="srch-ico">🔍</span>
       <input type="text" id="srchH" placeholder="Поиск участника..." oninput="applyFilters()">
     </div>
-    <select class="fsel" id="nicheF" onchange="applyFilters()">
-      <option value="">Все ниши</option>
-      <option>CRM</option><option>Продажи</option><option>Маркетинг</option>
-      <option>AI</option><option>Найм</option><option>Логистика</option>
-      <option>Медицина</option><option>Недвижимость</option><option>Образование</option>
-      <option>Консалтинг</option><option>Красота и здоровье</option><option>Автосфера</option><option>Благотворительность</option>
-    </select>
+    <div class="niche-wrap">
+      <button class="fsel niche-btn" id="nicheBtn" onclick="toggleNiche(event)">Все ниши <span class="niche-car">▾</span></button>
+      <div class="niche-panel" id="nichePanelBox">
+        <div class="niche-head"><span>Ниши / категории — выбор мультивыбором</span><button class="niche-reset" onclick="setCat('')">Сбросить</button></div>
+        <div class="niche-list" id="nichePanel"></div>
+      </div>
+    </div>
     <select class="fsel" id="statusF" onchange="applyFilters()">
       <option value="">Все статусы</option>
       <option>Новичок</option><option>Активный</option><option>Эксперт</option>
@@ -748,20 +762,20 @@ const EVENTS = [
 
 // Бонусы ассоциации. name = краткий заголовок, desc = формулировка из документа «Призы для ассоциации».
 const BONUSES = [
-  {ico:"💡",name:"Коллекция лайфхаков",pts:150,desc:"Вся коллекция лайфхаков со всех чатов ассоциации"},
-  {ico:"📇",name:"База контактов",pts:250,desc:"Вся коллекция полезных контактов со всех чатов ассоциации"},
-  {ico:"🗂️",name:"Полезные материалы",pts:350,desc:"Вся коллекция полезных материалов со всех чатов ассоциации"},
-  {ico:"🎧",name:"Доступ к онлайн-встречам",pts:460,desc:"Доступ ко всем онлайн-встречам ассоциации"},
-  {ico:"📕",name:"Книга основателя",pts:570,desc:"Электронная книга основателя ассоциации «Отдел продаж. Другой подход»"},
-  {ico:"📊",name:"Библиотека аудитов ОП",pts:670,desc:"Вся библиотека аудитов для отделов продаж"},
-  {ico:"📢",name:"Нативная реклама в чате",pts:780,desc:"Нативное рекламирование в главном чате"},
-  {ico:"⭐",name:"Реклама на платформе",pts:880,desc:"Реклама в платформе участников (1 неделя)"},
-  {ico:"📣",name:"Реклама в «Самореклама»",pts:980,desc:"Персональная реклама в «САМОРЕКЛАМА» от Влада"},
-  {ico:"💸",name:"Скидка 15% на ОКК",pts:1080,desc:"Скидка 15% на ОКК на первый месяц"},
-  {ico:"✅",name:"Экспресс-аудит ОП",pts:1190,desc:"Экспресс-аудит отдела продаж через чек-листинг (270 пунктов)"},
-  {ico:"👕",name:"Мерч ассоциации",pts:1290,desc:"Мерч от ассоциации"},
-  {ico:"🗄️",name:"Все архивы чатов",pts:1400,desc:"Все архивированные чаты разом"},
-  {ico:"👑",name:"Личный разбор от Влада",pts:1500,desc:"Личный разбор от Влада и ещё 3 профессионалов в продажах"},
+  {ico:"💡",name:"Коллекция лайфхаков",pts:250,desc:"Вся коллекция лайфхаков со всех чатов ассоциации"},
+  {ico:"📇",name:"База контактов",pts:360,desc:"Вся коллекция полезных контактов со всех чатов ассоциации"},
+  {ico:"🗂️",name:"Полезные материалы",pts:480,desc:"Вся коллекция полезных материалов со всех чатов ассоциации"},
+  {ico:"🎧",name:"Доступ к онлайн-встречам",pts:610,desc:"Доступ ко всем онлайн-встречам ассоциации"},
+  {ico:"📕",name:"Книга основателя",pts:740,desc:"Электронная книга основателя ассоциации «Отдел продаж. Другой подход»"},
+  {ico:"📊",name:"Библиотека аудитов ОП",pts:870,desc:"Вся библиотека аудитов для отделов продаж"},
+  {ico:"📢",name:"Нативная реклама в чате",pts:1000,desc:"Нативное рекламирование в главном чате"},
+  {ico:"⭐",name:"Реклама на платформе",pts:1130,desc:"Реклама в платформе участников (1 неделя)"},
+  {ico:"📣",name:"Реклама в «Самореклама»",pts:1260,desc:"Персональная реклама в «САМОРЕКЛАМА» от Влада"},
+  {ico:"💸",name:"Скидка 15% на ОКК",pts:1380,desc:"Скидка 15% на ОКК на первый месяц"},
+  {ico:"✅",name:"Экспресс-аудит ОП",pts:1480,desc:"Экспресс-аудит отдела продаж через чек-листинг (270 пунктов)"},
+  {ico:"👕",name:"Мерч ассоциации",pts:1560,desc:"Мерч от ассоциации"},
+  {ico:"🗄️",name:"Все архивы чатов",pts:1630,desc:"Все архивированные чаты разом"},
+  {ico:"👑",name:"Личный разбор от Влада",pts:1700,desc:"Личный разбор от Влада и ещё 3 профессионалов в продажах"},
 ];
 
 // ════════════ HELPERS ════════════
@@ -788,11 +802,11 @@ function status(pts){
 
 // ════════════ MEMBERS LIST ════════════
 let chipFilter = 'all';
-let catFilter  = '';
+let activeCats = new Set();
 
+// Комбинируемая точечная фильтрация: быстрый чип И (все выбранные категории) И статус И поиск
 function applyFilters(){
   const q  = document.getElementById('srchH').value.toLowerCase();
-  const ni = document.getElementById('nicheF').value;
   const st = document.getElementById('statusF').value;
 
   let list = [...M];
@@ -803,27 +817,53 @@ function applyFilters(){
   else if(chipFilter==='exp')    list = M.filter(m=>m.pts>=500);
   else if(chipFilter==='week')   list = [...M].sort((a,b)=>b.grow-a.grow).slice(0,10);
 
-  if(catFilter) list = list.filter(m=>m.cats.includes(catFilter));
-  if(q)  list = list.filter(m=>m.name.toLowerCase().includes(q)||m.phone.includes(q)||m.niche.toLowerCase().includes(q)||m.what.toLowerCase().includes(q)||m.cats.some(c=>c.toLowerCase().includes(q)));
-  if(ni) list = list.filter(m=>m.niche===ni);
+  if(activeCats.size) list = list.filter(m => [...activeCats].every(c => (m.cats||[]).includes(c)));
+  if(q)  list = list.filter(m=>m.name.toLowerCase().includes(q)||(m.phone||'').includes(q)||(m.niche||'').toLowerCase().includes(q)||(m.what||'').toLowerCase().includes(q)||(m.cats||[]).some(c=>c.toLowerCase().includes(q)));
   if(st) list = list.filter(m=>status(m.pts).l===st);
 
   renderList(list);
 }
 
+// Быстрые чипы — тумблер: повторный клик по активному снимает фильтр
 function setChip(f, btn){
-  chipFilter = f;
-  document.querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
+  if(chipFilter===f && f!=='all') f='all';
+  chipFilter=f;
+  document.querySelectorAll('.chip').forEach(b=>{ const m=(b.getAttribute('onclick')||'').match(/setChip\('([^']*)'/); b.classList.toggle('on', !!m && m[1]===f); });
   applyFilters();
 }
 
+// Категории — мультивыбор-тумблер (пустая строка = сбросить все категории)
 function setCat(cat, btn){
-  catFilter = cat;
-  document.querySelectorAll('.cchip').forEach(b=>b.classList.remove('on'));
-  if(cat) btn.classList.add('on');
+  if(cat===''){ activeCats.clear(); }
+  else { activeCats.has(cat) ? activeCats.delete(cat) : activeCats.add(cat); }
+  syncCatUI();
   applyFilters();
 }
+function syncCatUI(){
+  document.querySelectorAll('.cchip').forEach(b=>{ const m=(b.getAttribute('onclick')||'').match(/setCat\('([^']*)'/); const c=m?m[1]:null; b.classList.toggle('on', !!c && activeCats.has(c)); });
+  document.querySelectorAll('.ncat').forEach(b=>{ b.classList.toggle('on', activeCats.has(b.dataset.cat)); });
+  const nb=document.getElementById('nicheBtn'); if(nb && nb.firstChild) nb.firstChild.nodeValue = activeCats.size ? ('Ниши · '+activeCats.size+' ') : 'Все ниши ';
+}
+// Многоколоночный дропдаун «Все ниши» — все категории из данных
+function toggleNiche(e){ if(e) e.stopPropagation(); const b=document.getElementById('nichePanelBox'); if(b) b.classList.toggle('open'); }
+document.addEventListener('click', e=>{ const b=document.getElementById('nichePanelBox'); if(b && b.classList.contains('open') && !e.target.closest('.niche-wrap')) b.classList.remove('open'); });
+function buildNichePanel(){
+  const set=new Set(); M.forEach(m=>(m.cats||[]).forEach(c=>c&&set.add(c)));
+  const cats=[...set].sort((a,b)=>a.localeCompare(b,'ru'));
+  const el=document.getElementById('nichePanel'); if(!el) return;
+  el.innerHTML = cats.map(c=>`<button class="ncat" data-cat="${c.replace(/"/g,'&quot;')}" onclick="setCat('${c.replace(/'/g,"\\'")}',this)">${c}</button>`).join('');
+  syncCatUI();
+}
+// Реальные статы из бота-куратора (авто-обновление каждые 3 мин)
+async function loadPubStats(){
+  try{
+    const r=await fetch('https://bot.systemop.top/pubstats?t='+Date.now());
+    const d=await r.json();
+    const set=(id,v)=>{ if(typeof v==='number'){ const el=document.getElementById(id); if(el) el.textContent=v; } };
+    set('sTotal',d.members); set('sMsgs',d.msgsToday); set('sExp',d.experts); set('sChats',d.activeChats); set('sNew',d.newWeek);
+  }catch(e){}
+}
+loadPubStats(); setInterval(loadPubStats, 180000);
 
 function renderList(list){
   const el = document.getElementById('mList');
@@ -1073,13 +1113,9 @@ Promise.all([
   M.forEach((m,i)=>{ if(!used.has(i)){ m.pts=0; m.grow=0; m.msgs={day:0,week:0,month:0,total:0}; m.hist=[]; rows.push(m); } });
   M.length=0; Array.prototype.push.apply(M,rows);
   M.sort((a,b)=>b.pts-a.pts); M.forEach((m,i)=>m.rank=i+1);
-  if(live.stats){
-    if(live.stats.members) document.getElementById('sTotal').textContent=live.stats.members;
-    if(live.stats.chats) document.getElementById('sChats').textContent=live.stats.chats;
-  }
+  buildNichePanel();
   applyFilters();
-  document.getElementById('sExp').textContent=M.filter(m=>m.pts>=500).length;
-  document.getElementById('sMsgs').textContent=M.reduce((s,m)=>s+((m.msgs&&m.msgs.day)|0),0);
+  loadPubStats();
   // пересчёт доступности бонусов по живому лидеру (а не по статике)
   const topPts=(M[0]&&M[0].pts)|0;
   document.querySelectorAll('#bonList .bon-pts').forEach(el=>{const v=parseInt((el.textContent||'').replace(/\D/g,''))||0;el.classList.toggle('av',topPts>=v)});
