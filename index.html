@@ -133,17 +133,24 @@ select.fsel:focus{border-color:var(--red)}
 .niche-wrap{position:relative;flex-shrink:0}
 .niche-btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
 .niche-car{font-size:8px;color:var(--t3)}
-.niche-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:60;display:none;background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;box-shadow:0 14px 44px rgba(0,0,0,.55);width:min(72vw,640px)}
-.niche-panel.open{display:block}
-.niche-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
-.niche-head span{font-size:9px;font-weight:700;letter-spacing:.6px;color:var(--t3);text-transform:uppercase}
-.niche-reset{background:var(--bg4);border:1px solid var(--bdr);border-radius:6px;color:var(--t2);font-family:'Montserrat',sans-serif;font-size:9px;padding:3px 8px;cursor:pointer;flex-shrink:0}
+.niche-panel{position:absolute;top:calc(100% + 8px);left:0;z-index:60;display:none;
+  background:linear-gradient(180deg,var(--bg2),var(--bg3));border:1px solid var(--bdr);border-radius:14px;
+  padding:12px 14px 14px;box-shadow:0 20px 54px rgba(0,0,0,.6);width:min(74vw,700px)}
+.niche-panel.open{display:block;animation:nfade .13s ease}
+@keyframes nfade{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.niche-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--bdr)}
+.niche-head span{font-size:10px;font-weight:700;letter-spacing:.2px;color:var(--t2)}
+.niche-reset{background:transparent;border:1px solid var(--bdr);border-radius:7px;color:var(--t3);font-family:'Montserrat',sans-serif;font-size:9px;font-weight:600;padding:4px 10px;cursor:pointer;transition:.12s;flex-shrink:0}
 .niche-reset:hover{border-color:var(--red);color:var(--red)}
-.niche-list{column-count:4;column-gap:8px}
-@media(max-width:940px){.niche-list{column-count:2}.niche-panel{width:88vw}}
-.ncat{display:block;width:100%;text-align:left;break-inside:avoid;margin:0 0 5px;padding:4px 8px;border-radius:6px;background:var(--bg4);border:1px solid var(--bdr);color:var(--t2);font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:.12s}
-.ncat:hover{border-color:var(--red)}
-.ncat.on{background:var(--rdim);border-color:var(--red);color:var(--red)}
+.niche-list{column-count:5;column-gap:4px}
+@media(max-width:940px){.niche-list{column-count:2}.niche-panel{width:90vw}}
+.ncat{display:flex;align-items:center;gap:6px;width:100%;text-align:left;break-inside:avoid;margin:0 0 2px;
+  padding:5px 9px;border-radius:8px;background:transparent;border:1px solid transparent;
+  color:var(--t2);font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:600;cursor:pointer;transition:.1s;line-height:1.15}
+.ncat::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--bdr);flex-shrink:0;transition:.1s}
+.ncat:hover{background:var(--bg4)}
+.ncat.on{background:var(--rdim);color:#fff;font-weight:700}
+.ncat.on::before{background:var(--red);box-shadow:0 0 7px var(--red)}
 .chip{
   height:28px;
   background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;
@@ -555,7 +562,7 @@ a.walink:hover{color:#fff;text-decoration:underline}
     <div class="niche-wrap">
       <button class="fsel niche-btn" id="nicheBtn" onclick="toggleNiche(event)">Все ниши <span class="niche-car">▾</span></button>
       <div class="niche-panel" id="nichePanelBox">
-        <div class="niche-head"><span>Ниши / категории — выбор мультивыбором</span><button class="niche-reset" onclick="setCat('')">Сбросить</button></div>
+        <div class="niche-head"><span>Категории · можно выбрать несколько</span><button class="niche-reset" onclick="setCat('')">Сбросить</button></div>
         <div class="niche-list" id="nichePanel"></div>
       </div>
     </div>
