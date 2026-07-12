@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+_storage/
+.venv/
+venv/
+*.egg-info/
+*.log
+_api.log
+_worker.log
