@@ -414,9 +414,15 @@ a.walink:hover{color:#fff;text-decoration:underline}
 .mg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .mb{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:12px}
 .mb-t{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-.sr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--bdr)}
+.sr{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:5px 0;border-bottom:1px solid var(--bdr)}
 .sr:last-child{border:none}
-.sr .k{font-size:11px;color:var(--t3)}.sr .v{font-size:12px;font-weight:600}
+.sr .k{font-size:11px;color:var(--t3);flex:0 0 auto}.sr .v{font-size:12px;font-weight:600;text-align:right}
+/* стековое поле для длинного текста: подпись сверху, читаемый абзац во всю ширину слева */
+.fld{padding:10px 0;border-bottom:1px solid var(--bdr)}
+.fld:last-child{border:none}
+.fld-k{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.fld-v{font-size:12.5px;line-height:1.7;color:var(--t2)}
+.fld .tags{margin-top:1px}
 .tags{display:flex;gap:5px;flex-wrap:wrap}
 .tag{background:var(--bg4);border:1px solid var(--bdr);padding:3px 8px;border-radius:16px;font-size:10px;color:var(--t2)}
 .tag.r{background:var(--rdim);border-color:rgba(232,0,10,.3);color:var(--red)}
@@ -961,8 +967,8 @@ function openCard(id){
     </div>
     <div class="mb">
       <div class="mb-t">Специализация</div>
-      <div class="sr"><span class="k">Чем занимается</span><span class="v" style="text-align:right;max-width:60%">${m.what}</span></div>
-      <div class="sr"><span class="k">В чём профи</span><span class="v" style="text-align:right;max-width:60%">${m.pro}</span></div>
+      <div class="fld"><div class="fld-k">Чем занимается</div><div class="fld-v">${m.what||'Недостаточно данных'}</div></div>
+      <div class="fld"><div class="fld-k">В чём профи</div>${(()=>{const parts=String(m.pro||'').split(/[,;·]/).map(s=>s.trim()).filter(Boolean);return parts.length>1?`<div class="tags">${parts.map(s=>`<span class="tag">${s}</span>`).join('')}</div>`:`<div class="fld-v">${m.pro||'—'}</div>`})()}</div>
     </div>
     <div class="mb">
       <div class="mb-t">Темы экспертизы</div>
