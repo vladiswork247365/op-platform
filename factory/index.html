@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Контент-Завод · Ядро</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090B; --bg2:#111116; --bg3:#18181F; --bg4:#1E1E28;
+  --bdr:rgba(255,255,255,0.07); --bdr2:rgba(255,255,255,0.13);
+  --red:#E8000A; --red2:#FF1F3D; --rdim:rgba(232,0,10,0.14);
+  --text:#F0F0F5; --t2:#A0A0B0; --t3:#555565;
+  --gold:#F5A623; --gld2:#FFD700; --grn:#00C851; --blu:#4A9EFF;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(232,0,10,0.06), transparent 60%),
+    var(--bg);
+  color:var(--text); font-family:'Montserrat',sans-serif;
+  display:flex; flex-direction:column; min-height:100vh;
+}
+a{color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ── HEADER ── */
+header{
+  position:sticky; top:0; z-index:50; flex-shrink:0; height:60px;
+  background:rgba(9,9,11,.9); backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bdr);
+  display:flex; align-items:center; padding:0 20px; gap:16px;
+}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo-icon{width:28px;height:28px;flex-shrink:0}
+.logo-text{display:flex;flex-direction:column;line-height:1;gap:1px}
+.logo-sup{font-size:6.5px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase}
+.logo-main{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1.5px;white-space:nowrap}
+.logo-main em{color:var(--red);font-style:normal}
+.logo-sub{font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:2px;color:var(--t3)}
+.spacer{flex:1}
+.hbtn{
+  font-family:'Montserrat';font-size:12px;font-weight:600;
+  padding:8px 14px;border-radius:8px;border:1px solid var(--bdr2);
+  background:var(--bg3);color:var(--text);cursor:pointer;transition:.15s;
+  display:inline-flex;align-items:center;gap:7px;
+}
+.hbtn:hover{background:var(--bg4);border-color:var(--red)}
+.hbtn.primary{background:var(--red);border-color:var(--red)}
+.hbtn.primary:hover{background:var(--red2)}
+.hbtn.ghost{background:transparent}
+
+/* ── LAYOUT ── */
+.wrap{flex:1;display:flex;max-width:1400px;width:100%;margin:0 auto;padding:22px 20px;gap:22px}
+nav.side{
+  width:230px;flex-shrink:0;position:sticky;top:82px;align-self:flex-start;
+  display:flex;flex-direction:column;gap:4px;
+}
+.side-title{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;padding:6px 12px 10px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;
+  cursor:pointer;transition:.15s;border:1px solid transparent;color:var(--t2);
+}
+.nav-item:hover{background:var(--bg2);color:var(--text)}
+.nav-item.active{background:var(--bg3);border-color:var(--bdr2);color:var(--text)}
+.nav-item.active .ni-num{background:var(--red);color:#fff}
+.ni-num{
+  width:22px;height:22px;border-radius:6px;background:var(--bg4);color:var(--t2);
+  display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0;
+  font-family:'JetBrains Mono';
+}
+.ni-body{display:flex;flex-direction:column;gap:2px;line-height:1.1;min-width:0}
+.ni-label{font-size:13px;font-weight:600}
+.ni-hint{font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ni-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto;background:var(--t3)}
+.ni-dot.on{background:var(--grn);box-shadow:0 0 8px rgba(0,200,81,.6)}
+
+main{flex:1;min-width:0}
+
+/* ── PIPELINE FLOW ── */
+.flow{
+  display:flex;align-items:stretch;gap:0;margin-bottom:24px;
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:16px;overflow-x:auto;
+}
+.flow-node{
+  flex:1;min-width:130px;display:flex;flex-direction:column;gap:6px;
+  padding:12px 14px;border-radius:10px;cursor:pointer;transition:.15s;
+  border:1px solid transparent;position:relative;
+}
+.flow-node:hover{background:var(--bg3)}
+.flow-node.active{background:var(--bg3);border-color:var(--red)}
+.fn-top{display:flex;align-items:center;gap:8px}
+.fn-ico{font-size:17px}
+.fn-num{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:1px;font-family:'JetBrains Mono'}
+.fn-name{font-size:12.5px;font-weight:700}
+.fn-status{font-size:10px;color:var(--t3);display:flex;align-items:center;gap:5px}
+.fn-status .d{width:6px;height:6px;border-radius:50%;background:var(--t3)}
+.fn-status.on{color:var(--grn)}
+.fn-status.on .d{background:var(--grn);box-shadow:0 0 6px rgba(0,200,81,.6)}
+.flow-arrow{display:flex;align-items:center;color:var(--t3);font-size:18px;padding:0 2px}
+
+/* ── PANEL ── */
+.panel{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden}
+.panel-head{padding:20px 22px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:14px}
+.ph-ico{
+  width:42px;height:42px;border-radius:11px;background:var(--rdim);color:var(--red2);
+  display:grid;place-items:center;font-size:20px;flex-shrink:0;
+}
+.ph-body{flex:1;min-width:0}
+.ph-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1}
+.ph-sub{font-size:12px;color:var(--t2);margin-top:4px}
+.badge{
+  font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:5px 10px;border-radius:20px;border:1px solid var(--bdr2);color:var(--t2);
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.badge .d{width:7px;height:7px;border-radius:50%;background:var(--t3)}
+.badge.on{color:var(--grn);border-color:rgba(0,200,81,.3);background:rgba(0,200,81,.08)}
+.badge.on .d{background:var(--grn);box-shadow:0 0 6px rgba(0,200,81,.6)}
+
+.panel-body{padding:22px}
+.grp{margin-bottom:26px}
+.grp:last-child{margin-bottom:0}
+.grp-title{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.grp-title::after{content:"";flex:1;height:1px;background:var(--bdr)}
+
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field-label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;margin-bottom:7px}
+.field-label .opt{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.field-hint{font-size:11px;color:var(--t3);margin-top:6px;line-height:1.4}
+input[type=text],input[type=password],input[type=number],select,textarea{
+  width:100%;background:var(--bg);border:1px solid var(--bdr2);border-radius:9px;
+  color:var(--text);font-family:'Montserrat';font-size:13px;padding:11px 13px;transition:.15s;
+}
+textarea{resize:vertical;min-height:90px;font-family:'JetBrains Mono';font-size:12px;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);background:var(--bg2)}
+input::placeholder,textarea::placeholder{color:var(--t3)}
+select{cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23A0A0B0' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;
+}
+.field.inline{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:13px 15px;margin-bottom:12px}
+.field.inline .field-label{margin-bottom:0}
+.field.inline .fi-body{min-width:0}
+.field.inline .field-hint{margin-top:3px}
+
+/* toggle */
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle .track{position:absolute;inset:0;background:var(--bg4);border:1px solid var(--bdr2);border-radius:20px;transition:.18s;cursor:pointer}
+.toggle .track::before{content:"";position:absolute;width:18px;height:18px;left:2px;top:2px;background:var(--t2);border-radius:50%;transition:.18s}
+.toggle input:checked + .track{background:var(--red);border-color:var(--red)}
+.toggle input:checked + .track::before{transform:translateX(18px);background:#fff}
+
+/* connect row */
+.connect{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px dashed var(--bdr2);border-radius:11px;padding:14px 16px;margin-bottom:20px}
+.connect .c-ico{font-size:22px}
+.connect .c-body{flex:1;min-width:0}
+.connect .c-title{font-size:13px;font-weight:700}
+.connect .c-sub{font-size:11px;color:var(--t3);margin-top:2px}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){
+  .wrap{flex-direction:column}
+  nav.side{width:100%;position:static;flex-direction:row;overflow-x:auto;padding-bottom:6px}
+  .side-title{display:none}
+  .nav-item{flex-shrink:0}
+  .ni-hint{display:none}
+  .row2{grid-template-columns:1fr}
+}
+
+/* toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg4);border:1px solid var(--bdr2);border-radius:10px;
+  padding:13px 18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.25s;z-index:100;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .t-ico{color:var(--grn);font-size:16px}
+
+/* footer note */
+.corenote{margin-top:22px;font-size:11px;color:var(--t3);text-align:center;line-height:1.6}
+.corenote code{font-family:'JetBrains Mono';background:var(--bg3);padding:2px 6px;border-radius:5px;color:var(--t2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="14" cy="4"  r="1.5" fill="#E8000A"/>
+      <circle cx="20" cy="6"  r="1.3" fill="#E8000A"/>
+      <circle cx="24" cy="11" r="1.1" fill="#E8000A"/>
+      <circle cx="24" cy="17" r="1.0" fill="rgba(232,0,10,0.5)"/>
+      <circle cx="20" cy="22" r="1.0" fill="rgba(232,0,10,0.4)"/>
+      <circle cx="14" cy="24" r="1.3" fill="rgba(255,255,255,0.25)"/>
+      <circle cx="8"  cy="22" r="1.1" fill="rgba(255,255,255,0.2)"/>
+      <circle cx="4"  cy="17" r="1.0" fill="rgba(255,255,255,0.15)"/>
+      <circle cx="4"  cy="11" r="1.0" fill="rgba(255,255,255,0.12)"/>
+      <circle cx="8"  cy="6"  r="1.1" fill="rgba(255,255,255,0.18)"/>
+    </svg>
+    <div class="logo-text">
+      <div class="logo-sup">СИСТЕМА ОП</div>
+      <div class="logo-main">КОНТЕНТ·<em>ЗАВОД</em></div>
+      <div class="logo-sub">ЯДРО · CORE</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="hbtn ghost" id="btnImport" title="Загрузить конфигурацию из файла">Импорт</button>
+  <button class="hbtn ghost" id="btnExport" title="Выгрузить конфигурацию в файл">Экспорт</button>
+  <button class="hbtn primary" id="btnSave">💾 Сохранить ядро</button>
+</header>
+
+<div class="wrap">
+  <nav class="side" id="side">
+    <div class="side-title">Конвейер</div>
+    <!-- nav items injected -->
+  </nav>
+
+  <main>
+    <div class="flow" id="flow"><!-- pipeline flow injected --></div>
+    <div id="panelHost"><!-- active panel injected --></div>
+    <div class="corenote">
+      Оболочка ядра. Все настройки сохраняются локально в браузере (<code>localStorage</code>) и в файл через «Экспорт».<br>
+      Реальные интеграции (Telegram, ИИ, рендер, публикация) подключаются на следующем этапе — каркас под них уже заложен.
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><span class="t-ico">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============================================================
+   КОНТЕНТ-ЗАВОД · ЯДРО — оболочка (shell)
+   Конфигурация конвейера описана декларативно (SCHEMA).
+   Поля рендерятся автоматически, значения хранятся в state.
+   Подключение интеграций — на следующем этапе (см. connect.action).
+   ============================================================ */
+
+const LS_KEY = 'cf_core_v1';
+
+/* --- Схема конвейера: 1 ядро + 4 этапа ---------------------- */
+const SCHEMA = [
+  {
+    id:'core', num:'00', ico:'⚙️', label:'Ядро', hint:'Общие настройки',
+    title:'Ядро завода', sub:'Общие параметры проекта и режим работы конвейера',
+    integration:false,
+    groups:[
+      { title:'Проект', fields:[
+        {key:'projectName', type:'text', label:'Название проекта', def:'Контент-Завод АСП', placeholder:'Напр. Reels АСП'},
+        {key:'brand', type:'text', label:'Бренд / автор', def:'Ассоциация системных продаж', placeholder:'Имя канала или бренда'},
+      ]},
+      { title:'Режим конвейера', fields:[
+        {key:'mode', type:'select', label:'Как запускается обработка', def:'manual',
+         options:[['manual','Ручной — подтверждаю каждый ролик'],['auto','Авто — исходник сразу идёт по конвейеру'],['scheduled','По расписанию']]},
+        {key:'autoBetween', type:'toggle', label:'Автопереход между этапами', hint:'Этап сам передаёт результат следующему без ручного клика', def:true},
+        {key:'keepDrafts', type:'toggle', label:'Хранить черновики и промежуточные файлы', def:true},
+      ]},
+    ]
+  },
+  {
+    id:'intake', num:'01', ico:'📥', label:'Приём', hint:'Telegram-исходник',
+    title:'Приём исходника', sub:'Сырьё (видео / аудио / текст) поступает через Telegram-бота в очередь',
+    integration:{ ico:'🤖', title:'Telegram-бот', sub:'Не подключено — токен и права добавим на этапе интеграции', key:'telegram' },
+    groups:[
+      { title:'Источник', fields:[
+        {key:'botToken', type:'password', label:'Токен Telegram-бота', opt:'секрет', placeholder:'123456:ABC-DEF...', hint:'Получить у @BotFather. Хранится только в вашем браузере.'},
+        {key:'sourceChat', type:'text', label:'Чат / канал приёма', placeholder:'@my_uploads или -100...', hint:'Откуда бот забирает исходники'},
+      ]},
+      { title:'Что принимаем', fields:[
+        {key:'acceptVideo', type:'toggle', label:'Видео', def:true},
+        {key:'acceptAudio', type:'toggle', label:'Аудио / голосовые', def:true},
+        {key:'acceptText', type:'toggle', label:'Текст / ссылки', def:false},
+        {key:'maxSizeMb', type:'number', label:'Макс. размер файла, МБ', def:'200'},
+      ]},
+      { title:'Очередь', fields:[
+        {key:'autoQueue', type:'toggle', label:'Сразу ставить в очередь на обработку', def:true},
+        {key:'notifyOnIntake', type:'toggle', label:'Уведомлять о новом исходнике', def:true},
+      ]},
+    ]
+  },
+  {
+    id:'script', num:'02', ico:'🧠', label:'Сценарий', hint:'ИИ-обработка',
+    title:'Сценарий / ИИ-обработка', sub:'Транскрибация, нарезка на клипы и генерация сценария, субтитров, озвучки',
+    integration:{ ico:'✨', title:'ИИ-провайдер', sub:'Не подключено — ключ и модель добавим на этапе интеграции', key:'ai' },
+    groups:[
+      { title:'Провайдер', fields:[
+        {key:'aiProvider', type:'select', label:'ИИ-провайдер', def:'claude',
+         options:[['claude','Claude (Anthropic)'],['openai','OpenAI'],['custom','Свой endpoint']]},
+        {key:'aiModel', type:'text', label:'Модель', def:'claude-opus-4-8', placeholder:'напр. claude-opus-4-8'},
+        {key:'aiKey', type:'password', label:'API-ключ', opt:'секрет', placeholder:'sk-... / ключ провайдера'},
+      ]},
+      { title:'Обработка', fields:[
+        {key:'transcribe', type:'toggle', label:'Транскрибация речи', def:true},
+        {key:'lang', type:'select', label:'Язык контента', def:'ru', options:[['ru','Русский'],['kk','Казахский'],['en','English'],['auto','Определять автоматически']]},
+        {key:'autoClip', type:'toggle', label:'Автонарезка на клипы (highlights)', hint:'ИИ ищет сильные моменты для коротких роликов', def:true},
+        {key:'clipCount', type:'number', label:'Сколько клипов из одного исходника', def:'3'},
+      ]},
+      { title:'Генерация', fields:[
+        {key:'scriptPrompt', type:'textarea', label:'Промпт / шаблон сценария', def:'Ты — редактор коротких вертикальных роликов для сообщества РОП-ов.\nИз исходника собери цепляющий сценарий: хук в первые 3 сек, польза в теле, призыв в конце.\nТон — экспертный, без воды.', hint:'Инструкция для ИИ, как превращать исходник в сценарий ролика'},
+        {key:'genSubs', type:'toggle', label:'Генерировать субтитры', def:true},
+        {key:'genVoice', type:'toggle', label:'Озвучка (TTS)', def:false},
+      ]},
+    ]
+  },
+  {
+    id:'render', num:'03', ico:'🎬', label:'Монтаж', hint:'Сборка / рендер',
+    title:'Монтаж / рендер', sub:'Шаблон, оформление, субтитры и музыка собираются в финальный видеофайл',
+    integration:{ ico:'🎞️', title:'Движок рендера', sub:'Не подключено — рендер-сервис/FFmpeg добавим на этапе интеграции', key:'render' },
+    groups:[
+      { title:'Формат', fields:[
+        {key:'aspect', type:'select', label:'Соотношение сторон', def:'9:16',
+         options:[['9:16','Вертикаль 9:16 (Reels/Shorts/TikTok)'],['1:1','Квадрат 1:1'],['16:9','Горизонталь 16:9']]},
+        {key:'resolution', type:'select', label:'Разрешение', def:'1080', options:[['720','720p'],['1080','1080p (Full HD)'],['2160','2160p (4K)']]},
+        {key:'maxDuration', type:'number', label:'Макс. длина ролика, сек', def:'60'},
+      ]},
+      { title:'Оформление', fields:[
+        {key:'template', type:'select', label:'Шаблон оформления', def:'asp_dark',
+         options:[['asp_dark','АСП · Тёмный (фирменный)'],['minimal','Минимал'],['bold','Крупные титры'],['none','Без шаблона']]},
+        {key:'subsStyle', type:'select', label:'Стиль субтитров', def:'karaoke', options:[['karaoke','Караоке (подсветка слов)'],['block','Блоком'],['off','Выключены']]},
+        {key:'watermark', type:'toggle', label:'Логотип / водяной знак', def:true},
+      ]},
+      { title:'Звук', fields:[
+        {key:'music', type:'toggle', label:'Фоновая музыка', def:true},
+        {key:'musicTrack', type:'text', label:'Трек / плейлист по умолчанию', placeholder:'название или ID трека'},
+        {key:'ducking', type:'toggle', label:'Приглушать музыку под речь', def:true},
+      ]},
+    ]
+  },
+  {
+    id:'publish', num:'04', ico:'🚀', label:'Публикация', hint:'Выгрузка ролика',
+    title:'Публикация', sub:'Готовый ролик уходит в Telegram-канал и соцсети — сразу или по расписанию',
+    integration:{ ico:'📡', title:'Каналы публикации', sub:'Не подключено — доступы к каналам добавим на этапе интеграции', key:'publish' },
+    groups:[
+      { title:'Куда публикуем', fields:[
+        {key:'toTelegram', type:'toggle', label:'Telegram-канал', def:true},
+        {key:'tgChannel', type:'text', label:'Канал / чат публикации', placeholder:'@my_channel или -100...'},
+        {key:'toYoutube', type:'toggle', label:'YouTube Shorts', def:false},
+        {key:'toInstagram', type:'toggle', label:'Instagram Reels', def:false},
+        {key:'toTiktok', type:'toggle', label:'TikTok', def:false},
+      ]},
+      { title:'Режим выпуска', fields:[
+        {key:'pubMode', type:'select', label:'Как публиковать', def:'review',
+         options:[['review','На проверку — подтверждаю вручную'],['auto','Автопубликация сразу'],['schedule','По расписанию']]},
+        {key:'schedule', type:'text', label:'Расписание', placeholder:'напр. пн,ср,пт 19:00', hint:'Если выбран режим «По расписанию»'},
+        {key:'caption', type:'textarea', label:'Шаблон подписи к посту', def:'{title}\n\n{hashtags}\n\n#системныепродажи #АСП', hint:'Плейсхолдеры: {title}, {hashtags}'},
+      ]},
+    ]
+  },
+];
+
+/* --- Состояние ---------------------------------------------- */
+function defaults(){
+  const s={};
+  for(const sec of SCHEMA){ s[sec.id]={};
+    for(const g of sec.groups) for(const f of g.fields){
+      s[sec.id][f.key] = f.def!==undefined ? f.def : (f.type==='toggle'?false:'');
+    }
+  }
+  s._connected = {}; // статусы интеграций — заполнятся при подключении
+  return s;
+}
+let state = load();
+let active = 'core';
+
+function load(){
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw){ return merge(defaults(), JSON.parse(raw)); } }catch(e){}
+  return defaults();
+}
+function merge(base, over){ // мелкое слияние с сохранением новых полей схемы
+  for(const k in over){
+    if(k==='_connected'){ base._connected=over._connected||{}; continue; }
+    if(base[k]) Object.assign(base[k], over[k]);
+  }
+  return base;
+}
+function persist(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+/* --- Рендер левого меню + flow ------------------------------ */
+function isConnected(sec){ return !!(state._connected && state._connected[sec.id]); }
+
+function renderNav(){
+  const nav=document.getElementById('side');
+  nav.querySelectorAll('.nav-item').forEach(n=>n.remove());
+  for(const sec of SCHEMA){
+    const el=document.createElement('div');
+    el.className='nav-item'+(sec.id===active?' active':'');
+    const dot = sec.integration ? `<span class="ni-dot ${isConnected(sec)?'on':''}"></span>` : '';
+    el.innerHTML=`<span class="ni-num">${sec.num}</span>
+      <span class="ni-body"><span class="ni-label">${sec.ico} ${sec.label}</span><span class="ni-hint">${sec.hint}</span></span>${dot}`;
+    el.onclick=()=>{ active=sec.id; renderAll(); };
+    nav.appendChild(el);
+  }
+}
+function renderFlow(){
+  const flow=document.getElementById('flow'); flow.innerHTML='';
+  const stages=SCHEMA.filter(s=>s.id!=='core');
+  stages.forEach((sec,i)=>{
+    const node=document.createElement('div');
+    node.className='flow-node'+(sec.id===active?' active':'');
+    const on=isConnected(sec);
+    node.innerHTML=`<div class="fn-top"><span class="fn-ico">${sec.ico}</span><span class="fn-num">${sec.num}</span></div>
+      <div class="fn-name">${sec.label}</div>
+      <div class="fn-status ${on?'on':''}"><span class="d"></span>${on?'подключено':'не подключено'}</div>`;
+    node.onclick=()=>{ active=sec.id; renderAll(); };
+    flow.appendChild(node);
+    if(i<stages.length-1){ const a=document.createElement('div'); a.className='flow-arrow'; a.textContent='→'; flow.appendChild(a); }
+  });
+}
+
+/* --- Рендер панели активного раздела ------------------------ */
+function field(secId, f){
+  const val = state[secId][f.key];
+  const id = `f_${secId}_${f.key}`;
+  const opt = f.opt ? `<span class="opt">${f.opt}</span>` : '';
+  const hint = f.hint ? `<div class="field-hint">${f.hint}</div>` : '';
+
+  if(f.type==='toggle'){
+    return `<div class="field inline"><div class="fi-body"><div class="field-label">${f.label}${opt}</div>${hint}</div>
+      <label class="toggle"><input type="checkbox" id="${id}" ${val?'checked':''}><span class="track"></span></label></div>`;
+  }
+  let control='';
+  if(f.type==='select'){
+    control=`<select id="${id}">${f.options.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select>`;
+  }else if(f.type==='textarea'){
+    control=`<textarea id="${id}" placeholder="${f.placeholder||''}">${escapeHtml(val||'')}</textarea>`;
+  }else{
+    const t = f.type==='password'?'password':(f.type==='number'?'number':'text');
+    control=`<input type="${t}" id="${id}" value="${escapeAttr(val||'')}" placeholder="${f.placeholder||''}">`;
+  }
+  return `<div class="field"><div class="field-label">${f.label}${opt}</div>${control}${hint}</div>`;
+}
+
+function renderPanel(){
+  const sec = SCHEMA.find(s=>s.id===active);
+  const host=document.getElementById('panelHost');
+  const connected = isConnected(sec);
+  const badge = sec.integration
+    ? `<span class="badge ${connected?'on':''}"><span class="d"></span>${connected?'Подключено':'Не подключено'}</span>` : '';
+
+  let connectRow='';
+  if(sec.integration){
+    const c=sec.integration;
+    connectRow = `<div class="connect">
+      <span class="c-ico">${c.ico}</span>
+      <div class="c-body"><div class="c-title">${c.title}</div><div class="c-sub">${connected?'Готово к работе':c.sub}</div></div>
+      <button class="hbtn ${connected?'ghost':'primary'}" id="btnConnect">${connected?'Отключить':'Подключить'}</button>
+    </div>`;
+  }
+
+  const groups = sec.groups.map(g=>`
+    <div class="grp"><div class="grp-title">${g.title}</div>
+      ${g.fields.map(f=>field(sec.id,f)).join('')}
+    </div>`).join('');
+
+  host.innerHTML = `<div class="panel">
+    <div class="panel-head">
+      <div class="ph-ico">${sec.ico}</div>
+      <div class="ph-body"><div class="ph-title">${sec.title}</div><div class="ph-sub">${sec.sub}</div></div>
+      ${badge}
+    </div>
+    <div class="panel-body">${connectRow}${groups}</div>
+  </div>`;
+
+  // привязка полей
+  for(const g of sec.groups) for(const f of g.fields){
+    const el=document.getElementById(`f_${sec.id}_${f.key}`); if(!el) continue;
+    const ev = (f.type==='toggle'||f.type==='select')?'change':'input';
+    el.addEventListener(ev, ()=>{
+      state[sec.id][f.key] = f.type==='toggle' ? el.checked : el.value;
+      persist();
+    });
+  }
+  const cb=document.getElementById('btnConnect');
+  if(cb) cb.onclick=()=>toggleConnect(sec);
+}
+
+/* --- Подключение интеграции (заглушка под следующий этап) --- */
+function toggleConnect(sec){
+  state._connected = state._connected||{};
+  if(state._connected[sec.id]){
+    state._connected[sec.id]=false; persist(); renderAll();
+    toast('Интеграция «'+sec.label+'» отключена');
+  }else{
+    // Заглушка: реальное подключение (проверка токена/ключа, вебхук и т.п.)
+    // будет реализовано на этапе интеграций. Пока — помечаем как готовое.
+    state._connected[sec.id]=true; persist(); renderAll();
+    toast('Каркас «'+sec.label+'» готов · реальное подключение — на этапе интеграций');
+  }
+}
+
+function renderAll(){ renderNav(); renderFlow(); renderPanel(); }
+
+/* --- Save / Export / Import --------------------------------- */
+document.getElementById('btnSave').onclick=()=>{ persist(); toast('Ядро сохранено'); };
+document.getElementById('btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='content-factory-core.json'; a.click(); URL.revokeObjectURL(url);
+  toast('Конфигурация выгружена в файл');
+};
+document.getElementById('btnImport').onclick=()=>{
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json';
+  inp.onchange=()=>{ const file=inp.files[0]; if(!file) return;
+    const r=new FileReader(); r.onload=()=>{ try{
+      state=merge(defaults(), JSON.parse(r.result)); persist(); renderAll(); toast('Конфигурация загружена');
+    }catch(e){ toast('Ошибка: файл не читается'); } }; r.readAsText(file);
+  }; inp.click();
+};
+
+/* --- utils -------------------------------------------------- */
+let toastT;
+function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function escapeHtml(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function escapeAttr(s){ return String(s).replace(/[&"<>]/g,c=>({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[c])); }
+
+renderAll();
+</script>
+</body>
+</html>
