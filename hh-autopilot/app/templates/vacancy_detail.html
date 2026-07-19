@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/vacancies" class="back">← К списку</a>
+<div id="detail" data-id="{{ vacancy_id }}">Загрузка…</div>
+{% endblock %}
+{% block script %}<script>Autopilot.initDetail({{ vacancy_id }});</script>{% endblock %}

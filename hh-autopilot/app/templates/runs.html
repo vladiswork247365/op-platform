@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>История циклов</h2>
+<table class="grid">
+  <thead><tr>
+    <th>Старт</th><th>Найдено</th><th>Новых</th><th>Дубли</th><th>MATCH</th>
+    <th>REVIEW</th><th>REJECT</th><th>Откликов</th><th>Ошибок</th><th>OK</th>
+  </tr></thead>
+  <tbody id="runs-body"><tr><td colspan="10">Загрузка…</td></tr></tbody>
+</table>
+{% endblock %}
+{% block script %}<script>Autopilot.initRuns();</script>{% endblock %}

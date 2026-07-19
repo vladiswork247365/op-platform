@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="status-bar">
+  <div class="status-pill" id="sys-status">Система: <b>…</b></div>
+  <div class="status-info">
+    <span>Последняя проверка: <b id="last-check">—</b></span>
+    <span>Следующая проверка: <b id="next-check">—</b></span>
+    <span>Очередь: <b id="queue">—</b></span>
+    <span>Ошибок за 24ч: <b id="errors24">—</b></span>
+  </div>
+  <div class="actions">
+    <button id="run-now">Запустить цикл сейчас</button>
+    <button id="toggle-mode" class="secondary">Переключить режим</button>
+  </div>
+</section>
+
+<h2>За сегодня</h2>
+<section class="cards" id="today-cards">
+  <div class="card"><span class="num" data-k="found">0</span>Найдено</div>
+  <div class="card"><span class="num" data-k="new">0</span>Новых</div>
+  <div class="card"><span class="num" data-k="analyzed">0</span>AI-анализ</div>
+  <div class="card ok"><span class="num" data-k="match">0</span>MATCH</div>
+  <div class="card warn"><span class="num" data-k="review">0</span>REVIEW</div>
+  <div class="card"><span class="num" data-k="reject">0</span>REJECT</div>
+  <div class="card ok"><span class="num" data-k="applied">0</span>Откликов</div>
+  <div class="card"><span class="num" data-k="whatsapp">0</span>WhatsApp</div>
+  <div class="card err"><span class="num" data-k="errors">0</span>Ошибок</div>
+</section>
+{% endblock %}
+{% block script %}<script>Autopilot.initDashboard();</script>{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Вакансии</h2>
+<div class="filters" id="filters">
+  <button data-f="today">Сегодня</button>
+  <button data-f="yesterday">Вчера</button>
+  <button data-f="week" class="on">Неделя</button>
+  <button data-f="match">MATCH</button>
+  <button data-f="review">REVIEW</button>
+  <button data-f="reject">REJECT</button>
+  <button data-f="applied">Отклик отправлен</button>
+  <button data-f="attention">Ошибка / внимание</button>
+</div>
+<table class="grid">
+  <thead><tr>
+    <th>Дата</th><th>Компания</th><th>Вакансия</th><th>Score</th>
+    <th>Решение</th><th>Отклик</th><th>WA</th><th>Статус</th>
+  </tr></thead>
+  <tbody id="vac-body"><tr><td colspan="8">Загрузка…</td></tr></tbody>
+</table>
+{% endblock %}
+{% block script %}<script>Autopilot.initVacancies();</script>{% endblock %}

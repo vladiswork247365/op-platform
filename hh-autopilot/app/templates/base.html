@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} — HH Autopilot</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">HH<span>Autopilot</span></div>
+    <nav>
+      <a href="/" class="{{ 'on' if active == 'dashboard.html' else '' }}">Обзор</a>
+      <a href="/vacancies" class="{{ 'on' if active == 'vacancies.html' else '' }}">Вакансии</a>
+      <a href="/attention" class="{{ 'on' if active == 'attention.html' else '' }}">Требует внимания</a>
+      <a href="/runs" class="{{ 'on' if active == 'runs.html' else '' }}">Циклы</a>
+      <a href="/settings" class="{{ 'on' if active == 'settings.html' else '' }}">Настройки</a>
+    </nav>
+    <div class="mode" id="mode-badge">—</div>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <script src="/static/app.js"></script>
+  {% block script %}{% endblock %}
+</body>
+</html>

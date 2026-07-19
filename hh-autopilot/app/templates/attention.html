@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Требует внимания</h2>
+<p class="muted">Только исключения, которые система не смогла безопасно решить сама.</p>
+<table class="grid">
+  <thead><tr>
+    <th>Дата</th><th>Компания</th><th>Вакансия</th><th>Score</th><th>Причина</th>
+  </tr></thead>
+  <tbody id="att-body"><tr><td colspan="5">Загрузка…</td></tr></tbody>
+</table>
+{% endblock %}
+{% block script %}<script>Autopilot.initAttention();</script>{% endblock %}

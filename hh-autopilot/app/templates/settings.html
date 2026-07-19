@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Настройки</h2>
+<p class="muted">Изменения применяются сразу. Списки вводите через запятую.</p>
+<form id="settings-form" class="settings">
+  <fieldset><legend>Режим и планировщик</legend>
+    <label>Режим работы
+      <select name="run_mode">
+        <option value="dry_run">DRY RUN (ничего не отправляется)</option>
+        <option value="production">PRODUCTION</option>
+      </select>
+    </label>
+    <label>Интервал поиска, часов
+      <input name="search_interval_hours" type="number" step="0.5" min="0.5">
+    </label>
+  </fieldset>
+
+  <fieldset><legend>Пороги решения</legend>
+    <label>Порог авто-отклика (MATCH ≥) <input name="auto_apply_min_score" type="number" min="0" max="100"></label>
+    <label>Порог ручной проверки (REVIEW ≥) <input name="review_min_score" type="number" min="0" max="100"></label>
+  </fieldset>
+
+  <fieldset><legend>Профиль кандидата</legend>
+    <label>Резюме (текст)<textarea name="resume_text" rows="6"></textarea></label>
+    <label>Целевые должности<input name="target_titles" data-list></label>
+    <label>Альтернативные названия должностей<input name="alt_titles" data-list></label>
+    <label>Навыки<input name="skills" data-list></label>
+    <label>Города<input name="cities" data-list></label>
+    <label class="row"><input name="remote_ok" type="checkbox"> Возможна удалённая работа</label>
+    <label>Минимальная зарплата<input name="min_salary" type="number" min="0"></label>
+    <label class="row"><input name="mandatory_min_salary" type="checkbox"> Мин. зарплата — обязательное условие (жёсткий фильтр)</label>
+    <label>Стоп-слова<input name="stop_words" data-list></label>
+    <label>Обязательные ключевые слова<input name="required_keywords" data-list></label>
+  </fieldset>
+
+  <fieldset><legend>Профиль поиска (HeadHunter)</legend>
+    <label>Поисковый запрос<input name="search_text"></label>
+    <label>Регион (area id, 40 = Казахстан)<input name="search_area"></label>
+    <label>Опыт (experience id)<input name="search_experience"></label>
+    <label>Занятость (employment id)<input name="search_employment"></label>
+    <label>График (schedule id)<input name="search_schedule"></label>
+    <label>Вакансий за запрос<input name="search_per_page" type="number" min="1" max="100"></label>
+  </fieldset>
+
+  <fieldset><legend>Сопроводительное письмо</legend>
+    <label>Режим
+      <select name="cover_letter_mode">
+        <option value="static">Статический (один текст всем)</option>
+        <option value="ai">AI-персонализация</option>
+      </select>
+    </label>
+    <label>Базовый текст<textarea name="cover_letter_text" rows="5"></textarea></label>
+  </fieldset>
+
+  <button type="submit">Сохранить</button>
+  <span id="save-status" class="muted"></span>
+</form>
+{% endblock %}
+{% block script %}<script>Autopilot.initSettings();</script>{% endblock %}
