@@ -1,0 +1,13 @@
+{
+  "output": "reel.mp4",
+  "size": [1080, 1920],
+  "fps": 30,
+  "xfade": 0.6,
+  "brand_red": [232, 0, 10],
+  "segments": [
+    {"image": "/path/to/photo1.jpg", "dur": 5.0, "lines": ["СИСТЕМНЫЕ", "ПРОДАЖИ"], "pos": "bottom", "transpose": false},
+    {"image": "/path/to/photo2.jpg", "dur": 5.0, "lines": ["это не хаос —", "это система"], "pos": "bottom", "transpose": true},
+    {"image": "/path/to/photo3.jpg", "dur": 5.0, "lines": ["802 РОП-а", "уже внутри"], "pos": "top", "transpose": true}
+  ],
+  "cta": {"title": "АСП", "subtitle": "Ассоциация системных продаж", "domain": "platform.systemop.top", "dur": 3.5}
+}
