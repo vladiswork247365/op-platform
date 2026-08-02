@@ -1,0 +1,34 @@
+# Медиа в репозиторий не кладём — только текстовые артефакты сериала.
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.ttf
+*.otf
+
+# рабочие каталоги
+episodes/*/raw/
+episodes/*/work/
+episodes/*/out/
+assets/fonts/
+assets/music/
+
+# логи
+*.log
+
+# но текстовую память сериала сохраняем
+!.gitignore
+!README.md
+!series-bible.md
+!episodes/*/notes/*.md
+!episodes/*/notes/*.srt
+!episodes/*/state.json
