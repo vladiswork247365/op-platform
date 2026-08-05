@@ -1,0 +1,21 @@
+{
+  "_comment": "Ролик r002 «Сосиски → урок продаж». Положи 4 исходника в montage/sources/ с этими именами. in/out подрежь по своему материалу — это целевой таймлайн. Музыку (music.m4a) по желанию.",
+  "output": { "w": 1080, "h": 1920, "fps": 30 },
+  "music": { "file": "music.m4a", "gain_db": -18 },
+  "beats": [
+    { "src": "Штраф за сосиски.mp4.mov", "in": 0.0, "out": 3.0, "motion": "punch", "punch": 1.08,
+      "text": { "lines": ["ОШТРАФОВАЛИ", "за СОСИСКИ"], "highlight": "сосиски", "pos": "center", "size": 96 } },
+    { "src": "Штраф за сосиски.mp4.mov", "in": 3.0, "out": 9.5, "speed": 1.1, "motion": "none",
+      "text": { "lines": ["и это ещё", "не всё"], "highlight": "всё", "pos": "lower" } },
+    { "src": "IMG_5200.HEIC", "dur": 0.5, "motion": "kenburns_in" },
+    { "src": "IMG_6003 (online-video-cutter.com).mp4", "in": 0.0, "out": 3.0, "motion": "punch",
+      "text": { "lines": ["при чём тут", "ПРОДАЖИ?"], "highlight": "продажи?", "pos": "lower" } },
+    { "src": "IMG_6003 (online-video-cutter.com).mp4", "in": 3.0, "out": 15.5, "speed": 1.05, "motion": "none",
+      "text": { "lines": ["теряешь клиента", "на одной фразе"], "highlight": "фразе", "pos": "lower" } },
+    { "src": "_NIK5813.jpg", "dur": 0.5, "motion": "kenburns_out" },
+    { "src": "IMG_6003 (online-video-cutter.com).mp4", "in": 15.5, "out": 18.0, "motion": "punch",
+      "text": { "lines": ["вот она —", "точка слива"], "highlight": "слива", "pos": "lower" } },
+    { "src": "IMG_6003 (online-video-cutter.com).mp4", "in": 18.0, "out": 21.0, "motion": "none",
+      "text": { "lines": ["разбор отдела —", "в профиле"], "highlight": "профиле", "pos": "lower" } }
+  ]
+}

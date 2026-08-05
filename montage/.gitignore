@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+# исходники и результаты рендера в репозиторий не кладём (тяжёлые)
+sources/*
+out/*
+!sources/.gitkeep
+!out/.gitkeep
+_cap_test.png
+*.mp4
