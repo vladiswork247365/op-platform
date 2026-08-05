@@ -1,0 +1,16 @@
+# Фабрика Reels — авто-обработчик 24/7. Запуск: см. server/deploy.sh
+services:
+  reels:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    image: reels-factory
+    restart: unless-stopped
+    environment:
+      IN_ID: "1QuNqWxBNxhrhvetf13cJLoTQLLHTLbGw"   # 00 Исходники (съёмки)
+      OUT_ID: "1PlwYzMJG0CYJxz-0Dkfn9Lrp4K2Ntomc"  # 01 Готовые ролики
+      INTERVAL: "60"
+      REMOTE: "gdrive"
+    volumes:
+      - ./config:/config     # rclone.conf (Google-авторизация)
+      - ./data:/data         # рабочие sources/out

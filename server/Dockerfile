@@ -17,6 +17,10 @@ COPY montage/ /app/montage/
 RUN pip install --no-cache-dir -r /app/montage/requirements.txt \
     && python3 -c "import imageio_ffmpeg; print('ffmpeg:', imageio_ffmpeg.get_ffmpeg_exe())"
 
+# субтитры по речи + предзагрузка модели в образ (чтобы рантайм был offline-быстрым)
+RUN pip install --no-cache-dir -r /app/montage/requirements-subs.txt \
+    && python3 -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')"
+
 COPY server/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 

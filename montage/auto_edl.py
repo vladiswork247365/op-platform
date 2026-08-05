@@ -16,6 +16,11 @@ import subprocess
 
 import imageio_ffmpeg
 
+try:
+    from transcribe import transcribe_words, words_in_range, chunk_lines
+except Exception:  # модуль/зависимости могут отсутствовать — работаем без субтитров
+    transcribe_words = None
+
 FF = imageio_ffmpeg.get_ffmpeg_exe()
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
@@ -46,7 +51,7 @@ def wrap_words(text: str, per: int = 2, maxlines: int = 2):
     return lines[:maxlines] or [text]
 
 
-def build_edl(srcdir: str, target: float = 34.0, fps: int = 30) -> dict:
+def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = True) -> dict:
     files = sorted(glob.glob(os.path.join(srcdir, "*")))
     vids = [f for f in files if os.path.splitext(f)[1].lower() in VIDEO_EXT]
     imgs = [f for f in files if os.path.splitext(f)[1].lower() in IMAGE_EXT]
@@ -58,15 +63,25 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30) -> dict:
     beats, used, count, photo_i, hook_done = [], 0.0, 0, 0, False
     BEAT = 3.0
 
+    strip = ".,!?—:;«»\"'()"
     for v in vids:
+        words = transcribe_words(v) if (subs and transcribe_words) else None
         d, pos = duration(v), 0.0
         while pos + 1.0 < d and used < target:
             seg = min(BEAT, d - pos)
             beat = {"src": os.path.basename(v), "in": round(pos, 2), "out": round(pos + seg, 2),
                     "speed": 1.05, "motion": "punch" if count % 2 == 0 else "none"}
+            spoken = words_in_range(words, pos, pos + seg) if words else []
             if not hook_done:
-                beat["text"] = {"lines": wrap_words(clean_title(v)), "pos": "center", "size": 92}
+                if spoken:
+                    beat["text"] = {"lines": chunk_lines(spoken, per=2), "pos": "center",
+                                    "size": 88, "highlight": spoken[-1].strip(strip)}
+                else:
+                    beat["text"] = {"lines": wrap_words(clean_title(v)), "pos": "center", "size": 92}
                 beat["motion"], beat["punch"], hook_done = "punch", 1.08, True
+            elif spoken:
+                beat["text"] = {"lines": chunk_lines(spoken), "pos": "lower",
+                                "highlight": spoken[-1].strip(strip)}
             beats.append(beat)
             used += seg / 1.05
             pos += seg
@@ -92,8 +107,9 @@ if __name__ == "__main__":
     ap.add_argument("--src", required=True)
     ap.add_argument("--out", default="-")
     ap.add_argument("--target", type=float, default=34.0)
+    ap.add_argument("--no-subs", action="store_true", help="без транскрибации, хук из имени файла")
     a = ap.parse_args()
-    edl = build_edl(a.src, a.target)
+    edl = build_edl(a.src, a.target, subs=not a.no_subs)
     s = json.dumps(edl, ensure_ascii=False, indent=2)
     if a.out == "-":
         print(s)
