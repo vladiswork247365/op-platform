@@ -1,0 +1,26 @@
+# Reels-фабрика — авто-обработчик для всегда-онлайн сервера.
+# Забирает исходники из Google Drive (rclone), рендерит вертикальный ролик
+# движком montage/, кладёт результат обратно в Drive. Крутится 24/7.
+FROM python:3.11-slim
+
+# ffmpeg идёт статикой в imageio-ffmpeg (ставится из requirements),
+# нужны только шрифты (кириллица для субтитров), rclone и базовые утилиты.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        fonts-dejavu-core curl unzip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# rclone — синхронизация с Google Drive
+RUN curl -fsSL https://rclone.org/install.sh | bash
+
+WORKDIR /app
+COPY montage/ /app/montage/
+RUN pip install --no-cache-dir -r /app/montage/requirements.txt \
+    && python3 -c "import imageio_ffmpeg; print('ffmpeg:', imageio_ffmpeg.get_ffmpeg_exe())"
+
+COPY server/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# /data — рабочие sources/out; /config/rclone — конфиг rclone (том с хоста)
+VOLUME ["/data", "/config"]
+ENV RCLONE_CONFIG=/config/rclone.conf
+ENTRYPOINT ["/app/entrypoint.sh"]
