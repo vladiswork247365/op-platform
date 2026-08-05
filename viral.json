@@ -1,0 +1,100 @@
+{
+  "tools": [
+    {
+      "key": "hook3s",
+      "name": "Хук 0–3 с",
+      "impact": 10,
+      "does": "Крючок в первые 3 сек — решает досмотр",
+      "when": "всегда",
+      "engine": "auto_edl (hook) + reels.json score"
+    },
+    {
+      "key": "auto_cut",
+      "name": "Авто-динамика",
+      "impact": 9,
+      "does": "auto-editor режет паузы/тишину, держит темп",
+      "when": "есть речь",
+      "engine": "dynamic_cut.py"
+    },
+    {
+      "key": "word_subs",
+      "name": "Пословные субтитры",
+      "impact": 9,
+      "does": "Субтитры по словам с подсветкой (80% без звука)",
+      "when": "есть речь",
+      "engine": "transcribe.py + render captions"
+    },
+    {
+      "key": "beat_sync",
+      "name": "Нарезка в бит",
+      "impact": 8,
+      "does": "Склейки на бит музыки — гипнотизирует",
+      "when": "есть музыка",
+      "engine": "beat_sync.py (librosa)"
+    },
+    {
+      "key": "virality_score",
+      "name": "Оценка удержания",
+      "impact": 8,
+      "does": "Скоринг вариантов A/B, выбор лучшего",
+      "when": "всегда",
+      "engine": "reels.json rubric + virality_predictor"
+    },
+    {
+      "key": "zoom_punch",
+      "name": "Зум-панч / зум камеры",
+      "impact": 7,
+      "does": "Движение в кадре против статики",
+      "when": "статичные/длинные куски",
+      "engine": "render motion"
+    },
+    {
+      "key": "broll_stock",
+      "name": "B-roll / сток в тему",
+      "impact": 7,
+      "does": "Наслоение кадров по смыслу речи",
+      "when": "есть ключевые слова + Pexels",
+      "engine": "stock.py"
+    },
+    {
+      "key": "loop_cta",
+      "name": "CTA-петля",
+      "impact": 7,
+      "does": "Замыкание на начало → реплеи",
+      "when": "всегда",
+      "engine": "auto_edl CTA"
+    },
+    {
+      "key": "transitions",
+      "name": "Переходы",
+      "impact": 6,
+      "does": "Плавные/резкие переходы на сменах сцен",
+      "when": "смена сцены",
+      "engine": "render xfade"
+    },
+    {
+      "key": "boomerang",
+      "name": "Бумеранг (туда-сюда)",
+      "impact": 6,
+      "does": "Акцент-перемотка на ключевом моменте",
+      "when": "короткий акцент",
+      "engine": "render motion"
+    },
+    {
+      "key": "loudness",
+      "name": "Громкость под соцсети",
+      "impact": 6,
+      "does": "EBU -14 LUFS — не тише ленты",
+      "when": "всегда",
+      "engine": "render finalize"
+    },
+    {
+      "key": "color_punch",
+      "name": "Цветовой панч",
+      "impact": 5,
+      "does": "Контраст/сочность/резкость",
+      "when": "всегда",
+      "engine": "render finalize"
+    }
+  ]
+}

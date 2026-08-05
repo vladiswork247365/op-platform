@@ -79,6 +79,10 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
         tin, tout = float(beat.get("in", 0)), float(beat.get("out", 2))
         dur = round((tout - tin) / speed, 3)
 
+    boomerang = (not is_image(src)) and motion == "boomerang"
+    if boomerang:
+        dur = round(dur * 2, 3)  # вперёд + реверс
+
     inputs = []
     vf_src = "[0:v]"
     if is_image(src):
@@ -102,17 +106,27 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
             zexpr = "if(lte(zoom,1.0),1.18,max(zoom-0.0010,1.0))"
         vchain = (f"[0:v]scale={big_w}:{big_h}:force_original_aspect_ratio=increase,"
                   f"crop={big_w}:{big_h},zoompan=z='{zexpr}':d={frames}:"
-                  f"s={W}x{H}:fps={fps},format=yuv420p[vbase]")
+                  f"s={W}x{H}:fps={fps},format=yuv420p,setsar=1[vbase]")
     else:
         pts = f"setpts=PTS/{speed}," if speed != 1.0 else ""
-        punch = ""
+        mo = ""
         if motion == "punch":
             amt = float(beat.get("punch", 1.06))
-            punch = f"scale={even(W*amt)}:{even(H*amt)},crop={W}:{H},"
-        vchain = f"[0:v]{pts}{fill},{punch}fps={fps},format=yuv420p[vbase]"
+            mo = f"scale={even(W*amt)}:{even(H*amt)},crop={W}:{H},"
+        elif motion in ("zoomin", "zoomout"):  # зум камеры через zoompan (pzoom — накопление)
+            zexpr = ("min(pzoom+0.0015,1.25)" if motion == "zoomin"
+                     else "if(eq(on,0),1.25,max(pzoom-0.0015,1.0))")
+            mo = (f"zoompan=z='{zexpr}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
+                  f"s={W}x{H}:fps={fps},")
+        if boomerang:  # перемотка туда-сюда: вперёд + реверс, звук глушим
+            vchain = (f"[0:v]{fill},fps={fps},format=yuv420p,split[bf][bb];"
+                      f"[bb]reverse[bbr];[bf][bbr]concat=n=2:v=1:a=0,setsar=1[vbase]")
+        else:
+            vchain = f"[0:v]{pts}{fill},fps={fps},{mo}format=yuv420p,setsar=1[vbase]"
 
     # ── аудиоцепочка ──
-    keep = beat.get("audio", "keep") == "keep" and not is_image(src) and has_audio(os.path.join(srcdir, beat["src"]))
+    keep = (beat.get("audio", "keep") == "keep" and not is_image(src) and not boomerang
+            and has_audio(os.path.join(srcdir, beat["src"])))
     if keep:
         atempo = f"atempo={speed}," if speed != 1.0 else ""
         achain = f"[0:a]{atempo}aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo[aout]"
@@ -124,19 +138,29 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
     filt = vchain + ";" + achain
     vmap = "[vbase]"
 
-    # ── текст (Pillow → overlay) ──
-    txt = beat.get("text")
-    text_png = None
-    if txt:
-        text_png = os.path.join(tmp, f"cap_{i:02d}.png")
-        render_caption(txt.get("lines", []), highlight=txt.get("highlight"),
-                       out_path=text_png, w=W, h=H, pos=txt.get("pos", "lower"),
-                       font_path=font, font_size=int(txt.get("size", 84)))
-        inputs += ["-loop", "1", "-framerate", str(fps), "-t", f"{dur}", "-i", text_png]
-        cap_idx = 2  # 0=src,1=silence,2=caption (зациклен на длину beat'а)
-        filt += (f";[{cap_idx}:v]format=rgba,fade=in:st=0:d=0.12:alpha=1[cap];"
-                 f"{vmap}[cap]overlay=0:0:format=auto[vtxt]")
-        vmap = "[vtxt]"
+    # ── подписи: одиночный text ИЛИ анимированный трек captions (пословно) ──
+    cues = beat.get("captions")
+    if not cues and beat.get("text"):
+        t = beat["text"]
+        cues = [{"lines": t.get("lines", []), "highlight": t.get("highlight"),
+                 "pos": t.get("pos", "lower"), "size": t.get("size", 84)}]  # без времени = весь beat
+    if cues:
+        cap_idx = 2  # 0=src, 1=silence, далее подписи
+        for j, cue in enumerate(cues):
+            png = os.path.join(tmp, f"cap_{i:02d}_{j:02d}.png")
+            render_caption(cue.get("lines", []), highlight=cue.get("highlight"),
+                           out_path=png, w=W, h=H, pos=cue.get("pos", "lower"),
+                           font_path=font, font_size=int(cue.get("size", 84)))
+            inputs += ["-loop", "1", "-framerate", str(fps), "-t", f"{dur}", "-i", png]
+            enable = ""
+            if "t0" in cue:
+                t0 = max(0.0, float(cue["t0"]))
+                t1 = float(cue.get("t1", dur))
+                enable = f":enable='between(t,{t0:.2f},{t1:.2f})'"
+            filt += (f";[{cap_idx}:v]format=rgba[capin{j}];"
+                     f"{vmap}[capin{j}]overlay=0:0{enable}[vtxt{j}]")
+            vmap = f"[vtxt{j}]"
+            cap_idx += 1
 
     cmd = [FFMPEG, "-y", *inputs, "-filter_complex", filt,
            "-map", vmap, "-map", amap, "-t", f"{dur}",
@@ -147,13 +171,39 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
     return seg, dur
 
 
-def concat(segs, tmp, out):
-    lst = os.path.join(tmp, "concat.txt")
-    with open(lst, "w") as f:
-        for s in segs:
-            f.write(f"file '{os.path.abspath(s)}'\n")
-    # переэнкод (сегменты одинаковы, но так надёжнее склейки разных длительностей)
-    run([FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", lst,
+XFADE_TD = 0.28  # длительность мягкого перехода
+
+
+def concat(segs, durs, transes, tmp, out):
+    # нет переходов → простая надёжная склейка встык (жёсткие резы = динамика)
+    if not any(transes[1:]):
+        lst = os.path.join(tmp, "concat.txt")
+        with open(lst, "w") as f:
+            for s in segs:
+                f.write(f"file '{os.path.abspath(s)}'\n")
+        run([FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", lst,
+             "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+             "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out])
+        return
+    # xfade-цепочка: cut = почти мгновенный переход, остальные — по типу beat'а
+    inputs = []
+    for s in segs:
+        inputs += ["-i", s]
+    vf, af = [], []
+    vcur, acur, acc = "[0:v]", "[0:a]", durs[0]
+    for i in range(1, len(segs)):
+        t = transes[i]
+        cut = t in (None, "cut")
+        td = 0.02 if cut else XFADE_TD
+        trans = "fade" if cut else t
+        off = max(0.0, acc - td)
+        vl, al = f"[v{i}]", f"[a{i}]"
+        vf.append(f"{vcur}[{i}:v]xfade=transition={trans}:duration={td}:offset={off:.3f}{vl}")
+        af.append(f"{acur}[{i}:a]acrossfade=d={td}{al}")
+        vcur, acur = vl, al
+        acc = acc + durs[i] - td
+    filt = ";".join(vf + af)
+    run([FFMPEG, "-y", *inputs, "-filter_complex", filt, "-map", vcur, "-map", acur,
          "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
          "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out])
 
@@ -163,6 +213,16 @@ def add_music(video, music, gain_db, tmp, out, total_dur):
          f"[1:a]volume={gain_db}dB,afade=out:st={max(0,total_dur-1.2)}:d=1.2[m];"
          f"[0:a][m]amix=inputs=2:duration=first:dropout_transition=0,dynaudnorm[a]",
          "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", out])
+
+
+def finalize(src, out):
+    """Финальный проход для «залетаемости»: громкость под соцсети (EBU -14 LUFS),
+    цветовой панч и лёгкая резкость."""
+    run([FFMPEG, "-y", "-i", src,
+         "-vf", "eq=contrast=1.06:saturation=1.12:brightness=0.01,unsharp=5:5:0.4:5:5:0.0",
+         "-af", "loudnorm=I=-14:TP=-1.5:LRA=11",
+         "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+         "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out])
 
 
 def main():
@@ -184,22 +244,25 @@ def main():
 
     print(f"→ выход {W}x{H}@{fps}, шрифт: {font}")
     with tempfile.TemporaryDirectory() as tmp:
-        segs, total = [], 0.0
+        segs, durs, transes, total = [], [], [], 0.0
         for i, beat in enumerate(edl["beats"]):
             seg, dur = build_beat(i, beat, args.src, tmp, W, H, fps, font)
-            segs.append(seg); total += dur
-            print(f"  ✓ beat {i:02d}  {beat['src'][:34]:34}  {dur:>5.2f}s  «{(beat.get('text') or {}).get('lines',[''])[0][:24]}»")
+            segs.append(seg); durs.append(dur); transes.append(beat.get("transition"))
+            total += dur
+            print(f"  ✓ beat {i:02d}  {beat['src'][:30]:30}  {beat.get('motion','none'):8} {dur:>5.2f}s  «{(beat.get('text') or {}).get('lines',[''])[0][:20]}»")
         base = os.path.join(tmp, "concat.mp4")
-        concat(segs, tmp, base)
+        concat(segs, durs, transes, tmp, base)
         music = edl.get("music", {})
         mfile = music.get("file")
+        stage = base
         if mfile and os.path.exists(os.path.join(args.src, mfile)):
-            add_music(base, os.path.join(args.src, mfile), music.get("gain_db", -18), tmp, args.out, total)
+            stage = os.path.join(tmp, "mixed.mp4")
+            add_music(base, os.path.join(args.src, mfile), music.get("gain_db", -18), tmp, stage, total)
             print("  ✓ музыкальная подложка подмешана")
-        else:
-            os.replace(base, args.out)
-            if mfile:
-                print(f"  ⚠ музыка '{mfile}' не найдена в {args.src} — рендер без подложки")
+        elif mfile:
+            print(f"  ⚠ музыка '{mfile}' не найдена в {args.src} — рендер без подложки")
+        finalize(stage, args.out)   # громкость под соцсети + цветовой панч
+        print("  ✓ финал: loudnorm -14 LUFS + цветовой панч")
     print(f"\n✅ готово: {args.out}  (~{total:.1f}s, {len(segs)} склеек)")
 
 

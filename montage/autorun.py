@@ -24,11 +24,14 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
 import auto_edl
+import dynamic_cut
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -47,17 +50,40 @@ def has_media(items):
                for f, _ in items)
 
 
+def prepare(src, work):
+    """Рабочая папка: видео поджимаем auto-editor'ом (убираем мёртвый воздух),
+    фото/аудио копируем как есть."""
+    for f in sorted(os.listdir(src)):
+        if f.startswith((".", "_")):
+            continue
+        p = os.path.join(src, f)
+        if not os.path.isfile(p):
+            continue
+        ext = os.path.splitext(f)[1].lower()
+        dst = os.path.join(work, f)
+        if ext in auto_edl.VIDEO_EXT:
+            _, changed = dynamic_cut.tighten(p, dst)
+            print(f"  {'⚡ поджал' if changed else 'скопировал'} {f}")
+        elif ext in (auto_edl.IMAGE_EXT | auto_edl.AUDIO_EXT):
+            shutil.copy(p, dst)
+
+
 def process(watch, out, fps):
-    edl = auto_edl.build_edl(watch, fps=fps)
-    plan = os.path.join(watch, "_auto.edl.json")
-    with open(plan, "w", encoding="utf-8") as f:
-        json.dump(edl, f, ensure_ascii=False, indent=2)
-    os.makedirs(out, exist_ok=True)
-    ts = time.strftime("%Y%m%d_%H%M%S")
-    outfile = os.path.join(out, f"reel_{ts}.mp4")
-    subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
-                    "--edl", plan, "--src", watch, "--out", outfile], check=True)
-    return outfile
+    work = tempfile.mkdtemp(prefix="reels_work_")
+    try:
+        prepare(watch, work)
+        edl = auto_edl.build_edl(work, fps=fps)
+        plan = os.path.join(work, "_auto.edl.json")
+        with open(plan, "w", encoding="utf-8") as f:
+            json.dump(edl, f, ensure_ascii=False, indent=2)
+        os.makedirs(out, exist_ok=True)
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        outfile = os.path.join(out, f"reel_{ts}.mp4")
+        subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
+                        "--edl", plan, "--src", work, "--out", outfile], check=True)
+        return outfile
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
 
 
 def main():

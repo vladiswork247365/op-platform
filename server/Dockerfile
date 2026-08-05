@@ -6,7 +6,7 @@ FROM python:3.11-slim
 # ffmpeg идёт статикой в imageio-ffmpeg (ставится из requirements),
 # нужны только шрифты (кириллица для субтитров), rclone и базовые утилиты.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        fonts-dejavu-core curl unzip ca-certificates \
+        fonts-dejavu-core curl unzip ca-certificates libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
 # rclone — синхронизация с Google Drive
@@ -20,6 +20,9 @@ RUN pip install --no-cache-dir -r /app/montage/requirements.txt \
 # субтитры по речи + предзагрузка модели в образ (чтобы рантайм был offline-быстрым)
 RUN pip install --no-cache-dir -r /app/montage/requirements-subs.txt \
     && python3 -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')"
+
+# про-арсенал виральности: auto-editor (динамика) + librosa (биты музыки)
+RUN pip install --no-cache-dir -r /app/montage/requirements-pro.txt
 
 COPY server/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

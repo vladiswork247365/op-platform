@@ -51,6 +51,26 @@ def wrap_words(text: str, per: int = 2, maxlines: int = 2):
     return lines[:maxlines] or [text]
 
 
+STRIP = ".,!?—:;«»\"'()"
+
+
+def word_cues(words, t0: float, t1: float, speed: float, per: int = 3):
+    """Пословные субтитры (стиль SubMagic): слова сегмента [t0,t1] → cue-и с
+    таймингами относительно beat'а (с учётом ускорения), активное слово красным."""
+    seg = [w for w in words if t0 - 0.15 <= w["start"] < t1]
+    cues = []
+    for i in range(0, len(seg), per):
+        chunk = seg[i:i + per]
+        cues.append({
+            "t0": round(max(0.0, (chunk[0]["start"] - t0) / speed), 2),
+            "t1": round((chunk[-1]["end"] - t0) / speed, 2),
+            "lines": [" ".join(w["word"] for w in chunk)],
+            "highlight": chunk[-1]["word"].strip(STRIP),
+            "pos": "lower",
+        })
+    return cues
+
+
 def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = True) -> dict:
     files = sorted(glob.glob(os.path.join(srcdir, "*")))
     vids = [f for f in files if os.path.splitext(f)[1].lower() in VIDEO_EXT]
@@ -63,25 +83,29 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
     beats, used, count, photo_i, hook_done = [], 0.0, 0, 0, False
     BEAT = 3.0
 
-    strip = ".,!?—:;«»\"'()"
+    MOTIONS = ["punch", "zoomin", "none", "zoomout"]
     for v in vids:
         words = transcribe_words(v) if (subs and transcribe_words) else None
         d, pos = duration(v), 0.0
         while pos + 1.0 < d and used < target:
             seg = min(BEAT, d - pos)
             beat = {"src": os.path.basename(v), "in": round(pos, 2), "out": round(pos + seg, 2),
-                    "speed": 1.05, "motion": "punch" if count % 2 == 0 else "none"}
+                    "speed": 1.05, "motion": MOTIONS[count % len(MOTIONS)]}
+            # жёсткие резы = динамика (переходы xfade доступны опционально в EDL)
             spoken = words_in_range(words, pos, pos + seg) if words else []
             if not hook_done:
                 if spoken:
                     beat["text"] = {"lines": chunk_lines(spoken, per=2), "pos": "center",
-                                    "size": 88, "highlight": spoken[-1].strip(strip)}
+                                    "size": 88, "highlight": spoken[-1].strip(STRIP)}
                 else:
                     beat["text"] = {"lines": wrap_words(clean_title(v)), "pos": "center", "size": 92}
-                beat["motion"], beat["punch"], hook_done = "punch", 1.08, True
-            elif spoken:
-                beat["text"] = {"lines": chunk_lines(spoken), "pos": "lower",
-                                "highlight": spoken[-1].strip(strip)}
+                beat["motion"], beat["punch"] = "punch", 1.08
+                beat.pop("transition", None)
+                hook_done = True
+            elif words:
+                cues = word_cues(words, pos, pos + seg, beat["speed"])
+                if cues:
+                    beat["captions"] = cues
             beats.append(beat)
             used += seg / 1.05
             pos += seg
