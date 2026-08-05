@@ -1,0 +1,34 @@
+{
+  // Cloudflare Worker + Container для авто-рендера Reels.
+  // Деплой: npm i @cloudflare/containers && npx wrangler deploy
+  "name": "reels-factory",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2025-05-01",
+
+  // «Станок»: Linux-контейнер с ffmpeg+whisper (собирается из Dockerfile)
+  "containers": [
+    {
+      "class_name": "RenderContainer",
+      "image": "./cloudflare/Dockerfile",
+      "max_instances": 1,
+      "instance_type": "standard" // нужен RAM под whisper; для лёгких — basic
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "RENDER", "class_name": "RenderContainer" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RenderContainer"] }
+  ],
+
+  // «Будильник»: каждые 5 минут проверять инбокс и рендерить новое
+  "triggers": { "crons": ["*/5 * * * *"] },
+
+  // Папки Диска. Токен Google задаётся секретами (см. cloudflare/README.md),
+  // сюда секреты НЕ пишем.
+  "vars": {
+    "IN_ID": "1QuNqWxBNxhrhvetf13cJLoTQLLHTLbGw",
+    "OUT_ID": "1PlwYzMJG0CYJxz-0Dkfn9Lrp4K2Ntomc",
+    "REMOTE": "gdrive"
+  }
+}
