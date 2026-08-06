@@ -97,7 +97,7 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
         beat_grid, _bpm = beat_sync.beat_times(music[0])
     all_words = []
 
-    MOTIONS = ["punch", "zoomin", "none", "zoomout"]
+    MOTIONS = ["kick", "zoomin", "punch", "zoomout"]  # каждый рез с энергией (kick = панч-ин на склейке)
     for v in vids:
         words = transcribe_words(v) if (subs and transcribe_words) else None
         if words:

@@ -25,6 +25,7 @@ from captions import render_caption, find_font
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 IMG_EXT = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
+SFX_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "studio", "sfx")
 
 
 def run(cmd, **kw):
@@ -118,6 +119,9 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
                      else "if(eq(on,0),1.25,max(pzoom-0.0015,1.0))")
             mo = (f"zoompan=z='{zexpr}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
                   f"s={W}x{H}:fps={fps},")
+        elif motion == "kick":  # панч-ин на резе с быстрым оседанием (виральный ритм)
+            mo = (f"zoompan=z='max(1.0,1.12-on*0.009)':d=1:x='iw/2-(iw/zoom/2)':"
+                  f"y='ih/2-(ih/zoom/2)':s={W}x{H}:fps={fps},")
         if boomerang:  # перемотка туда-сюда: вперёд + реверс, звук глушим
             vchain = (f"[0:v]{fill},fps={fps},format=yuv420p,split[bf][bb];"
                       f"[bb]reverse[bbr];[bf][bbr]concat=n=2:v=1:a=0,setsar=1[vbase]")
@@ -215,6 +219,24 @@ def add_music(video, music, gain_db, tmp, out, total_dur):
          "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", out])
 
 
+def mix_sfx(video, cut_times, out, sfx="whoosh.wav"):
+    """Подмешать SFX на монтажных склейках (за 15 мс до реза — перезапуск внимания)."""
+    path = os.path.join(SFX_DIR, sfx)
+    if not os.path.exists(path) or not cut_times:
+        return False
+    n = len(cut_times)
+    parts = ["[1:a]asplit=%d%s" % (n, "".join(f"[s{i}]" for i in range(n)))]
+    for i, t in enumerate(cut_times):
+        ms = max(0, int((t - 0.015) * 1000))
+        parts.append(f"[s{i}]adelay={ms}|{ms}[a{i}]")
+    parts.append("[0:a]" + "".join(f"[a{i}]" for i in range(n)) +
+                 f"amix=inputs={n + 1}:normalize=0:duration=first[a]")
+    run([FFMPEG, "-y", "-i", video, "-i", path, "-filter_complex", ";".join(parts),
+         "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k",
+         "-movflags", "+faststart", out])
+    return True
+
+
 def finalize(src, out, total=0.0, progress=True):
     """Финальный проход для «залетаемости»: громкость под соцсети (EBU -14 LUFS),
     цветовой панч, лёгкая резкость и полоса удержания сверху (progress bar)."""
@@ -265,6 +287,16 @@ def main():
             print("  ✓ музыкальная подложка подмешана")
         elif mfile:
             print(f"  ⚠ музыка '{mfile}' не найдена в {args.src} — рендер без подложки")
+        # SFX на склейках (только для встык-склейки без xfade — тайминги точны)
+        if not any(transes[1:]):
+            cut_times, acc = [], 0.0
+            for dd in durs[:-1]:
+                acc += dd
+                cut_times.append(round(acc, 3))
+            sfx_stage = os.path.join(tmp, "sfx.mp4")
+            if mix_sfx(stage, cut_times, sfx_stage):
+                stage = sfx_stage
+                print(f"  ✓ SFX на {len(cut_times)} склейках (whoosh)")
         finalize(stage, args.out, total)   # громкость + цвет + полоса удержания
         print("  ✓ финал: loudnorm -14 LUFS + цветовой панч + progress bar")
     print(f"\n✅ готово: {args.out}  (~{total:.1f}s, {len(segs)} склеек)")
