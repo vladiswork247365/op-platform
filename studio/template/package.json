@@ -1,0 +1,15 @@
+{
+  "name": "reels-remotion",
+  "version": "1.0.0",
+  "description": "Remotion-шаблон Reels-фабрики: караоке-сабы, кинетик",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render KaraokeReel out/reel.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "remotion": "^4.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
