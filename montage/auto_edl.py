@@ -32,6 +32,10 @@ try:
     import scene_detect  # резы по реальным сменам сцен (PySceneDetect)
 except Exception:
     scene_detect = None
+try:
+    import select_moments  # умный отбор моментов + хука (скоринг виральности)
+except Exception:
+    select_moments = None
 
 FF = imageio_ffmpeg.get_ffmpeg_exe()
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}
@@ -108,7 +112,15 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
             all_words.extend(words)
         d, pos = duration(v), 0.0
         sbounds = scene_detect.scene_boundaries(v) if scene_detect else []
-        while pos + 1.0 < d and used < target:
+        # умный отбор: старт с сильнейшего окна + лучший хук из речи
+        region_end, hook_pref = d, None
+        if words and select_moments and not hook_done:
+            ws, we = select_moments.best_window(words, target)
+            pos, region_end = ws, min(d, we + 6.0)
+            hl, hlw = select_moments.best_hook(words)
+            if hl:
+                hook_pref = (hl, hlw)
+        while pos + 1.0 < region_end and used < target:
             end = min(pos + BEAT, d)
             if sbounds:  # рез по реальной границе сцены
                 sc = scene_detect.snap(pos + BEAT, sbounds, tol=1.0)
@@ -124,7 +136,10 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
             # жёсткие резы = динамика (переходы xfade доступны опционально в EDL)
             spoken = words_in_range(words, pos, pos + seg) if words else []
             if not hook_done:
-                if spoken:
+                if hook_pref:
+                    beat["text"] = {"lines": hook_pref[0], "pos": "center", "size": 88,
+                                    "highlight": hook_pref[1]}
+                elif spoken:
                     beat["text"] = {"lines": chunk_lines(spoken, per=2), "pos": "center",
                                     "size": 88, "highlight": spoken[-1].strip(STRIP)}
                 else:
