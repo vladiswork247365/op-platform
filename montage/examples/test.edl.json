@@ -1,0 +1,19 @@
+{
+  "_comment": "Самопроверка движка на сгенерированных клипах (montage/sources/). Запусти montage/make_test_sources.py, затем render.py с этим EDL.",
+  "output": { "w": 1080, "h": 1920, "fps": 30 },
+  "music": { "file": "music.m4a", "gain_db": -20 },
+  "beats": [
+    { "src": "clipA.mp4", "in": 0.0, "out": 3.0, "motion": "punch", "punch": 1.06,
+      "text": { "lines": ["ОШТРАФОВАЛИ", "за СОСИСКИ"], "highlight": "сосиски", "pos": "center", "size": 96 } },
+    { "src": "clipA.mp4", "in": 3.0, "out": 6.0, "speed": 1.1, "motion": "none",
+      "text": { "lines": ["а дальше —", "хуже"], "highlight": "хуже", "pos": "lower" } },
+    { "src": "photo1.jpg", "dur": 0.6, "motion": "kenburns_in" },
+    { "src": "clipB.mp4", "in": 0.0, "out": 3.0, "motion": "punch",
+      "text": { "lines": ["при чём тут", "ПРОДАЖИ?"], "highlight": "продажи?", "pos": "lower" } },
+    { "src": "clipB.mp4", "in": 3.0, "out": 6.5, "speed": 1.05,
+      "text": { "lines": ["вот", "в чём соль"], "highlight": "соль", "pos": "lower" } },
+    { "src": "photo2.heic", "dur": 0.6, "motion": "kenburns_out" },
+    { "src": "clipA.mp4", "in": 6.0, "out": 9.0, "motion": "none",
+      "text": { "lines": ["разбор —", "в профиле"], "highlight": "профиле", "pos": "lower" } }
+  ]
+}
