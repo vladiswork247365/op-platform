@@ -91,6 +91,19 @@ table.timeline td{padding:7px 8px;border-bottom:1px solid var(--bdr);color:var(-
 .tl-t{font-family:'JetBrains Mono';font-size:9px;color:var(--red);white-space:nowrap}
 .entry{background:var(--bg3);border:1px dashed var(--bdr2);border-radius:11px;padding:13px 15px;font-size:11.5px;color:var(--t2);line-height:1.55;margin-top:8px}
 .entry b{color:var(--text)}.entry code{font-family:'JetBrains Mono';font-size:10.5px;background:var(--bg);padding:1px 5px;border-radius:4px}
+/* вердикт */
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:820px){.vgrid{grid-template-columns:1fr}}
+.vcol{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:14px}
+.vhead{font-family:var(--fdisp);font-size:18px;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.vhead .vn{font-family:var(--fmono);font-size:12px;background:var(--bg4);border-radius:10px;padding:1px 8px;color:var(--t2)}
+.vaction{font-size:10.5px;color:var(--t2);margin:6px 0 10px;line-height:1.4;min-height:28px}
+.vitem{background:var(--bg3);border:1px solid var(--bdr);border-radius:9px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:.12s}
+.vitem:hover{border-color:var(--bdr2);transform:translateX(2px)}
+.vitem .vt{display:block;font-size:11.5px;font-weight:600}
+.vitem .vsec{display:block;font-family:var(--fmono);font-size:9.5px;color:var(--t3);margin-top:2px}
+.vempty{color:var(--t3);font-size:11px;padding:6px 0}
+.vbadge{font-family:var(--fdisp);font-size:12px;letter-spacing:.5px;padding:3px 9px;border-radius:6px;color:#fff;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .foot{text-align:center;color:var(--t3);font-size:10px;margin:26px 0 12px;line-height:1.6}
 .err{background:var(--rdim);border:1px solid rgba(232,0,10,.3);border-radius:12px;padding:20px;font-size:12px;text-align:center;color:var(--t2)}
 </style>
@@ -137,6 +150,62 @@ function dropoff(curve){
   for(let i=1;i<curve.length;i++){const d=curve[i-1]-curve[i];if(d>md){md=d;mi=i;}}
   const seg=['0–25%','25–50%','50–75%','75–100%'][mi-1]||'—';
   return {seg,drop:md};
+}
+
+function watchSec(r){return (r.actual.avg_watch_pct/100*r.duration);}
+// вердикт: качать / усилить / убирать — по удержанию
+function verdict(r){
+  const a=r.actual; const sec=watchSec(r); const doff=dropoff(a.curve);
+  if(a.completion>=47 && a.hook3s>=78)
+    return {k:'push',label:'КАЧАТЬ',ic:'🔥',color:'#00C851',sec,
+      why:'сильное удержание — лей трафик/промо, снимай продолжения в этом формате'};
+  if(a.completion<28 || a.hook3s<62)
+    return {k:'kill',label:'УБИРАТЬ',ic:'🗑',color:'#E8000A',sec,
+      why:'формат не держит — убрать из ротации, не повторять'};
+  return {k:'boost',label:'УСИЛИТЬ',ic:'⚡',color:'#F5A623',sec,
+    why:`почини слив на ${doff.seg} (−${doff.drop} п.п.) и переопубликуй — потенциал есть`};
+}
+
+function verdictStrip(){
+  const A=withActual().map(r=>({r,v:verdict(r)}));
+  const by=k=>A.filter(x=>x.v.k===k).sort((a,b)=>b.r.actual.completion-a.r.actual.completion);
+  const col=(title,ic,color,items,action)=>`<div class="vcol" style="border-color:${color}55">
+    <div class="vhead" style="color:${color}">${ic} ${title} <span class="vn">${items.length}</span></div>
+    <div class="vaction">${action}</div>
+    ${items.map(x=>`<div class="vitem" onclick="openM('${x.r.id}')"><span class="vt">${esc(x.r.title)}</span>
+      <span class="vsec">${x.v.sec.toFixed(1)}с в среднем · до конца ${x.r.actual.completion}% · hook ${x.r.actual.hook3s}%</span></div>`).join('')||'<div class="vempty">— пусто</div>'}
+  </div>`;
+  return `<div class="section-t" style="margin-top:20px">Вердикт дня — что качать, что усиливать, что убирать</div>
+    <div class="vgrid">
+      ${col('КАЧАТЬ','🔥','#00C851',by('push'),'Лей трафик и промо, снимай продолжения — этот формат держит')}
+      ${col('УСИЛИТЬ','⚡','#F5A623',by('boost'),'Почини точку слива и переопубликуй — потенциал есть')}
+      ${col('УБИРАТЬ','🗑','#E8000A',by('kill'),'Убери из ротации — формат не держит, не повторять')}
+    </div>`;
+}
+
+// динамика удержания в секундах по дате публикации
+function trendChart(){
+  const A=withActual().slice().sort((a,b)=>(a.actual.published||'').localeCompare(b.actual.published||''));
+  if(A.length<2) return '';
+  const secs=A.map(watchSec);
+  const cur=secs[secs.length-1], first=secs[0], delta=cur-first;
+  const mx=Math.max(...secs)*1.15, W=100,H=46,pad=5;
+  const xp=i=>pad+(W-2*pad)*(i/(secs.length-1)), yp=v=>pad+(H-2*pad)*(1-v/mx);
+  const line=secs.map((v,i)=>`${i?'L':'M'}${xp(i).toFixed(1)},${yp(v).toFixed(1)}`).join(' ');
+  const dots=secs.map((v,i)=>`<circle cx="${xp(i).toFixed(1)}" cy="${yp(v).toFixed(1)}" r="1.5" fill="#00C851"/>`).join('');
+  const lbls=A.map((r,i)=>`<text x="${xp(i).toFixed(1)}" y="${H-.5}" fill="#555565" font-size="2.8" text-anchor="middle">${esc((r.actual.published||'').slice(5))}</text>`).join('');
+  const arrow=delta>=0?'▲':'▼', col=delta>=0?'#00C851':'#E8000A';
+  return `<div class="panel"><div class="section-t" style="margin-top:0">Удержание в секундах — растёт ли ежедневно</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+      <span style="font-family:var(--fdisp);font-size:34px;color:#00C851">${cur.toFixed(1)}с</span>
+      <span style="font-size:12px;color:${col};font-weight:700">${arrow} ${Math.abs(delta).toFixed(1)}с</span>
+      <span style="font-size:10px;color:var(--t3)">от первого ролика (${first.toFixed(1)}с)</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="height:150px">
+      <path d="${line} L${xp(secs.length-1).toFixed(1)},${(H-pad).toFixed(1)} L${xp(0).toFixed(1)},${(H-pad).toFixed(1)} Z" fill="rgba(0,200,81,.09)"/>
+      <path d="${line}" fill="none" stroke="#00C851" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>${dots}${lbls}</svg>
+    <div style="font-size:10px;color:var(--t3);margin-top:6px">Средний досмотр × длину = сколько секунд реально смотрят. Цель — чтобы линия ползла вверх каждый день.</div>
+  </div>`;
 }
 
 function kpis(){
@@ -203,22 +272,23 @@ function reelsTable(){
   const A=withActual().slice().sort((a,b)=>b.actual.completion-a.actual.completion);
   const rows=A.map(r=>{
     const a=r.actual, g=r.variants?grade(r.variants.reduce((m,v)=>Math.max(m,v.score.total),0)):grade(a.completion);
-    const spark=miniCurve(a.curve);
-    const doff=dropoff(a.curve);
-    const tools=(r.tools_used||[]).slice(0,5).map(t=>`<span class="chip">${esc(toolLabel(t))}</span>`).join('');
+    const v=verdict(r), doff=dropoff(a.curve);
+    const tools=(r.tools_used||[]).slice(0,4).map(t=>`<span class="chip">${esc(toolLabel(t))}</span>`).join('');
     return `<tr onclick="openM('${r.id}')">
       <td><div class="rt-title">${esc(r.title)}</div><div class="plat">${esc(a.platform||r.platform)} · ${r.duration}с · ${esc(a.published||'')}</div></td>
+      <td><span class="vbadge" style="background:${v.color}">${v.ic} ${v.label}</span></td>
       <td class="num">${fmt(a.views)}</td>
       <td>${bar(a.hook3s,'#4A9EFF')}</td>
       <td>${bar(a.avg_watch_pct,'#F5A623')}</td>
       <td>${bar(a.completion,'#00C851')}</td>
-      <td>${spark}</td>
-      <td><span class="flag">▼ ${doff.drop} на ${doff.seg}</span></td>
+      <td class="num" style="color:#00C851">${watchSec(r).toFixed(1)}с</td>
+      <td>${miniCurve(a.curve)}</td>
+      <td><span class="flag">▼${doff.drop} ${doff.seg}</span></td>
       <td><div class="chips">${tools}</div></td>
       <td><span class="g g-${g}">${g}</span></td></tr>`;
   }).join('');
-  return `<div class="section-t">Ролики по досмотру</div><div class="panel" style="overflow-x:auto">
-    <table class="reels"><thead><tr><th>ролик</th><th>показы</th><th>hook 3с</th><th>ср. досмотр</th><th>до конца</th><th>кривая</th><th>точка слива</th><th>инструменты</th><th>оц.</th></tr></thead>
+  return `<div class="section-t">Все ролики — ранжированы по удержанию</div><div class="panel" style="overflow-x:auto">
+    <table class="reels"><thead><tr><th>ролик</th><th>вердикт</th><th>показы</th><th>hook 3с</th><th>ср. досмотр</th><th>до конца</th><th>сек</th><th>кривая</th><th>слив</th><th>инструменты</th><th>оц.</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
 }
 function bar(v,c){return `<span class="bar"><i style="width:${v}%;background:${c}"></i></span> <span class="num">${v}%</span>`;}
@@ -229,7 +299,9 @@ function miniCurve(curve){const W=60,H=22;const xp=i=>i/(curve.length-1)*W,yp=v=
 function render(){
   document.getElementById('app').innerHTML =
     kpis()+
-    `<div class="grid2" style="margin-top:16px">${overlayChart()}${insights()}</div>`+
+    verdictStrip()+
+    `<div class="grid2" style="margin-top:16px">${trendChart()}${insights()}</div>`+
+    `<div style="margin-top:16px">${overlayChart()}</div>`+
     reelsTable()+
     `<div class="section-t">Добавить факт из соцсетей</div>
      <div class="entry">После публикации возьми из <b>Instagram/TikTok Insights</b>: показы, удержание на 3с (hook rate), средний досмотр %, % до конца, сохранения, репосты — и кривую удержания, если платформа даёт.
@@ -255,6 +327,7 @@ function openM(id){
     <h2>${esc(r.title)}</h2>
     <div class="plat" style="margin:4px 0 8px">${esc(a.platform||r.platform)} · ${r.duration}с · ${esc(a.published||'')} · <span style="color:var(--t2)">инструменты:</span> </div>
     <div class="chips" style="margin-bottom:10px">${tools||'<span class="chip">—</span>'}</div>
+    ${(function(){const v=verdict(r);return `<div class="dropbox" style="background:${v.color}18;border-color:${v.color}66;color:var(--t2);margin-top:0"><span class="vbadge" style="background:${v.color}">${v.ic} ${v.label}</span> &nbsp;${esc(v.why)} · смотрят <b style="color:#00C851">${v.sec.toFixed(1)}с</b> в среднем</div>`;})()}
     <div class="mgrid">
       <div class="cell"><div class="cv" style="color:#4A9EFF">${a.hook3s??'—'}%</div><div class="cl">hook 3с</div></div>
       <div class="cell"><div class="cv" style="color:#F5A623">${a.avg_watch_pct??'—'}%</div><div class="cl">ср. досмотр</div></div>
