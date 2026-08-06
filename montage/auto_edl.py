@@ -28,6 +28,10 @@ try:
     import stock       # b-roll со стока в тему (Pexels)
 except Exception:
     stock = None
+try:
+    import scene_detect  # резы по реальным сменам сцен (PySceneDetect)
+except Exception:
+    scene_detect = None
 
 FF = imageio_ffmpeg.get_ffmpeg_exe()
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}
@@ -103,10 +107,15 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
         if words:
             all_words.extend(words)
         d, pos = duration(v), 0.0
+        sbounds = scene_detect.scene_boundaries(v) if scene_detect else []
         while pos + 1.0 < d and used < target:
             end = min(pos + BEAT, d)
-            if beat_grid:  # подтянуть рез к ближайшему биту
-                s = beat_sync.snap(pos + BEAT, beat_grid, tol=0.7)
+            if sbounds:  # рез по реальной границе сцены
+                sc = scene_detect.snap(pos + BEAT, sbounds, tol=1.0)
+                if pos + 1.0 <= sc <= d:
+                    end = sc
+            if beat_grid:  # подтянуть к биту музыки
+                s = beat_sync.snap(end, beat_grid, tol=0.5)
                 if pos + 1.0 <= s <= d:
                     end = s
             seg = round(end - pos, 3)
