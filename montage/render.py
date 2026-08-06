@@ -215,11 +215,15 @@ def add_music(video, music, gain_db, tmp, out, total_dur):
          "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", out])
 
 
-def finalize(src, out):
+def finalize(src, out, total=0.0, progress=True):
     """Финальный проход для «залетаемости»: громкость под соцсети (EBU -14 LUFS),
-    цветовой панч и лёгкая резкость."""
-    run([FFMPEG, "-y", "-i", src,
-         "-vf", "eq=contrast=1.06:saturation=1.12:brightness=0.01,unsharp=5:5:0.4:5:5:0.0",
+    цветовой панч, лёгкая резкость и полоса удержания сверху (progress bar)."""
+    vf = "eq=contrast=1.06:saturation=1.12:brightness=0.01,unsharp=5:5:0.4:5:5:0.0"
+    if progress and total > 0:
+        # тонкая красная полоса прогресса вверху — растёт по ходу ролика
+        vf += (f",drawbox=x=0:y=0:h=10:w='iw*min(t/{total:.2f}\\,1)':"
+               f"color=0xE8000A@0.95:t=fill")
+    run([FFMPEG, "-y", "-i", src, "-vf", vf,
          "-af", "loudnorm=I=-14:TP=-1.5:LRA=11",
          "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
          "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out])
@@ -261,8 +265,8 @@ def main():
             print("  ✓ музыкальная подложка подмешана")
         elif mfile:
             print(f"  ⚠ музыка '{mfile}' не найдена в {args.src} — рендер без подложки")
-        finalize(stage, args.out)   # громкость под соцсети + цветовой панч
-        print("  ✓ финал: loudnorm -14 LUFS + цветовой панч")
+        finalize(stage, args.out, total)   # громкость + цвет + полоса удержания
+        print("  ✓ финал: loudnorm -14 LUFS + цветовой панч + progress bar")
     print(f"\n✅ готово: {args.out}  (~{total:.1f}s, {len(segs)} склеек)")
 
 
