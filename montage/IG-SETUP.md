@@ -1,78 +1,72 @@
-# Подключение Instagram API — сбор статистики Reels
+# Подключение Instagram — сбор статистики Reels
 
-Коллектор `montage/ig_stats.py` тянет статистику твоих Reels прямо из Instagram
-и складывает в `reels.json` — панель на `platform.systemop.top/reels.html`
-сразу показывает вердикт по реальным роликам.
+Коллектор `montage/ig_stats.py` тянет статистику твоих Reels из Instagram и
+складывает в `reels.json` — панель `platform.systemop.top/reels.html` сразу
+показывает вердикт по реальным роликам.
 
 ## Что API отдаёт, а что — нет
 
 | Метрика | Откуда |
 |---|---|
-| Показы / охват (views, reach) | ✅ API |
-| Среднее время досмотра (avg watch) | ✅ API |
-| Сохранения, репосты, лайки, комменты | ✅ API |
-| Дата публикации | ✅ API |
-| **Hook 3с, % досмотра до конца, кривая удержания** | ❌ API не отдаёт — только в приложении |
+| Показы / охват, среднее время досмотра | ✅ API |
+| Сохранения, репосты, лайки, комменты, дата | ✅ API |
+| **Hook 3с, % досмотра до конца, кривая удержания** | ❌ только в приложении |
 
-Недостающее коллектор **оценивает** из среднего досмотра (в панели помечено `~`).
-Точные цифры вписываешь руками со скрина Insights → оценка их не перетирает.
+Недостающее коллектор **оценивает** из среднего досмотра (в панели помечено `~`);
+точные цифры со скрина Insights вписываешь руками — оценку они перетрут, не наоборот.
 
-## Разовая настройка (~15 мин)
+---
 
-**1. Перевести аккаунт в профессиональный.**
-Instagram → Настройки → «Тип аккаунта» → *Business* или *Creator*.
+## СПОСОБ A — вход через Instagram (по умолчанию, без Facebook-страницы) ⭐️
 
-**2. Привязать к Facebook-странице.**
-Нужна любая FB-страница (создаётся бесплатно за минуту).
-Instagram → Настройки → «Связанные аккаунты» → привязать страницу.
+Самый простой: Facebook-страница и бизнес-портфолио НЕ нужны.
 
-**3. Создать приложение Meta.**
-[developers.facebook.com](https://developers.facebook.com) → *My Apps* → *Create App*
-→ тип **Business** → добавить продукт **Instagram Graph API**.
-Пока приложение в режиме *Development* — для **своего** аккаунта проверка (App Review)
-НЕ нужна: ты как админ/тестер уже можешь читать инсайты.
+**1. Аккаунт — профессиональный** (Business или Creator). У тебя уже есть.
 
-**4. Получить токен.**
-*Tools → Graph API Explorer* → выбрать своё приложение → *Get User Access Token*.
-Отметить права:
-`instagram_basic`, `instagram_manage_insights`, `pages_show_list`, `pages_read_engagement`.
-Нажать *Generate Access Token* → скопировать.
+**2. Создать приложение Meta.**
+[developers.facebook.com](https://developers.facebook.com) → *My Apps* → **Create App**
+→ на вопрос о назначении выбери **«Other» / «Другое»** → тип **Business** → создать.
 
-**5. Узнать IG_USER_ID.**
-В том же Explorer выполнить:
-- `GET /me/accounts` → взять `id` своей страницы;
-- `GET /{page-id}?fields=instagram_business_account` → поле
-  `instagram_business_account.id` — это и есть **IG_USER_ID**.
+**3. Добавить продукт Instagram.**
+В приложении слева *Add product* → **Instagram** → кнопка
+**«API setup with Instagram login»** (Настройка API со входом через Instagram).
 
-**6. Продлить токен до ~60 дней.**
-Короткий токен живёт час. Долгий:
-`GET /oauth/access_token?grant_type=fb_exchange_token&client_id={app-id}&client_secret={app-secret}&fb_exchange_token={короткий-токен}`
-Либо: вписать `IG_APP_ID`, `IG_APP_SECRET`, короткий `IG_ACCESS_TOKEN` в `.env` и
-запустить `python3 montage/ig_stats.py --refresh-token`.
+**4. Сгенерировать токен.**
+В разделе **«1. Generate access tokens»**:
+- **Add account** → войти в свой Instagram → разрешить доступ;
+- убедись, что в правах отмечены `instagram_business_basic` и
+  **`instagram_business_manage_insights`**;
+- нажми **Generate token** → скопируй токен (живёт ~60 дней).
 
-## Прописать ключи
-
+**5. Прописать ключ.**
 `montage/.env` (см. `montage/.env.example`), затем `chmod 600 montage/.env`:
-
 ```
-IG_USER_ID=17841400000000000
-IG_ACCESS_TOKEN=EAAG...
-IG_APP_ID=1234567890        # опц. — для продления токена
-IG_APP_SECRET=abcd...       # опц.
+IG_ACCESS_TOKEN=IGAA...      # токен из шага 4
+# IG_USER_ID не нужен в этом режиме
 ```
 
-## Запуск
-
+**6. Проверить и собрать:**
 ```bash
-python3 montage/ig_stats.py --whoami            # проверка: покажет @username
-python3 montage/ig_stats.py --limit 25          # показать статы (без записи)
-python3 montage/ig_stats.py --limit 25 --write  # записать в reels.json
+python3 montage/ig_stats.py --whoami            # покажет @username
+python3 montage/ig_stats.py --limit 25 --write  # запишет в reels.json
 ```
 
-После `--write` открой панель — вердикт по реальным роликам уже там.
+Продление токена раз в ~50 дней: `python3 montage/ig_stats.py --refresh-token`
+(в этом режиме app id/secret не нужны).
+
+---
+
+## СПОСОБ B — через Facebook-страницу (запасной)
+
+Если по какой-то причине нужен классический путь: перевести режим
+`IG_AUTH=facebook` в `.env` и задать `IG_USER_ID`, `IG_ACCESS_TOKEN`
+(права `instagram_manage_insights`), токен из Graph API Explorer. Требует
+привязки Instagram к Facebook-странице. В РФ этот путь часто глючит —
+используй способ A.
+
+---
 
 ## Дальше — автосбор
 
-Токен живёт ~60 дней; сбор можно повесить на ежедневный запуск (cron/Routine) с
-авто-продлением токена (`--refresh-token`) раз в ~50 дней. Скажу «настрой автосбор» —
-повешу.
+Скажи «настрой автосбор» — повешу ежедневный запуск коллектора + авто-продление
+токена + автопуш `reels.json` в `main` (панель обновляется сама).

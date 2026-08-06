@@ -32,8 +32,15 @@ import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REELS_JSON = os.path.join(ROOT, "reels.json")
+# Два режима авторизации:
+#   instagram (по умолчанию) — «Instagram API с входом через Instagram»: без
+#     Facebook-страницы и бизнес-портфолио; хост graph.instagram.com, аккаунт = me.
+#   facebook — классика через Facebook-страницу (IG_USER_ID + fb_exchange_token).
+# Переключается переменной IG_AUTH=facebook при необходимости.
+AUTH = os.environ.get("IG_AUTH", "instagram").lower()
+IG_LOGIN = not AUTH.startswith("f")
 API_VERSION = os.environ.get("IG_API_VERSION", "v21.0")
-GRAPH = "https://graph.facebook.com"
+GRAPH = "https://graph.instagram.com" if IG_LOGIN else "https://graph.facebook.com"
 
 # метрики media-insights для Reels; недоступные в текущей версии API молча отсеются
 REEL_METRICS = ["views", "reach", "saved", "shares", "likes", "comments",
@@ -55,7 +62,9 @@ def load_env():
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 def api_get(path, params):
-    url = f"{GRAPH}/{API_VERSION}/{path}?" + urllib.parse.urlencode(params)
+    # graph.instagram.com работает без версии в пути; у facebook — с версией
+    prefix = f"{GRAPH}" if IG_LOGIN else f"{GRAPH}/{API_VERSION}"
+    url = f"{prefix}/{path}?" + urllib.parse.urlencode(params)
     try:
         with urllib.request.urlopen(url, timeout=45) as r:
             return json.load(r), None
@@ -237,11 +246,16 @@ def print_table(fetched):
 
 
 def cmd_refresh_token():
-    app_id, secret = need("IG_APP_ID"), need("IG_APP_SECRET")
     tok = need("IG_ACCESS_TOKEN")
-    data, err = api_get("oauth/access_token", {
-        "grant_type": "fb_exchange_token", "client_id": app_id,
-        "client_secret": secret, "fb_exchange_token": tok})
+    if IG_LOGIN:
+        # instagram-login: продление без app id/secret
+        data, err = api_get("refresh_access_token",
+                           {"grant_type": "ig_refresh_token", "access_token": tok})
+    else:
+        app_id, secret = need("IG_APP_ID"), need("IG_APP_SECRET")
+        data, err = api_get("oauth/access_token", {
+            "grant_type": "fb_exchange_token", "client_id": app_id,
+            "client_secret": secret, "fb_exchange_token": tok})
     if err:
         sys.exit(f"❌ Не удалось продлить токен: {err}")
     new = data.get("access_token", "")
@@ -266,15 +280,17 @@ def main():
         return cmd_refresh_token()
 
     token = need("IG_ACCESS_TOKEN")
-    ig_user = need("IG_USER_ID")
+    # в instagram-login режиме id не нужен — аккаунт это "me"
+    ig_user = "me" if IG_LOGIN else need("IG_USER_ID")
 
     if a.whoami:
-        data, err = api_get(ig_user, {"fields": "username,followers_count,media_count",
-                                      "access_token": token})
+        fields = "user_id,username,account_type" if IG_LOGIN else "username,followers_count,media_count"
+        data, err = api_get(ig_user, {"fields": fields, "access_token": token})
         if err:
-            sys.exit(f"❌ Токен/ID не приняты: {err}")
-        print(f"✅ Аккаунт: @{data.get('username')} · подписчиков {data.get('followers_count')} "
-              f"· постов {data.get('media_count')}")
+            sys.exit(f"❌ Токен не принят: {err}")
+        extra = (f" · {data.get('account_type')}" if IG_LOGIN
+                 else f" · подписчиков {data.get('followers_count')} · постов {data.get('media_count')}")
+        print(f"✅ Аккаунт: @{data.get('username')}{extra}")
         return
 
     nodes = fetch_reels(a.limit, token, ig_user)
