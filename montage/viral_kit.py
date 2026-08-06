@@ -22,6 +22,10 @@ TOOLS = [
     {"key": "boomerang",     "name": "Бумеранг (туда-сюда)",   "impact": 6,  "does": "Акцент-перемотка на ключевом моменте",         "when": "короткий акцент",      "engine": "render motion"},
     {"key": "loudness",      "name": "Громкость под соцсети",  "impact": 6,  "does": "EBU -14 LUFS — не тише ленты",                 "when": "всегда",               "engine": "render finalize"},
     {"key": "color_punch",   "name": "Цветовой панч",          "impact": 5,  "does": "Контраст/сочность/резкость",                   "when": "всегда",               "engine": "render finalize"},
+    {"key": "hashtags",      "name": "Авто-хэштеги/описание",  "impact": 6,  "does": "Дискаверабилити — теги+описание под ролик",     "when": "всегда",               "engine": "auto_meta.py"},
+    {"key": "face_track",    "name": "Реврейм по лицу",         "impact": 7,  "does": "Камера ведёт за спикером (динамич. кроп)",     "when": "говорящая голова",     "engine": "studio/engine/autoframe.py"},
+    {"key": "cover",         "name": "Авто-обложка",            "impact": 6,  "does": "Кавер с текстом-хуком под CTR",                "when": "всегда",               "engine": "studio/pipeline/cover.py"},
+    {"key": "split_screen",  "name": "Split-screen b-roll",     "impact": 5,  "does": "Satisfying-низ под talking-head — удержание",   "when": "статичная голова",     "engine": "studio/pipeline/matte.py"},
 ]
 TOOLS_BY_KEY = {t["key"]: t for t in TOOLS}
 
@@ -56,7 +60,7 @@ def recommend(signals):
         t = TOOLS_BY_KEY[k]
         picked.append({"tool": k, "name": t["name"], "impact": t["impact"], "why": why})
 
-    for k in ("hook3s", "virality_score", "loop_cta", "loudness", "color_punch"):
+    for k in ("hook3s", "virality_score", "loop_cta", "loudness", "color_punch", "hashtags", "cover"):
         add(k, "база залетаемости")
     if signals.get("has_speech"):
         add("auto_cut", "убрать мёртвый воздух — держим темп")
