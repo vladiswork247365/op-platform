@@ -20,6 +20,14 @@ try:
     from transcribe import transcribe_words, words_in_range, chunk_lines
 except Exception:  # модуль/зависимости могут отсутствовать — работаем без субтитров
     transcribe_words = None
+try:
+    import beat_sync  # нарезка в бит музыки (librosa)
+except Exception:
+    beat_sync = None
+try:
+    import stock       # b-roll со стока в тему (Pexels)
+except Exception:
+    stock = None
 
 FF = imageio_ffmpeg.get_ffmpeg_exe()
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm"}
@@ -83,12 +91,25 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
     beats, used, count, photo_i, hook_done = [], 0.0, 0, 0, False
     BEAT = 3.0
 
+    # биты музыки → нарезка «в ритм» (склейки на бит держат внимание)
+    beat_grid = []
+    if music and beat_sync:
+        beat_grid, _bpm = beat_sync.beat_times(music[0])
+    all_words = []
+
     MOTIONS = ["punch", "zoomin", "none", "zoomout"]
     for v in vids:
         words = transcribe_words(v) if (subs and transcribe_words) else None
+        if words:
+            all_words.extend(words)
         d, pos = duration(v), 0.0
         while pos + 1.0 < d and used < target:
-            seg = min(BEAT, d - pos)
+            end = min(pos + BEAT, d)
+            if beat_grid:  # подтянуть рез к ближайшему биту
+                s = beat_sync.snap(pos + BEAT, beat_grid, tol=0.7)
+                if pos + 1.0 <= s <= d:
+                    end = s
+            seg = round(end - pos, 3)
             beat = {"src": os.path.basename(v), "in": round(pos, 2), "out": round(pos + seg, 2),
                     "speed": 1.05, "motion": MOTIONS[count % len(MOTIONS)]}
             # жёсткие резы = динамика (переходы xfade доступны опционально в EDL)
@@ -119,6 +140,16 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
                 break
         if used >= target:
             break
+
+    # b-roll со стока в тему (Pexels) по ключевым словам речи — «наслоение кадров»
+    if stock and getattr(stock, "PEXELS_KEY", None) and all_words:
+        for n, kw in enumerate(stock.keywords(all_words, top=2)):
+            path = os.path.join(srcdir, f"_stock_{n}.mp4")
+            if stock.fetch_stock(kw, path):
+                insert = {"src": os.path.basename(path), "in": 0.0, "out": 2.0,
+                          "speed": 1.0, "motion": "zoomin", "audio": "mute",
+                          "text": {"lines": [kw.upper()], "pos": "lower", "highlight": kw}}
+                beats.insert(min(len(beats) // 2 + 1 + n, len(beats)), insert)
 
     edl = {"output": {"w": 1080, "h": 1920, "fps": fps}, "beats": beats}
     if music:
