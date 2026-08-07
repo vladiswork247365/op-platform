@@ -8,15 +8,10 @@ echo "▶ Reels-бот в Telegram (приём роликов до 2 ГБ → м
 echo "  проект: $REPO"
 echo
 
-# 0) python3 + ffmpeg
+# 0) python3 (ffmpeg отдельно НЕ нужен — идёт в пакете imageio-ffmpeg)
 if ! command -v python3 >/dev/null 2>&1; then
   echo "✗ Нет python3. Выполни в Терминале: xcode-select --install — и запусти снова."
   read -n1 -r -p "Нажми любую клавишу…"; exit 1
-fi
-if ! command -v ffmpeg >/dev/null 2>&1; then
-  echo "⚠️ Не найден ffmpeg (движок монтажа). Поставь его: brew install ffmpeg"
-  echo "   (или запусти mac/install-mac.command — он ставит всё для фабрики)."
-  read -r -p "Продолжить всё равно? [Enter — да / n — выйти] " a; [ "$a" = "n" ] && exit 1
 fi
 
 # 1) обновить проект (если git-клон)
@@ -42,10 +37,12 @@ if ! grep -q '^TG_BOT_TOKEN=' "$ENV" 2>/dev/null || ! grep -q '^TG_API_ID=' "$EN
 fi
 echo
 
-# 3) зависимости бота
-echo "▶ Проверяю зависимости (pyrogram)…"
+# 3) зависимости: бот (pyrogram) + движок монтажа (Pillow/ffmpeg-бинарник и т.д.)
+echo "▶ Ставлю зависимости (бот + движок монтажа)… может занять минуту в первый раз"
 python3 -c "import pyrogram, tgcrypto" 2>/dev/null || pip3 install -q -r montage/requirements-tg.txt || {
   echo "✗ Не удалось поставить pyrogram. Выполни вручную: pip3 install pyrogram tgcrypto"; read -n1 -r -p "…"; exit 1; }
+python3 -c "import PIL, imageio_ffmpeg, numpy" 2>/dev/null || pip3 install -q -r montage/requirements.txt || {
+  echo "✗ Не удалось поставить движок монтажа. Выполни: pip3 install -r montage/requirements.txt"; read -n1 -r -p "…"; exit 1; }
 
 # 4) запуск
 echo
