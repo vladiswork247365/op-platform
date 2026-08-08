@@ -51,6 +51,15 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
     d = ImageDraw.Draw(img)
     hl = (highlight or "").strip().lower()
 
+    # авто-подгонка размера шрифта под ширину кадра — чтобы текст НЕ вылезал за экран.
+    # учитываем поля, обводку и возможную жёлтую плашку у слова.
+    max_w = w * 0.84
+    disp_all = [(ln.upper() if upper else ln) for ln in lines if ln.strip()]
+    widest = max((d.textlength(ln, font=font) for ln in disp_all), default=1.0)
+    if widest > max_w:
+        font_size = max(30, int(font_size * max_w / widest))
+        font = ImageFont.truetype(font_path, font_size)
+
     line_h = int(font_size * 1.28)
     total_h = line_h * len(lines)
     if y_frac is not None:
