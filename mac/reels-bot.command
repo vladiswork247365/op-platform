@@ -43,6 +43,10 @@ python3 -c "import pyrogram, tgcrypto, cv2" 2>/dev/null || pip3 install -q -r mo
   echo "✗ Не удалось поставить зависимости бота. Выполни: pip3 install -r montage/requirements-tg.txt"; read -n1 -r -p "…"; exit 1; }
 python3 -c "import PIL, imageio_ffmpeg, numpy" 2>/dev/null || pip3 install -q -r montage/requirements.txt || {
   echo "✗ Не удалось поставить движок монтажа. Выполни: pip3 install -r montage/requirements.txt"; read -n1 -r -p "…"; exit 1; }
+# распознавание речи → пословные субтитры (обязательно для стиля с субтитрами)
+python3 -c "import faster_whisper" 2>/dev/null || {
+  echo "▶ Ставлю распознавание речи (faster-whisper) — субтитры по словам…"
+  pip3 install -q faster-whisper || echo "⚠️ faster-whisper не встал — субтитры по речи будут недоступны (остальное работает)"; }
 
 # 4) запуск
 echo
