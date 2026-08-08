@@ -22,8 +22,9 @@ from html.parser import HTMLParser
 HERE = os.path.dirname(os.path.abspath(__file__))
 STAMP = os.environ.get("STAMP") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-SITES = [u.strip() for u in os.environ.get(
-    "CONTENT_URLS", "https://systemop.pro,https://systemop.top").split(",") if u.strip()]
+# пустая строка из GitHub (незаданная переменная) не должна перебивать дефолт → через `or`
+SITES = [u.strip() for u in (os.environ.get("CONTENT_URLS")
+         or "https://systemop.pro,https://systemop.top").split(",") if u.strip()]
 
 API_BASE = os.environ.get("OWNER_AGENT_BASE", "https://systemop.pro/api/owner-agent")
 API_KEY = os.environ.get("OWNER_AGENT_API_SECRET")

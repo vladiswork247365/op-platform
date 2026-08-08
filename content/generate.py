@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STAMP = os.environ.get("STAMP") or datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-4.1")
+MODEL = os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.1"  # пустое → дефолт
 KEY = os.environ.get("OPENROUTER_API_KEY")
 N = int(os.environ.get("CONTENT_COUNT", "3"))
 
