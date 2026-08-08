@@ -297,8 +297,8 @@ def main():
             if mix_sfx(stage, cut_times, sfx_stage):
                 stage = sfx_stage
                 print(f"  ✓ SFX на {len(cut_times)} склейках (whoosh)")
-        finalize(stage, args.out, total)   # громкость + цвет + полоса удержания
-        print("  ✓ финал: loudnorm -14 LUFS + цветовой панч + progress bar")
+        finalize(stage, args.out, total, progress=False)   # громкость + цвет (без верхней полосы)
+        print("  ✓ финал: loudnorm -14 LUFS + цветовой панч")
     print(f"\n✅ готово: {args.out}  (~{total:.1f}s, {len(segs)} склеек)")
 
 
