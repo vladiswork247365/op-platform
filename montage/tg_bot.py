@@ -19,12 +19,15 @@ import asyncio
 import os
 import sys
 import time
+import shutil
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT_DIR = os.path.join(HERE, "out")
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".mkv", ".avi", ".webm", ".hevc"}
+IMAGE_EXT = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
+DEBOUNCE = 5  # сек ожидания новых файлов перед авто-стартом монтажа
 
 
 def load_env():
@@ -64,7 +67,6 @@ app = Client("reels_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN,
              workdir=HERE)
 
 render_lock = asyncio.Lock()   # рендер по одному за раз
-pending = 0                    # сколько в очереди на рендер
 
 
 def allowed(msg: "Message") -> bool:
@@ -82,73 +84,117 @@ def human(n):
     return f"{n:.1f} ТБ"
 
 
+baskets = {}  # chat_id -> {files, job, hook, gen, status, running} — сборка нескольких файлов
+
+
 @app.on_message(filters.command("start"))
 async def start(_, m: "Message"):
     await m.reply(
-        "👋 Пришли мне видео (можно как файл, до 2 ГБ) — соберу вертикальный Reel: "
-        "поджму паузы, нарежу динамично, добавлю субтитры и отдам готовый ролик обратно.\n\n"
-        "📝 Хочешь задать ТЗ — просто добавь к видео ПОДПИСЬ (caption). Этот текст ляжет "
-        "крупным хуком в начало ролика.\n\n"
-        "Перекинь видео с телефона или файлом.")
+        "👋 Пришли ОДНО или НЕСКОЛЬКО видео/фото — соберу из них один вертикальный Reel: "
+        "поджму паузы, нарежу динамично, субтитры (мимо лица), и отдам готовый ролик.\n\n"
+        f"🧺 Файлы коплю в сборку и склеиваю по порядку. После последнего жду ~{DEBOUNCE}с и "
+        "монтирую, или напиши /go — сразу.\n\n"
+        "📝 ТЗ — добавь ПОДПИСЬ к любому файлу: текст ляжет крупным хуком в начало.\n\n"
+        "Видео лучше слать как файл (до 2 ГБ).")
 
 
-@app.on_message(filters.video | filters.document | filters.animation)
-async def on_video(_, m: "Message"):
-    global pending
-    if not allowed(m):
-        await m.reply("⛔️ Доступ ограничён. Попроси добавить тебя в TG_ALLOW.")
+def _basket(chat_id):
+    b = baskets.get(chat_id)
+    if not b:
+        b = baskets[chat_id] = {"files": [], "job": tempfile.mkdtemp(prefix="tg_job_"),
+                                "hook": "", "gen": 0, "status": None, "running": False}
+    return b
+
+
+async def _process_basket(client, chat_id):
+    b = baskets.get(chat_id)
+    if not b or b["running"] or not b["files"]:
         return
-
-    media = m.video or m.document or m.animation
-    name = getattr(media, "file_name", None) or f"clip_{int(time.time())}.mp4"
-    ext = os.path.splitext(name)[1].lower()
-    if m.document and ext and ext not in VIDEO_EXT:
-        await m.reply(f"Это не видео ({ext}). Пришли видеофайл.")
-        return
-    size = getattr(media, "file_size", 0) or 0
-    hook = (m.caption or "").strip()   # текстовое ТЗ = подпись к видео → хук в начале ролика
-
-    note = f" · ТЗ: «{hook[:40]}»" if hook else ""
-    status = await m.reply(f"📥 Принял «{name}» ({human(size)}){note}. Скачиваю…")
-    job = tempfile.mkdtemp(prefix="tg_job_")
-    dst = os.path.join(job, os.path.basename(name) or "clip.mp4")
-
-    # прогресс скачивания — обновляем не чаще раза в 2с
-    st = {"t": 0.0}
-    async def prog(cur, tot):
-        now = time.time()
-        if now - st["t"] >= 2 and tot:
-            st["t"] = now
-            try:
-                await status.edit_text(f"📥 Скачиваю «{name}»… {cur*100//tot}% ({human(cur)}/{human(tot)})")
-            except Exception:
-                pass
-    try:
-        await m.download(file_name=dst, progress=prog)
-    except Exception as e:
-        await status.edit_text(f"❌ Не смог скачать: {str(e)[:120]}")
-        return
-
-    pending += 1
-    pos = pending
-    if render_lock.locked():
-        await status.edit_text(f"🎬 В очереди на монтаж (перед тобой: {pos-1}). Начну, как освободится.")
+    b["running"] = True
+    status, job, hook, n = b["status"], b["job"], (b["hook"] or None), len(b["files"])
     async with render_lock:
         try:
-            await status.edit_text("⚙️ Монтирую: поджимаю паузы → нарезка → субтитры → рендер…")
+            await status.edit_text(f"⚙️ Монтирую {n} файл(ов) в один ролик: паузы → нарезка → субтитры → рендер…")
             loop = asyncio.get_event_loop()
-            reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook or None)
-            rsize = os.path.getsize(reel)
-            await status.edit_text(f"⬆️ Готово ({human(rsize)}). Отправляю ролик…")
-            await m.reply_video(reel, caption="✅ Готовый Reel. Дальше — залей в Instagram/TikTok, "
-                                              "и панель подтянет статистику автоматически.")
+            reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook)
+            await status.edit_text(f"⬆️ Готово ({human(os.path.getsize(reel))}). Отправляю…")
+            await client.send_video(chat_id, reel,
+                caption="✅ Готовый Reel. Залей в Instagram/TikTok — панель подтянет статистику сама.")
             await status.delete()
         except Exception as e:
             await status.edit_text(f"❌ Ошибка монтажа: {str(e)[:200]}")
         finally:
-            pending -= 1
-            import shutil
             shutil.rmtree(job, ignore_errors=True)
+            baskets.pop(chat_id, None)
+
+
+async def _debounce(client, chat_id, gen):
+    await asyncio.sleep(DEBOUNCE)
+    b = baskets.get(chat_id)
+    if b and b["gen"] == gen and not b["running"]:
+        await _process_basket(client, chat_id)
+
+
+@app.on_message(filters.command("go"))
+async def go(client, m: "Message"):
+    if not allowed(m):
+        return
+    b = baskets.get(m.chat.id)
+    if not b or not b["files"]:
+        await m.reply("Сборка пуста — пришли видео/фото, потом /go.")
+        return
+    await _process_basket(client, m.chat.id)
+
+
+@app.on_message(filters.video | filters.document | filters.animation | filters.photo)
+async def on_media(client, m: "Message"):
+    if not allowed(m):
+        await m.reply("⛔️ Доступ ограничён. Попроси добавить тебя в TG_ALLOW.")
+        return
+    b = _basket(m.chat.id)
+    if b["running"]:
+        await m.reply("⏳ Уже монтирую предыдущую сборку — дождись ролика и пришли заново.")
+        return
+
+    if m.photo:
+        kind, base, size = "фото", "photo.jpg", getattr(m.photo, "file_size", 0) or 0
+    else:
+        media = m.video or m.document or m.animation
+        base = getattr(media, "file_name", None) or "clip.mp4"
+        ext = os.path.splitext(base)[1].lower()
+        if m.document and ext and ext not in VIDEO_EXT and ext not in IMAGE_EXT:
+            await m.reply(f"Пропускаю: {ext} — нужно видео или фото.")
+            return
+        kind, size = "видео", getattr(media, "file_size", 0) or 0
+
+    if m.caption and not b["hook"]:
+        b["hook"] = m.caption.strip()
+
+    idx = len(b["files"])
+    dst = os.path.join(b["job"], f"{idx:02d}_{os.path.basename(base)}")
+    text = f"📥 Качаю {kind} #{idx + 1} ({human(size)})…"
+    if b["status"] is None:
+        b["status"] = await m.reply(text)
+    else:
+        try:
+            await b["status"].edit_text(text)
+        except Exception:
+            pass
+    try:
+        await m.download(file_name=dst)
+    except Exception as e:
+        await b["status"].edit_text(f"❌ Не смог скачать файл: {str(e)[:120]}")
+        return
+    b["files"].append(dst)
+    b["gen"] += 1
+    hooknote = f" · ТЗ: «{b['hook'][:32]}»" if b["hook"] else ""
+    try:
+        await b["status"].edit_text(
+            f"🧺 В сборке: {len(b['files'])} файл(ов){hooknote}.\n"
+            f"Пришли ещё или /go — смонтирую в один ролик (авто-старт через {DEBOUNCE}с).")
+    except Exception:
+        pass
+    asyncio.create_task(_debounce(client, m.chat.id, b["gen"]))
 
 
 if __name__ == "__main__":

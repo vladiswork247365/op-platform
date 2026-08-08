@@ -8,10 +8,13 @@ from __future__ import annotations
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-RED    = (232, 0, 10, 255)     # фирменный красный платформы
-WHITE  = (240, 240, 245, 255)
-SHADOW = (0, 0, 0, 190)
-BOX    = (9, 9, 11, 150)
+RED     = (232, 0, 10, 255)      # фирменный красный платформы
+WHITE   = (255, 255, 255, 255)
+YELLOW  = (255, 214, 10, 255)    # выделение ключевого слова (стиль референса)
+OUTLINE = (0, 0, 0, 240)         # жирная чёрная обводка букв
+SHADOW  = (0, 0, 0, 190)
+BOX     = (9, 9, 11, 150)
+STRIP   = ".,!?—:;«»\"'()"
 
 FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -32,7 +35,8 @@ def find_font(explicit: str | None = None) -> str:
 
 
 def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
-                   pos="lower", font_path=None, font_size=84, box=True, y_frac=None):
+                   pos="lower", font_path=None, font_size=84, box=False, y_frac=None,
+                   hl_color=YELLOW, upper=True):
     """Нарисовать подпись (1–3 строки) на прозрачном холсте wxh.
 
     lines     — список строк (по ≤4 слова, как для Reels-субтитров)
@@ -62,25 +66,27 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
         y0 = int(h * 0.74) - total_h // 2
     y0 = max(6, min(y0, h - total_h - 6))
 
+    stroke = max(4, font_size // 12)      # жирная обводка под референс
     space = d.textlength(" ", font=font)
     for i, ln in enumerate(lines):
-        words = ln.split()
+        words = [wd for wd in ln.split() if wd]
         if not words:
             continue
-        sizes = [d.textlength(wd, font=font) for wd in words]
-        tw = sum(sizes) + space * (len(words) - 1)
+        disp = [wd.upper() if upper else wd for wd in words]
+        sizes = [d.textlength(wd, font=font) for wd in disp]
+        tw = sum(sizes) + space * (len(disp) - 1)
         x = (w - tw) / 2
         y = y0 + i * line_h
         if box:
-            pad = 24
-            d.rounded_rectangle([x - pad, y - 12, x + tw + pad, y + font_size + 18],
-                                radius=20, fill=BOX)
+            pad = 26
+            d.rounded_rectangle([x - pad, y - 14, x + tw + pad, y + font_size + 20],
+                                radius=22, fill=BOX)
         cx = x
-        for wd, wdw in zip(words, sizes):
-            key = wd.strip(".,!?—:;«»\"'()").lower()
-            color = RED if hl and key == hl else WHITE
-            d.text((cx + 3, y + 4), wd, font=font, fill=SHADOW)  # тень
-            d.text((cx, y), wd, font=font, fill=color)
+        for orig, wd, wdw in zip(words, disp, sizes):
+            key = orig.strip(STRIP).lower()
+            color = hl_color if hl and key == hl else WHITE
+            d.text((cx, y), wd, font=font, fill=color,
+                   stroke_width=stroke, stroke_fill=OUTLINE)
             cx += wdw + space
     img.save(out_path)
     return out_path
