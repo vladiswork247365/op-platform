@@ -85,12 +85,14 @@ def _apply_sub_y(edl, yf):
             b["text"]["yf"] = yf
 
 
-def process(watch, out, fps, hook=None, grayscale=False, status_file=None, review=True):
+def process(watch, out, fps, hook=None, grayscale=False, status_file=None, review=True,
+            dense=False):
     """Собрать ролик из папки исходников. Возвращает (outfile, verdict).
 
     verdict — вердикт авто-контроля качества (qc.review) или None. Если контроль
     находит поправимый огрех (субтитры на лице) — движок сам переделывает ролик один
     раз, опустив субтитры ниже.
+    dense — джампкат-режим: плотный рез на каждую фразу с зум-панчами.
     """
     def _sf(t):
         if status_file:
@@ -103,7 +105,7 @@ def process(watch, out, fps, hook=None, grayscale=False, status_file=None, revie
         _sf("📁 Готовлю исходники (поджимаю паузы)…")
         prepare(watch, work)
         _sf("🎙 Распознаю речь и собираю план монтажа…")
-        edl = auto_edl.build_edl(work, fps=fps)
+        edl = auto_edl.build_edl(work, fps=fps, dense=dense)
         if grayscale:
             edl.setdefault("output", {})["grayscale"] = True
         # автозона субтитров по лицу — не садить субтитры на лицо

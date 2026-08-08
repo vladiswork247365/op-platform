@@ -98,6 +98,7 @@ def human(n):
 
 GRAY_RE = r"(ч[её]рно[- ]?бел\w*|монохром\w*|grayscale|\bч/?б\b|\bbw\b|\bсер(?:ый|ым|ом|ое|еньк\w*)\b|#чб)"
 VOICE_RE = r"(озвуч\w*|наложи\s+голос|без\s+звука|начита\w*|проговор\w*|голос(?:ом)?\s+клон\w*)"
+DENSE_RE = r"(джампкат\w*|jumpcut|динамичн\w*\s+монтаж|част\w*\s+рез\w*|плотн\w*\s+монтаж|нарезк\w*\s+покруче|как\s+у\s+блогер\w*)"
 GO_WORDS = {"го", "гоу", "поехали", "погнали", "генерируй", "генери", "генерь",
             "монтируй", "начинай", "старт", "готово", "давай", "собирай", "сделай"}
 
@@ -112,6 +113,7 @@ async def start(_, m: "Message"):
         "2️⃣ Наговори или напиши ТЗ — какой ролик нужен (голосовое понимаю). "
         "Скажешь «чёрно-белый» — сделаю ч/б.\n"
         "3️⃣ Досылай ещё или скажи /go (или «генерируй») — соберу ролик.\n\n"
+        "⚡ Скажешь «джампкат» (или «динамичный монтаж») — нарежу часто, рез на каждую фразу.\n"
         "🧠 После сборки сам проверяю качество и переделываю, если есть огрех.\n"
         "🎙 Скажешь «озвучь: …текст…» — сниму твоим клон-голосом (нужен ElevenLabs, "
         "см. VOICE-SETUP.md): снимаешь молча, голос и субтитры лягут сами.\n\n"
@@ -157,6 +159,7 @@ async def _process_basket(client, chat_id):
     status, job, n, raw = b["status"], b["job"], len(b["files"]), (b["brief"] or "")
     gray = bool(re.search(GRAY_RE, raw, re.I))
     voiceover_on = bool(re.search(VOICE_RE, raw, re.I))
+    dense_on = bool(re.search(DENSE_RE, raw, re.I))
     cleaned = re.sub(GRAY_RE, "", raw, flags=re.I).strip()
     hook = cleaned if 0 < len(cleaned.split()) <= 6 else None   # запасной вариант без режиссёра
     stage_file = os.path.join(job, "_stage.txt")
@@ -225,9 +228,11 @@ async def _process_basket(client, chat_id):
                         note = ("\n⚠️ Режим озвучки требует ELEVEN_KEY и голос "
                                 "(см. montage/VOICE-SETUP.md) — собрал обычный ролик.")
                 if reel is None:                # обычный монтаж (или откат)
-                    prog["stage"] = "🎬 Монтирую ролик" + (" · ч/б" if gray else "")
+                    prog["stage"] = ("🎬 Монтирую ролик" + (" · джампкат" if dense_on else "")
+                                     + (" · ч/б" if gray else ""))
                     reel, verdict = await loop.run_in_executor(
-                        None, autorun.process, job, OUT_DIR, FPS, hook, gray, stage_file)
+                        None, lambda: autorun.process(job, OUT_DIR, FPS, hook, gray,
+                                                      stage_file, True, dense_on))
             finally:
                 stop.set()
                 await anim                  # гасим анимацию перед финальными сообщениями
