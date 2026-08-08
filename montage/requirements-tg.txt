@@ -1,3 +1,5 @@
 # Телеграм-приём роликов до 2 ГБ (MTProto)
 pyrogram>=2.0
 tgcrypto>=1.2
+# автоопределение лица для позиции субтитров (YuNet через OpenCV)
+opencv-python-headless>=4.9

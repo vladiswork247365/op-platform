@@ -39,8 +39,8 @@ echo
 
 # 3) зависимости: бот (pyrogram) + движок монтажа (Pillow/ffmpeg-бинарник и т.д.)
 echo "▶ Ставлю зависимости (бот + движок монтажа)… может занять минуту в первый раз"
-python3 -c "import pyrogram, tgcrypto" 2>/dev/null || pip3 install -q -r montage/requirements-tg.txt || {
-  echo "✗ Не удалось поставить pyrogram. Выполни вручную: pip3 install pyrogram tgcrypto"; read -n1 -r -p "…"; exit 1; }
+python3 -c "import pyrogram, tgcrypto, cv2" 2>/dev/null || pip3 install -q -r montage/requirements-tg.txt || {
+  echo "✗ Не удалось поставить зависимости бота. Выполни: pip3 install -r montage/requirements-tg.txt"; read -n1 -r -p "…"; exit 1; }
 python3 -c "import PIL, imageio_ffmpeg, numpy" 2>/dev/null || pip3 install -q -r montage/requirements.txt || {
   echo "✗ Не удалось поставить движок монтажа. Выполни: pip3 install -r montage/requirements.txt"; read -n1 -r -p "…"; exit 1; }
 

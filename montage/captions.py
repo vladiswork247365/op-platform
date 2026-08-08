@@ -32,7 +32,7 @@ def find_font(explicit: str | None = None) -> str:
 
 
 def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
-                   pos="lower", font_path=None, font_size=84, box=True):
+                   pos="lower", font_path=None, font_size=84, box=True, y_frac=None):
     """Нарисовать подпись (1–3 строки) на прозрачном холсте wxh.
 
     lines     — список строк (по ≤4 слова, как для Reels-субтитров)
@@ -49,14 +49,18 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
 
     line_h = int(font_size * 1.28)
     total_h = line_h * len(lines)
-    if pos == "center":
+    if y_frac is not None:
+        # явная зона (например, рассчитанная по лицу) — центр блока на y_frac высоты
+        y0 = int(h * float(y_frac)) - total_h // 2
+    elif pos == "center":
         y0 = (h - total_h) // 2
     elif pos == "upper":
         y0 = int(h * 0.15)
     else:
-        # нижняя безопасная зона: под лицом (говорящая голова обычно вверху-центре),
-        # но выше зоны кнопок платформы. Опущено с 0.60 (попадало на лицо).
+        # нижняя безопасная зона по умолчанию: под лицом (говорящая голова обычно
+        # вверху-центре), но выше зоны кнопок платформы. (было 0.60 — попадало на лицо)
         y0 = int(h * 0.74) - total_h // 2
+    y0 = max(6, min(y0, h - total_h - 6))
 
     space = d.textlength(" ", font=font)
     for i, ln in enumerate(lines):
