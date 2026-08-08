@@ -21,6 +21,7 @@ Google Drive для компьютера) и при появлении новы�
 """
 from __future__ import annotations
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -33,6 +34,10 @@ import time
 import auto_edl
 import dynamic_cut
 import face_zone
+try:
+    import qc            # авто-контроль качества («вторые мозги»)
+except Exception:
+    qc = None
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -69,7 +74,24 @@ def prepare(src, work):
             shutil.copy(p, dst)
 
 
-def process(watch, out, fps, hook=None, grayscale=False, status_file=None):
+def _apply_sub_y(edl, yf):
+    """Проставить Y-долю субтитров (зона мимо лица / принудительно ниже при переделке)."""
+    if not yf:
+        return
+    for b in edl.get("beats", []):
+        for cue in (b.get("captions") or []):
+            cue["yf"] = yf
+        if b.get("text") and b["text"].get("pos", "lower") == "lower":
+            b["text"]["yf"] = yf
+
+
+def process(watch, out, fps, hook=None, grayscale=False, status_file=None, review=True):
+    """Собрать ролик из папки исходников. Возвращает (outfile, verdict).
+
+    verdict — вердикт авто-контроля качества (qc.review) или None. Если контроль
+    находит поправимый огрех (субтитры на лице) — движок сам переделывает ролик один
+    раз, опустив субтитры ниже.
+    """
     def _sf(t):
         if status_file:
             try:
@@ -95,29 +117,52 @@ def process(watch, out, fps, hook=None, grayscale=False, status_file=None):
                     print(f"  🙂 лицо найдено — субтитры на {int(sy*100)}% высоты (мимо лица)")
         except Exception as e:
             print("  (детектор лица пропущен:", str(e)[:60], ")")
-        if sy:
-            for b in edl.get("beats", []):
-                for cue in (b.get("captions") or []):
-                    cue.setdefault("yf", sy)
-                if b.get("text") and b["text"].get("pos", "lower") == "lower":
-                    b["text"].setdefault("yf", sy)
-        # текстовое ТЗ пользователя / хук от AI-режиссёра → в ВЕРХ (не на лицо), без субтитров поверх
+        # текстовое ТЗ / хук от AI-режиссёра → в ВЕРХ (не на лицо), без субтитров поверх
         if hook and edl.get("beats"):
             edl["beats"][0]["text"] = {
                 "lines": auto_edl.wrap_words(hook, per=3, maxlines=2),
                 "pos": "upper", "size": 92}
             edl["beats"][0].pop("captions", None)
-        plan = os.path.join(work, "_auto.edl.json")
-        with open(plan, "w", encoding="utf-8") as f:
-            json.dump(edl, f, ensure_ascii=False, indent=2)
         os.makedirs(out, exist_ok=True)
-        ts = time.strftime("%Y%m%d_%H%M%S")
-        outfile = os.path.join(out, f"reel_{ts}.mp4")
-        _sf("🎨 Рендерю ролик (нарезка, субтитры, звук, цвет)…")
-        subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
-                        "--edl", plan, "--src", work, "--out", outfile], check=True)
+
+        def _render(force_sub_y=None):
+            e = copy.deepcopy(edl)
+            _apply_sub_y(e, force_sub_y if force_sub_y is not None else sy)
+            plan = os.path.join(work, "_auto.edl.json")
+            with open(plan, "w", encoding="utf-8") as f:
+                json.dump(e, f, ensure_ascii=False, indent=2)
+            ts = time.strftime("%Y%m%d_%H%M%S")
+            outfile = os.path.join(out, f"reel_{ts}.mp4")
+            _sf("🎨 Рендерю ролик (нарезка, субтитры, звук, цвет)…")
+            subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
+                            "--edl", plan, "--src", work, "--out", outfile], check=True)
+            return outfile
+
+        outfile = _render()
+
+        # «Вторые мозги»: пересмотреть готовый ролик и переделать при поправимом огрехе
+        verdict = None
+        if review and qc is not None:
+            _sf("🧠 Проверяю качество (вторые мозги)…")
+            try:
+                verdict = qc.review(outfile)
+            except Exception as e:
+                print("  (контроль качества пропущен:", str(e)[:60], ")")
+                verdict = None
+            if verdict and verdict.get("fixes", {}).get("sub_y"):
+                _sf("🛠 Нашёл огрех (субтитры/лицо) — переделываю…")
+                try:
+                    fixed = _render(force_sub_y=verdict["fixes"]["sub_y"])
+                    try:
+                        os.remove(outfile)   # убрать первый вариант
+                    except Exception:
+                        pass
+                    outfile = fixed
+                    verdict = qc.review(outfile)   # перепроверить итог
+                except Exception as e:
+                    print("  (переделка пропущена:", str(e)[:60], ")")
         _sf("📦 Финализирую…")
-        return outfile
+        return outfile, verdict
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
@@ -139,8 +184,10 @@ def main():
             sig, items = snapshot(watch)
             if has_media(items) and sig != last:
                 print("новые исходники — рендерю…")
-                f = process(watch, out, a.fps)
+                f, verdict = process(watch, out, a.fps)
                 print("✅ готово:", f)
+                if verdict:
+                    print("  ", qc.summary(verdict) if qc else "")
                 last = sig
         except Exception as e:
             print("ошибка:", e)
