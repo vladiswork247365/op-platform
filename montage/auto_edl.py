@@ -87,7 +87,37 @@ def word_cues(words, t0: float, t1: float, speed: float, per: int = 3):
     return cues
 
 
-def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = True) -> dict:
+def dense_beats(v: str, words, target: float, per: int = 3):
+    """Джампкат-режим: рез НА КАЖДУЮ фразу (≈3 слова) с зум-панчем — плотный монтаж
+    говорящей головы (стиль виральных Reels: ~2 склейки/сек, жёсткие резы)."""
+    d = duration(v)
+    MO = ["punch", "zoomin", "kick", "zoomout"]
+    beats, used, count = [], 0.0, 0
+    groups = [words[i:i + per] for i in range(0, len(words), per)]
+    for g in groups:
+        if used >= target:
+            break
+        t0 = max(0.0, g[0]["start"] - 0.06)
+        t1 = min(d, g[-1]["end"] + 0.10)
+        seg = round(t1 - t0, 3)
+        if seg < 0.45:                # слишком короткий кусок — приклеим к следующему
+            continue
+        beat = {"src": os.path.basename(v), "in": round(t0, 2), "out": round(t1, 2),
+                "speed": 1.0, "motion": ("punch" if count == 0 else MO[count % len(MO)])}
+        if count == 0:
+            beat["punch"] = 1.08
+        # жёсткие резы (transition не ставим) = аутентичный джампкат
+        beat["captions"] = [{"t0": 0.0, "t1": round(seg, 2),
+                             "lines": [" ".join(w["word"] for w in g)],
+                             "highlight": g[-1]["word"].strip(STRIP), "pos": "lower"}]
+        beats.append(beat)
+        used += seg
+        count += 1
+    return beats, used
+
+
+def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = True,
+              dense: bool = False) -> dict:
     files = sorted(glob.glob(os.path.join(srcdir, "*")))
     vids = [f for f in files if os.path.splitext(f)[1].lower() in VIDEO_EXT]
     imgs = [f for f in files if os.path.splitext(f)[1].lower() in IMAGE_EXT]
@@ -96,6 +126,17 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
         raise SystemExit(f"нет видео/фото в {srcdir}")
 
     vids.sort(key=duration, reverse=True)        # главный клип = самый длинный
+
+    # ── ДЖАМПКАТ-режим: плотный рез на каждую фразу по речи главного клипа ──
+    if dense and subs and transcribe_words and vids:
+        w0 = transcribe_words(vids[0])
+        if w0:
+            beats, _used = dense_beats(vids[0], w0, target)
+            if beats:
+                edl = {"output": {"w": 1080, "h": 1920, "fps": fps}, "beats": beats}
+                if music:
+                    edl["music"] = {"file": os.path.basename(music[0]), "gain_db": -18}
+                return edl
     beats, used, count, photo_i, hook_done = [], 0.0, 0, 0, False
     BEAT = 3.0
 

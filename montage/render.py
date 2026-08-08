@@ -349,12 +349,17 @@ def main():
             print("  ✓ музыкальная подложка подмешана")
         elif mfile:
             print(f"  ⚠ музыка '{mfile}' не найдена в {args.src} — рендер без подложки")
-        # SFX-«вжух» на каждом стыке (и на жёстких резах, и на динамичных переходах)
-        if cut_times:
+        # SFX-«вжух» на стыках. При очень частых резах (джампкат) прореживаем, чтобы
+        # звук не частил — оставляем не гуще ~1 удара в 2.2с.
+        sfx_times = cut_times
+        if total > 0 and len(cut_times) > max(6, total / 2.2):
+            keep = max(1, round(len(cut_times) / max(1, total / 2.2)))
+            sfx_times = cut_times[::keep]
+        if sfx_times:
             sfx_stage = os.path.join(tmp, "sfx.mp4")
-            if mix_sfx(stage, cut_times, sfx_stage):
+            if mix_sfx(stage, sfx_times, sfx_stage):
                 stage = sfx_stage
-                print(f"  ✓ SFX на {len(cut_times)} стыках (whoosh)")
+                print(f"  ✓ SFX на {len(sfx_times)}/{len(cut_times)} стыках (whoosh)")
         gray = bool(out_cfg.get("grayscale"))
         finalize(stage, args.out, total, progress=False, grayscale=gray)
         print(f"  ✓ финал: loudnorm -14 LUFS + {'ч/б грейд' if gray else 'цветовой панч'}")
