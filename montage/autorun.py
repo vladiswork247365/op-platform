@@ -32,6 +32,7 @@ import time
 
 import auto_edl
 import dynamic_cut
+import face_zone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -73,6 +74,23 @@ def process(watch, out, fps, hook=None):
     try:
         prepare(watch, work)
         edl = auto_edl.build_edl(work, fps=fps)
+        # автозона субтитров по лицу — не садить субтитры на лицо
+        sy = None
+        try:
+            vids = [os.path.join(work, f) for f in sorted(os.listdir(work))
+                    if os.path.splitext(f)[1].lower() in auto_edl.VIDEO_EXT]
+            if vids:
+                sy = face_zone.subtitle_y_fraction(vids[0])
+                if sy:
+                    print(f"  🙂 лицо найдено — субтитры на {int(sy*100)}% высоты (мимо лица)")
+        except Exception as e:
+            print("  (детектор лица пропущен:", str(e)[:60], ")")
+        if sy:
+            for b in edl.get("beats", []):
+                for cue in (b.get("captions") or []):
+                    cue.setdefault("yf", sy)
+                if b.get("text") and b["text"].get("pos", "lower") == "lower":
+                    b["text"].setdefault("yf", sy)
         # текстовое ТЗ пользователя → крупный хук в начале ролика (первый beat)
         if hook and edl.get("beats"):
             edl["beats"][0]["text"] = {

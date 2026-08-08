@@ -154,7 +154,8 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
             png = os.path.join(tmp, f"cap_{i:02d}_{j:02d}.png")
             render_caption(cue.get("lines", []), highlight=cue.get("highlight"),
                            out_path=png, w=W, h=H, pos=cue.get("pos", "lower"),
-                           font_path=font, font_size=int(cue.get("size", 84)))
+                           font_path=font, font_size=int(cue.get("size", 84)),
+                           y_frac=cue.get("yf"))
             inputs += ["-loop", "1", "-framerate", str(fps), "-t", f"{dur}", "-i", png]
             enable = ""
             if "t0" in cue:
