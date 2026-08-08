@@ -17,6 +17,7 @@
 from __future__ import annotations
 import asyncio
 import os
+import re
 import sys
 import time
 import shutil
@@ -111,12 +112,17 @@ async def _process_basket(client, chat_id):
     if not b or b["running"] or not b["files"]:
         return
     b["running"] = True
-    status, job, hook, n = b["status"], b["job"], (b["hook"] or None), len(b["files"])
+    status, job, n = b["status"], b["job"], len(b["files"])
+    # разбор тегов стиля из ТЗ: #чб / #bw / #серый → ч/б грейд
+    raw = b["hook"] or ""
+    gray = bool(re.search(r"#(чб|ч/б|серый|серым|bw|grayscale|ч[ёе]рно[- ]?бел\w*)", raw, re.I))
+    hook = re.sub(r"#(чб|ч/б|серый|серым|bw|grayscale|ч[ёе]рно[- ]?бел\w*)", "", raw, flags=re.I).strip() or None
     async with render_lock:
         try:
-            await status.edit_text(f"⚙️ Монтирую {n} файл(ов) в один ролик: паузы → нарезка → субтитры → рендер…")
+            gnote = " · ч/б" if gray else ""
+            await status.edit_text(f"⚙️ Монтирую {n} файл(ов) в один ролик{gnote}: паузы → нарезка → субтитры → рендер…")
             loop = asyncio.get_event_loop()
-            reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook)
+            reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook, gray)
             await status.edit_text(f"⬆️ Готово ({human(os.path.getsize(reel))}). Отправляю…")
             await client.send_video(chat_id, reel,
                 caption="✅ Готовый Reel. Залей в Instagram/TikTok — панель подтянет статистику сама.")

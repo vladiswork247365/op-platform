@@ -238,10 +238,14 @@ def mix_sfx(video, cut_times, out, sfx="whoosh.wav"):
     return True
 
 
-def finalize(src, out, total=0.0, progress=True):
+def finalize(src, out, total=0.0, progress=True, grayscale=False):
     """Финальный проход для «залетаемости»: громкость под соцсети (EBU -14 LUFS),
-    цветовой панч, лёгкая резкость и полоса удержания сверху (progress bar)."""
-    vf = "eq=contrast=1.06:saturation=1.12:brightness=0.01,unsharp=5:5:0.4:5:5:0.0"
+    цветовой панч (или ч/б грейд), лёгкая резкость."""
+    if grayscale:
+        # ч/б (серый) грейд: убрать цвет, поднять контраст — моно-мотивационный вид
+        vf = "hue=s=0,eq=contrast=1.14:brightness=0.0,unsharp=5:5:0.4:5:5:0.0"
+    else:
+        vf = "eq=contrast=1.06:saturation=1.12:brightness=0.01,unsharp=5:5:0.4:5:5:0.0"
     if progress and total > 0:
         # тонкая красная полоса прогресса вверху — растёт по ходу ролика
         vf += (f",drawbox=x=0:y=0:h=10:w='iw*min(t/{total:.2f}\\,1)':"
@@ -298,8 +302,9 @@ def main():
             if mix_sfx(stage, cut_times, sfx_stage):
                 stage = sfx_stage
                 print(f"  ✓ SFX на {len(cut_times)} склейках (whoosh)")
-        finalize(stage, args.out, total, progress=False)   # громкость + цвет (без верхней полосы)
-        print("  ✓ финал: loudnorm -14 LUFS + цветовой панч")
+        gray = bool(out_cfg.get("grayscale"))
+        finalize(stage, args.out, total, progress=False, grayscale=gray)
+        print(f"  ✓ финал: loudnorm -14 LUFS + {'ч/б грейд' if gray else 'цветовой панч'}")
     print(f"\n✅ готово: {args.out}  (~{total:.1f}s, {len(segs)} склеек)")
 
 

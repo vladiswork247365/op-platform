@@ -69,11 +69,13 @@ def prepare(src, work):
             shutil.copy(p, dst)
 
 
-def process(watch, out, fps, hook=None):
+def process(watch, out, fps, hook=None, grayscale=False):
     work = tempfile.mkdtemp(prefix="reels_work_")
     try:
         prepare(watch, work)
         edl = auto_edl.build_edl(work, fps=fps)
+        if grayscale:
+            edl.setdefault("output", {})["grayscale"] = True
         # автозона субтитров по лицу — не садить субтитры на лицо
         sy = None
         try:
