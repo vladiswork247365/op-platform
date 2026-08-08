@@ -56,9 +56,18 @@ except ImportError:
     sys.exit("❌ Не установлен Pyrogram. Выполни:  pip3 install pyrogram tgcrypto")
 
 sys.path.insert(0, HERE)
-import autorun     # noqa: E402  — готовая process(watch, out, fps, hook, grayscale)
+import autorun     # noqa: E402  — готовая process(watch, out, fps, hook, grayscale) → (reel, verdict)
 import transcribe  # noqa: E402  — распознавание голосового ТЗ (faster-whisper)
 import director     # noqa: E402  — AI-режиссёр (ТЗ+речь → настройки через OpenRouter)
+try:
+    import qc       # noqa: E402  — авто-контроль качества («вторые мозги»)
+except Exception:
+    qc = None
+try:
+    import eleven    # noqa: E402  — озвучка/клон голоса (ElevenLabs)
+    import voiceover # noqa: E402  — режим «говорю без звука»
+except Exception:
+    eleven = voiceover = None
 
 API_ID = int(need("TG_API_ID"))
 API_HASH = need("TG_API_HASH")
@@ -88,6 +97,7 @@ def human(n):
 
 
 GRAY_RE = r"(ч[её]рно[- ]?бел\w*|монохром\w*|grayscale|\bч/?б\b|\bbw\b|\bсер(?:ый|ым|ом|ое|еньк\w*)\b|#чб)"
+VOICE_RE = r"(озвуч\w*|наложи\s+голос|без\s+звука|начита\w*|проговор\w*|голос(?:ом)?\s+клон\w*)"
 GO_WORDS = {"го", "гоу", "поехали", "погнали", "генерируй", "генери", "генерь",
             "монтируй", "начинай", "старт", "готово", "давай", "собирай", "сделай"}
 
@@ -102,6 +112,9 @@ async def start(_, m: "Message"):
         "2️⃣ Наговори или напиши ТЗ — какой ролик нужен (голосовое понимаю). "
         "Скажешь «чёрно-белый» — сделаю ч/б.\n"
         "3️⃣ Досылай ещё или скажи /go (или «генерируй») — соберу ролик.\n\n"
+        "🧠 После сборки сам проверяю качество и переделываю, если есть огрех.\n"
+        "🎙 Скажешь «озвучь: …текст…» — сниму твоим клон-голосом (нужен ElevenLabs, "
+        "см. VOICE-SETUP.md): снимаешь молча, голос и субтитры лягут сами.\n\n"
         "Видео лучше как файл (до 2 ГБ).")
 
 
@@ -143,6 +156,7 @@ async def _process_basket(client, chat_id):
     b["running"] = True
     status, job, n, raw = b["status"], b["job"], len(b["files"]), (b["brief"] or "")
     gray = bool(re.search(GRAY_RE, raw, re.I))
+    voiceover_on = bool(re.search(VOICE_RE, raw, re.I))
     cleaned = re.sub(GRAY_RE, "", raw, flags=re.I).strip()
     hook = cleaned if 0 < len(cleaned.split()) <= 6 else None   # запасной вариант без режиссёра
     stage_file = os.path.join(job, "_stage.txt")
@@ -191,16 +205,38 @@ async def _process_basket(client, chat_id):
                         gray = cfg["grayscale"] or gray
                         if cfg["hook"]:
                             hook = cfg["hook"]
-                prog["stage"] = "🎬 Монтирую ролик" + (" · ч/б" if gray else "")
-                reel = await loop.run_in_executor(
-                    None, autorun.process, job, OUT_DIR, FPS, hook, gray, stage_file)
+                reel = verdict = None
+                note = ""
+                # режим «говорю без звука»: озвучка скрипта клон-голосом (ElevenLabs)
+                if voiceover_on:
+                    if voiceover and eleven and eleven.have_key() and eleven.default_voice():
+                        script = re.sub(VOICE_RE, "", cleaned, flags=re.I).strip()
+                        if len(script.split()) >= 3:
+                            prog["stage"] = "🎙 Озвучиваю скрипт твоим голосом"
+                            res = await loop.run_in_executor(
+                                None, voiceover.build, job, script, OUT_DIR, None, FPS, 0.835, gray, None)
+                            if res:
+                                reel = res[0]
+                            else:
+                                note = "\n⚠️ Озвучка не удалась — собрал обычный ролик."
+                        else:
+                            note = "\n⚠️ Для озвучки пришли ТЕКСТ скрипта (что проговорить)."
+                    else:
+                        note = ("\n⚠️ Режим озвучки требует ELEVEN_KEY и голос "
+                                "(см. montage/VOICE-SETUP.md) — собрал обычный ролик.")
+                if reel is None:                # обычный монтаж (или откат)
+                    prog["stage"] = "🎬 Монтирую ролик" + (" · ч/б" if gray else "")
+                    reel, verdict = await loop.run_in_executor(
+                        None, autorun.process, job, OUT_DIR, FPS, hook, gray, stage_file)
             finally:
                 stop.set()
                 await anim                  # гасим анимацию перед финальными сообщениями
             await status.edit_text(f"⬆️ Готово за {int(time.time()-prog['t0'])}с "
                                    f"({human(os.path.getsize(reel))}). Отправляю…")
+            qc_line = ("\n" + qc.summary(verdict)) if (verdict and qc) else ""
             await client.send_video(chat_id, reel,
-                caption="✅ Готовый Reel. Залей в Instagram/TikTok — панель подтянет статистику сама.")
+                caption="✅ Готовый Reel. Залей в Instagram/TikTok — панель подтянет статистику сама."
+                        + qc_line + note)
             await status.delete()
         except Exception as e:
             stop.set()

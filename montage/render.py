@@ -215,9 +215,12 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
 XFADE_TD = 0.28  # длительность мягкого перехода
 
 
-def concat(segs, durs, transes, tmp, out):
+def concat(segs, durs, transes, tmp, out, fps=30):
     """Склейка сегментов. Возвращает (join_times, total) — моменты стыков на итоговом
     таймлайне (для SFX) и реальную длительность (для затухания музыки)."""
+    # «жёсткий рез» в xfade-цепочке должен длиться ≥ 2 кадров, иначе xfade короче кадра
+    # ломается и обрывает цепочку (видео обрезается на первом клипе). Держим кадро-безопасно.
+    td_cut = max(0.08, 2.0 / max(1, fps))
     # нет переходов → простая надёжная склейка встык (жёсткие резы = динамика)
     if not any(transes[1:]):
         lst = os.path.join(tmp, "concat.txt")
@@ -246,7 +249,7 @@ def concat(segs, durs, transes, tmp, out):
     for i in range(1, len(segs)):
         t = transes[i]
         cut = t in (None, "cut")
-        td = 0.02 if cut else XFADE_TD
+        td = td_cut if cut else XFADE_TD
         trans = "fade" if cut else t
         off = max(0.0, acc - td)
         joins.append(round(off + td / 2, 3))   # середина перехода — точка «удара» SFX
@@ -336,7 +339,7 @@ def main():
             total += dur
             print(f"  ✓ beat {i:02d}  {beat['src'][:30]:30}  {beat.get('motion','none'):8} {dur:>5.2f}s  «{(beat.get('text') or {}).get('lines',[''])[0][:20]}»")
         base = os.path.join(tmp, "concat.mp4")
-        cut_times, total = concat(segs, durs, transes, tmp, base)
+        cut_times, total = concat(segs, durs, transes, tmp, base, fps=fps)
         music = edl.get("music", {})
         mfile = music.get("file")
         stage = base

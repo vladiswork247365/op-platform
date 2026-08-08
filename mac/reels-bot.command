@@ -14,8 +14,30 @@ if ! command -v python3 >/dev/null 2>&1; then
   read -n1 -r -p "Нажми любую клавишу…"; exit 1
 fi
 
-# 1) обновить проект (если git-клон)
-[ -d .git ] && { echo "▶ Обновляю проект…"; git pull --ff-only 2>/dev/null || true; echo; }
+# 1) авто-обновление кода до последней версии
+if [ -d .git ]; then
+  echo "▶ Обновляю проект (git)…"; git pull --ff-only 2>/dev/null || true; echo
+elif command -v curl >/dev/null 2>&1 && command -v unzip >/dev/null 2>&1; then
+  # проект скачан ZIP-ом (без git): тянем свежий код из GitHub и кладём поверх.
+  # .env с ключами и папку fonts НЕ трогаем — обновляется только код (*.py, launcher'ы).
+  echo "▶ Обновляю код до последней версии…"
+  TMPZIP="$(mktemp -t opreels 2>/dev/null || echo /tmp/opreels).zip"
+  if curl -fsSL "https://github.com/vladiswork247365/op-platform/archive/refs/heads/main.zip" -o "$TMPZIP" 2>/dev/null; then
+    TMPD="$(mktemp -d)"
+    if unzip -oq "$TMPZIP" -d "$TMPD" 2>/dev/null; then
+      SRC="$TMPD/op-platform-main"
+      [ -d "$SRC/montage" ] && cp -f "$SRC"/montage/*.py montage/ 2>/dev/null
+      [ -d "$SRC/montage" ] && cp -f "$SRC"/montage/requirements*.txt montage/ 2>/dev/null
+      [ -d "$SRC/mac" ]     && cp -f "$SRC"/mac/*.command mac/ 2>/dev/null
+      echo "  ✓ код свежий (ключи .env и шрифты сохранены)"
+    fi
+    rm -rf "$TMPD"
+  else
+    echo "  ⚠️ не смог обновиться (нет сети/VPN?) — запускаю текущую версию"
+  fi
+  rm -f "$TMPZIP"
+  echo
+fi
 
 # 2) ключи Telegram
 ENV="montage/.env"
