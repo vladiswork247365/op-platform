@@ -144,30 +144,69 @@ async def _process_basket(client, chat_id):
     gray = bool(re.search(GRAY_RE, raw, re.I))
     cleaned = re.sub(GRAY_RE, "", raw, flags=re.I).strip()
     hook = cleaned if 0 < len(cleaned.split()) <= 6 else None   # запасной вариант без режиссёра
+    stage_file = os.path.join(job, "_stage.txt")
+    prog = {"stage": f"🚀 Запускаю сборку ({n} файл.)…", "t0": time.time()}
+    stop = asyncio.Event()
+
+    async def animate():
+        frames = "◐◓◑◒"
+        i = 0
+        while not stop.is_set():
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=3)
+                break                       # остановили — выходим
+            except asyncio.TimeoutError:
+                pass
+            stage = prog["stage"]
+            try:                            # движок мог записать свой этап
+                s = open(stage_file, encoding="utf-8").read().strip()
+                if s:
+                    stage = s
+            except Exception:
+                pass
+            el = int(time.time() - prog["t0"])
+            mm, ss = divmod(el, 60)
+            clock = f"{mm}:{ss:02d}" if mm else f"{ss} сек"
+            try:
+                await status.edit_text(f"{stage}  {frames[i % 4]}\n⏱ прошло {clock}")
+            except Exception:
+                pass
+            i += 1
+
     async with render_lock:
+        anim = asyncio.create_task(animate())
         try:
-            loop = asyncio.get_event_loop()
-            # AI-режиссёр: если есть ключ OpenRouter — по ТЗ + речи сам решает ч/б и хук
-            if raw and os.environ.get("OPENROUTER_API_KEY"):
-                await status.edit_text("🧠 AI-режиссёр читает ТЗ и речь…")
-                firstvid = next((f for f in b["files"]
-                                 if os.path.splitext(f)[1].lower() in VIDEO_EXT), None)
-                tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)
-                      if firstvid else "") or ""
-                cfg = await loop.run_in_executor(None, director.direct, raw, tr)
-                if cfg:
-                    gray = cfg["grayscale"] or gray
-                    if cfg["hook"]:
-                        hook = cfg["hook"]
-            gnote = " · ч/б" if gray else ""
-            await status.edit_text(f"⚙️ Монтирую {n} файл(ов){gnote}: паузы → нарезка → субтитры → рендер…")
-            reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook, gray)
-            await status.edit_text(f"⬆️ Готово ({human(os.path.getsize(reel))}). Отправляю…")
+            try:
+                loop = asyncio.get_event_loop()
+                # AI-режиссёр: если есть ключ OpenRouter — по ТЗ + речи сам решает ч/б и хук
+                if raw and os.environ.get("OPENROUTER_API_KEY"):
+                    prog["stage"] = "🧠 AI-режиссёр читает ТЗ и речь"
+                    firstvid = next((f for f in b["files"]
+                                     if os.path.splitext(f)[1].lower() in VIDEO_EXT), None)
+                    tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)
+                          if firstvid else "") or ""
+                    cfg = await loop.run_in_executor(None, director.direct, raw, tr)
+                    if cfg:
+                        gray = cfg["grayscale"] or gray
+                        if cfg["hook"]:
+                            hook = cfg["hook"]
+                prog["stage"] = "🎬 Монтирую ролик" + (" · ч/б" if gray else "")
+                reel = await loop.run_in_executor(
+                    None, autorun.process, job, OUT_DIR, FPS, hook, gray, stage_file)
+            finally:
+                stop.set()
+                await anim                  # гасим анимацию перед финальными сообщениями
+            await status.edit_text(f"⬆️ Готово за {int(time.time()-prog['t0'])}с "
+                                   f"({human(os.path.getsize(reel))}). Отправляю…")
             await client.send_video(chat_id, reel,
                 caption="✅ Готовый Reel. Залей в Instagram/TikTok — панель подтянет статистику сама.")
             await status.delete()
         except Exception as e:
-            await status.edit_text(f"❌ Ошибка монтажа: {str(e)[:200]}")
+            stop.set()
+            try:
+                await status.edit_text(f"❌ Ошибка монтажа: {str(e)[:200]}")
+            except Exception:
+                pass
         finally:
             shutil.rmtree(job, ignore_errors=True)
             baskets.pop(chat_id, None)

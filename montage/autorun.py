@@ -69,10 +69,18 @@ def prepare(src, work):
             shutil.copy(p, dst)
 
 
-def process(watch, out, fps, hook=None, grayscale=False):
+def process(watch, out, fps, hook=None, grayscale=False, status_file=None):
+    def _sf(t):
+        if status_file:
+            try:
+                open(status_file, "w", encoding="utf-8").write(t)
+            except Exception:
+                pass
     work = tempfile.mkdtemp(prefix="reels_work_")
     try:
+        _sf("📁 Готовлю исходники (поджимаю паузы)…")
         prepare(watch, work)
+        _sf("🎙 Распознаю речь и собираю план монтажа…")
         edl = auto_edl.build_edl(work, fps=fps)
         if grayscale:
             edl.setdefault("output", {})["grayscale"] = True
@@ -104,8 +112,10 @@ def process(watch, out, fps, hook=None, grayscale=False):
         os.makedirs(out, exist_ok=True)
         ts = time.strftime("%Y%m%d_%H%M%S")
         outfile = os.path.join(out, f"reel_{ts}.mp4")
+        _sf("🎨 Рендерю ролик (нарезка, субтитры, звук, цвет)…")
         subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
                         "--edl", plan, "--src", work, "--out", outfile], check=True)
+        _sf("📦 Финализирую…")
         return outfile
     finally:
         shutil.rmtree(work, ignore_errors=True)
