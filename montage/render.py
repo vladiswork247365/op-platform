@@ -216,6 +216,8 @@ XFADE_TD = 0.28  # длительность мягкого перехода
 
 
 def concat(segs, durs, transes, tmp, out):
+    """Склейка сегментов. Возвращает (join_times, total) — моменты стыков на итоговом
+    таймлайне (для SFX) и реальную длительность (для затухания музыки)."""
     # нет переходов → простая надёжная склейка встык (жёсткие резы = динамика)
     if not any(transes[1:]):
         lst = os.path.join(tmp, "concat.txt")
@@ -225,12 +227,21 @@ def concat(segs, durs, transes, tmp, out):
         run([FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", lst,
              "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
              "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out])
-        return
-    # xfade-цепочка: cut = почти мгновенный переход, остальные — по типу beat'а
+        joins, acc = [], 0.0
+        for dd in durs[:-1]:
+            acc += dd
+            joins.append(round(acc, 3))
+        return joins, round(sum(durs), 3)
+    # xfade-цепочка: cut = почти мгновенный переход, остальные — по типу beat'а.
+    # ВАЖНО: xfade(видео) и acrossfade(аудио) в ОДНОМ графе несовместимы — у них разные
+    # модели времени (offset vs последовательное потребление), ffmpeg упирается в
+    # рассинхрон framesync («buffers queued» → аудио-энкодер падает). Поэтому делаем два
+    # раздельных прохода (видео-only + аудио-only), затем мукс. Итоговые длительности
+    # совпадают (sum(durs) − N·td), синхрон сохраняется.
     inputs = []
     for s in segs:
         inputs += ["-i", s]
-    vf, af = [], []
+    vf, af, joins = [], [], []
     vcur, acur, acc = "[0:v]", "[0:a]", durs[0]
     for i in range(1, len(segs)):
         t = transes[i]
@@ -238,15 +249,22 @@ def concat(segs, durs, transes, tmp, out):
         td = 0.02 if cut else XFADE_TD
         trans = "fade" if cut else t
         off = max(0.0, acc - td)
+        joins.append(round(off + td / 2, 3))   # середина перехода — точка «удара» SFX
         vl, al = f"[v{i}]", f"[a{i}]"
         vf.append(f"{vcur}[{i}:v]xfade=transition={trans}:duration={td}:offset={off:.3f}{vl}")
         af.append(f"{acur}[{i}:a]acrossfade=d={td}{al}")
         vcur, acur = vl, al
         acc = acc + durs[i] - td
-    filt = ";".join(vf + af)
-    run([FFMPEG, "-y", *inputs, "-filter_complex", filt, "-map", vcur, "-map", acur,
+    vonly = os.path.join(tmp, "concat_v.mp4")
+    aonly = os.path.join(tmp, "concat_a.m4a")
+    run([FFMPEG, "-y", *inputs, "-filter_complex", ";".join(vf), "-map", vcur, "-an",
          "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
-         "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-movflags", "+faststart", out])
+         "-movflags", "+faststart", vonly])
+    run([FFMPEG, "-y", *inputs, "-filter_complex", ";".join(af), "-map", acur, "-vn",
+         "-c:a", "aac", "-b:a", "160k", "-ar", "44100", aonly])
+    run([FFMPEG, "-y", "-i", vonly, "-i", aonly, "-c", "copy", "-shortest",
+         "-movflags", "+faststart", out])
+    return joins, round(acc, 3)
 
 
 def add_music(video, music, gain_db, tmp, out, total_dur):
@@ -318,7 +336,7 @@ def main():
             total += dur
             print(f"  ✓ beat {i:02d}  {beat['src'][:30]:30}  {beat.get('motion','none'):8} {dur:>5.2f}s  «{(beat.get('text') or {}).get('lines',[''])[0][:20]}»")
         base = os.path.join(tmp, "concat.mp4")
-        concat(segs, durs, transes, tmp, base)
+        cut_times, total = concat(segs, durs, transes, tmp, base)
         music = edl.get("music", {})
         mfile = music.get("file")
         stage = base
@@ -328,16 +346,12 @@ def main():
             print("  ✓ музыкальная подложка подмешана")
         elif mfile:
             print(f"  ⚠ музыка '{mfile}' не найдена в {args.src} — рендер без подложки")
-        # SFX на склейках (только для встык-склейки без xfade — тайминги точны)
-        if not any(transes[1:]):
-            cut_times, acc = [], 0.0
-            for dd in durs[:-1]:
-                acc += dd
-                cut_times.append(round(acc, 3))
+        # SFX-«вжух» на каждом стыке (и на жёстких резах, и на динамичных переходах)
+        if cut_times:
             sfx_stage = os.path.join(tmp, "sfx.mp4")
             if mix_sfx(stage, cut_times, sfx_stage):
                 stage = sfx_stage
-                print(f"  ✓ SFX на {len(cut_times)} склейках (whoosh)")
+                print(f"  ✓ SFX на {len(cut_times)} стыках (whoosh)")
         gray = bool(out_cfg.get("grayscale"))
         finalize(stage, args.out, total, progress=False, grayscale=gray)
         print(f"  ✓ финал: loudnorm -14 LUFS + {'ч/б грейд' if gray else 'цветовой панч'}")
