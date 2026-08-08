@@ -56,7 +56,8 @@ except ImportError:
     sys.exit("❌ Не установлен Pyrogram. Выполни:  pip3 install pyrogram tgcrypto")
 
 sys.path.insert(0, HERE)
-import autorun  # noqa: E402  — берём готовую process(watch, out, fps)
+import autorun     # noqa: E402  — готовая process(watch, out, fps, hook, grayscale)
+import transcribe  # noqa: E402  — распознавание голосового ТЗ (faster-whisper)
 
 API_ID = int(need("TG_API_ID"))
 API_HASH = need("TG_API_HASH")
@@ -85,26 +86,52 @@ def human(n):
     return f"{n:.1f} ТБ"
 
 
-baskets = {}  # chat_id -> {files, job, hook, gen, status, running} — сборка нескольких файлов
+GRAY_RE = r"(ч[её]рно[- ]?бел\w*|монохром\w*|grayscale|\bч/?б\b|\bbw\b|\bсер(?:ый|ым|ом|ое|еньк\w*)\b|#чб)"
+GO_WORDS = {"го", "гоу", "поехали", "погнали", "генерируй", "генери", "генерь",
+            "монтируй", "начинай", "старт", "готово", "давай", "собирай", "сделай"}
+
+baskets = {}  # chat_id -> {files, job, brief, status, running}
 
 
 @app.on_message(filters.command("start"))
 async def start(_, m: "Message"):
     await m.reply(
-        "👋 Пришли ОДНО или НЕСКОЛЬКО видео/фото — соберу из них один вертикальный Reel: "
-        "поджму паузы, нарежу динамично, субтитры (мимо лица), и отдам готовый ролик.\n\n"
-        f"🧺 Файлы коплю в сборку и склеиваю по порядку. После последнего жду ~{DEBOUNCE}с и "
-        "монтирую, или напиши /go — сразу.\n\n"
-        "📝 ТЗ — добавь ПОДПИСЬ к любому файлу: текст ляжет крупным хуком в начало.\n\n"
-        "Видео лучше слать как файл (до 2 ГБ).")
+        "👋 Я собираю Reels. Порядок работы:\n\n"
+        "1️⃣ Пришли ИСХОДНИКИ — одно или несколько видео/фото.\n"
+        "2️⃣ Наговори или напиши ТЗ — какой ролик нужен (голосовое понимаю). "
+        "Скажешь «чёрно-белый» — сделаю ч/б.\n"
+        "3️⃣ Досылай ещё или скажи /go (или «генерируй») — соберу ролик.\n\n"
+        "Видео лучше как файл (до 2 ГБ).")
 
 
 def _basket(chat_id):
     b = baskets.get(chat_id)
     if not b:
         b = baskets[chat_id] = {"files": [], "job": tempfile.mkdtemp(prefix="tg_job_"),
-                                "hook": "", "gen": 0, "status": None, "running": False}
+                                "brief": "", "status": None, "running": False}
     return b
+
+
+def _is_go(text):
+    t = re.sub(r"[^0-9a-zа-яё ]", "", (text or "").lower()).strip()
+    words = t.split()
+    return bool(words) and len(words) <= 2 and any(w in GO_WORDS for w in words)
+
+
+async def _say(b, m, text):
+    if b["status"] is None:
+        b["status"] = await m.reply(text)
+    else:
+        try:
+            await b["status"].edit_text(text)
+        except Exception:
+            b["status"] = await m.reply(text)
+
+
+async def _prompt(b, m):
+    bnote = f"\n📝 ТЗ: «{b['brief'][:70]}»" if b["brief"] else "\n📝 ТЗ пока нет — наговори или напиши."
+    await _say(b, m, f"🧺 Исходников: {len(b['files'])}.{bnote}\n"
+                     "Пришли ещё, добавь ТЗ, или /go — генерирую.")
 
 
 async def _process_basket(client, chat_id):
@@ -112,15 +139,14 @@ async def _process_basket(client, chat_id):
     if not b or b["running"] or not b["files"]:
         return
     b["running"] = True
-    status, job, n = b["status"], b["job"], len(b["files"])
-    # разбор тегов стиля из ТЗ: #чб / #bw / #серый → ч/б грейд
-    raw = b["hook"] or ""
-    gray = bool(re.search(r"#(чб|ч/б|серый|серым|bw|grayscale|ч[ёе]рно[- ]?бел\w*)", raw, re.I))
-    hook = re.sub(r"#(чб|ч/б|серый|серым|bw|grayscale|ч[ёе]рно[- ]?бел\w*)", "", raw, flags=re.I).strip() or None
+    status, job, n, raw = b["status"], b["job"], len(b["files"]), (b["brief"] or "")
+    gray = bool(re.search(GRAY_RE, raw, re.I))
+    cleaned = re.sub(GRAY_RE, "", raw, flags=re.I).strip()
+    hook = cleaned if 0 < len(cleaned.split()) <= 6 else None   # короткое ТЗ → хук; длинное → авто-хук
     async with render_lock:
         try:
             gnote = " · ч/б" if gray else ""
-            await status.edit_text(f"⚙️ Монтирую {n} файл(ов) в один ролик{gnote}: паузы → нарезка → субтитры → рендер…")
+            await status.edit_text(f"⚙️ Монтирую {n} файл(ов){gnote}: паузы → нарезка → субтитры → рендер…")
             loop = asyncio.get_event_loop()
             reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook, gray)
             await status.edit_text(f"⬆️ Готово ({human(os.path.getsize(reel))}). Отправляю…")
@@ -134,20 +160,13 @@ async def _process_basket(client, chat_id):
             baskets.pop(chat_id, None)
 
 
-async def _debounce(client, chat_id, gen):
-    await asyncio.sleep(DEBOUNCE)
-    b = baskets.get(chat_id)
-    if b and b["gen"] == gen and not b["running"]:
-        await _process_basket(client, chat_id)
-
-
 @app.on_message(filters.command("go"))
 async def go(client, m: "Message"):
     if not allowed(m):
         return
     b = baskets.get(m.chat.id)
     if not b or not b["files"]:
-        await m.reply("Сборка пуста — пришли видео/фото, потом /go.")
+        await m.reply("Сначала пришли исходники (видео/фото), потом /go.")
         return
     await _process_basket(client, m.chat.id)
 
@@ -159,9 +178,8 @@ async def on_media(client, m: "Message"):
         return
     b = _basket(m.chat.id)
     if b["running"]:
-        await m.reply("⏳ Уже монтирую предыдущую сборку — дождись ролика и пришли заново.")
+        await m.reply("⏳ Уже монтирую — дождись ролика.")
         return
-
     if m.photo:
         kind, base, size = "фото", "photo.jpg", getattr(m.photo, "file_size", 0) or 0
     else:
@@ -172,35 +190,72 @@ async def on_media(client, m: "Message"):
             await m.reply(f"Пропускаю: {ext} — нужно видео или фото.")
             return
         kind, size = "видео", getattr(media, "file_size", 0) or 0
-
-    if m.caption and not b["hook"]:
-        b["hook"] = m.caption.strip()
-
+    if m.caption and not b["brief"]:
+        b["brief"] = m.caption.strip()
     idx = len(b["files"])
     dst = os.path.join(b["job"], f"{idx:02d}_{os.path.basename(base)}")
-    text = f"📥 Качаю {kind} #{idx + 1} ({human(size)})…"
-    if b["status"] is None:
-        b["status"] = await m.reply(text)
-    else:
-        try:
-            await b["status"].edit_text(text)
-        except Exception:
-            pass
+    await _say(b, m, f"📥 Качаю {kind} #{idx + 1} ({human(size)})…")
     try:
         await m.download(file_name=dst)
     except Exception as e:
-        await b["status"].edit_text(f"❌ Не смог скачать файл: {str(e)[:120]}")
+        await _say(b, m, f"❌ Не смог скачать: {str(e)[:120]}")
         return
     b["files"].append(dst)
-    b["gen"] += 1
-    hooknote = f" · ТЗ: «{b['hook'][:32]}»" if b["hook"] else ""
+    await _prompt(b, m)
+
+
+@app.on_message(filters.voice)
+async def on_voice(client, m: "Message"):
+    if not allowed(m):
+        return
+    b = _basket(m.chat.id)
+    if b["running"]:
+        return
+    note = await m.reply("🎧 Слушаю ТЗ…")
+    ogg = os.path.join(b["job"], "tz_voice.ogg")
     try:
-        await b["status"].edit_text(
-            f"🧺 В сборке: {len(b['files'])} файл(ов){hooknote}.\n"
-            f"Пришли ещё или /go — смонтирую в один ролик (авто-старт через {DEBOUNCE}с).")
-    except Exception:
-        pass
-    asyncio.create_task(_debounce(client, m.chat.id, b["gen"]))
+        await m.download(file_name=ogg)
+        loop = asyncio.get_event_loop()
+        text = (await loop.run_in_executor(None, transcribe.transcribe_text, ogg) or "").strip()
+    except Exception as e:
+        await note.edit_text(f"❌ Не распознал голос: {str(e)[:100]}")
+        return
+    finally:
+        try:
+            os.remove(ogg)
+        except Exception:
+            pass
+    if not text:
+        await note.edit_text("Не расслышал 🙈 Повтори ТЗ голосом или напиши текстом.")
+        return
+    if _is_go(text) and b["files"]:
+        await note.delete()
+        await _process_basket(client, m.chat.id)
+        return
+    b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
+    await note.delete()
+    if not b["files"]:
+        await m.reply(f"📝 ТЗ понял (голос): «{text}».\nТеперь пришли исходники (видео/фото) → потом /go.")
+    else:
+        await _prompt(b, m)
+
+
+@app.on_message(filters.text & ~filters.command(["go", "start"]))
+async def on_text(client, m: "Message"):
+    if not allowed(m):
+        return
+    b = _basket(m.chat.id)
+    if b["running"]:
+        return
+    text = (m.text or "").strip()
+    if _is_go(text) and b["files"]:
+        await _process_basket(client, m.chat.id)
+        return
+    b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
+    if not b["files"]:
+        await m.reply(f"📝 ТЗ понял: «{text}».\nПришли исходники (видео/фото) → потом /go.")
+    else:
+        await _prompt(b, m)
 
 
 if __name__ == "__main__":

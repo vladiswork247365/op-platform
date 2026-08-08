@@ -56,6 +56,17 @@ def transcribe_words(path: str, model_size: str = "small", lang: str = "ru"):
         return None
 
 
+def transcribe_text(path: str, model_size: str = "small", lang: str = "ru") -> str:
+    """Полный текст речи (для голосового ТЗ). '' при недоступности распознавания."""
+    try:
+        model = _load(model_size)
+        segments, _ = model.transcribe(path, language=lang, vad_filter=True)
+        return " ".join((s.text or "").strip() for s in segments).strip()
+    except Exception as e:
+        sys.stderr.write(f"[transcribe] голос не распознан ({type(e).__name__}: {str(e)[:80]})\n")
+        return ""
+
+
 def words_in_range(words, t0: float, t1: float):
     if not words:
         return []
