@@ -54,7 +54,9 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
     elif pos == "upper":
         y0 = int(h * 0.15)
     else:
-        y0 = int(h * 0.60)
+        # нижняя безопасная зона: под лицом (говорящая голова обычно вверху-центре),
+        # но выше зоны кнопок платформы. Опущено с 0.60 (попадало на лицо).
+        y0 = int(h * 0.74) - total_h // 2
 
     space = d.textlength(" ", font=font)
     for i, ln in enumerate(lines):

@@ -68,11 +68,16 @@ def prepare(src, work):
             shutil.copy(p, dst)
 
 
-def process(watch, out, fps):
+def process(watch, out, fps, hook=None):
     work = tempfile.mkdtemp(prefix="reels_work_")
     try:
         prepare(watch, work)
         edl = auto_edl.build_edl(work, fps=fps)
+        # текстовое ТЗ пользователя → крупный хук в начале ролика (первый beat)
+        if hook and edl.get("beats"):
+            edl["beats"][0]["text"] = {
+                "lines": auto_edl.wrap_words(hook, per=3, maxlines=2),
+                "pos": "center", "size": 96}
         plan = os.path.join(work, "_auto.edl.json")
         with open(plan, "w", encoding="utf-8") as f:
             json.dump(edl, f, ensure_ascii=False, indent=2)

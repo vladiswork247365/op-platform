@@ -87,7 +87,9 @@ async def start(_, m: "Message"):
     await m.reply(
         "👋 Пришли мне видео (можно как файл, до 2 ГБ) — соберу вертикальный Reel: "
         "поджму паузы, нарежу динамично, добавлю субтитры и отдам готовый ролик обратно.\n\n"
-        "Просто перекинь сюда видео с телефона или файлом.")
+        "📝 Хочешь задать ТЗ — просто добавь к видео ПОДПИСЬ (caption). Этот текст ляжет "
+        "крупным хуком в начало ролика.\n\n"
+        "Перекинь видео с телефона или файлом.")
 
 
 @app.on_message(filters.video | filters.document | filters.animation)
@@ -104,8 +106,10 @@ async def on_video(_, m: "Message"):
         await m.reply(f"Это не видео ({ext}). Пришли видеофайл.")
         return
     size = getattr(media, "file_size", 0) or 0
+    hook = (m.caption or "").strip()   # текстовое ТЗ = подпись к видео → хук в начале ролика
 
-    status = await m.reply(f"📥 Принял «{name}» ({human(size)}). Скачиваю…")
+    note = f" · ТЗ: «{hook[:40]}»" if hook else ""
+    status = await m.reply(f"📥 Принял «{name}» ({human(size)}){note}. Скачиваю…")
     job = tempfile.mkdtemp(prefix="tg_job_")
     dst = os.path.join(job, os.path.basename(name) or "clip.mp4")
 
@@ -133,7 +137,7 @@ async def on_video(_, m: "Message"):
         try:
             await status.edit_text("⚙️ Монтирую: поджимаю паузы → нарезка → субтитры → рендер…")
             loop = asyncio.get_event_loop()
-            reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS)
+            reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook or None)
             rsize = os.path.getsize(reel)
             await status.edit_text(f"⬆️ Готово ({human(rsize)}). Отправляю ролик…")
             await m.reply_video(reel, caption="✅ Готовый Reel. Дальше — залей в Instagram/TikTok, "
