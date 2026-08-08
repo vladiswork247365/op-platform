@@ -16,18 +16,25 @@ SHADOW  = (0, 0, 0, 190)
 BOX     = (9, 9, 11, 150)
 STRIP   = ".,!?—:;«»\"'()"
 
+FONTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
 FONT_CANDIDATES = [
+    "/System/Library/Fonts/Supplemental/Arial Black.ttf",   # тяжёлый и чистый — лучше для субтитров
+    "/Library/Fonts/Arial Black.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-    "/Library/Fonts/Arial Bold.ttf",
-    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-    "C:/Windows/Fonts/arialbd.ttf",
+    "C:/Windows/Fonts/ariblk.ttf",
 ]
 
 
 def find_font(explicit: str | None = None) -> str:
     if explicit and os.path.exists(explicit):
         return explicit
+    # 1) вшитый премиум-шрифт (montage/fonts/*.ttf|otf, напр. Montserrat) — в приоритете
+    if os.path.isdir(FONTS_DIR):
+        for f in sorted(os.listdir(FONTS_DIR)):
+            if f.lower().endswith((".ttf", ".otf")):
+                return os.path.join(FONTS_DIR, f)
     for p in FONT_CANDIDATES:
         if os.path.exists(p):
             return p
@@ -51,11 +58,30 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
     d = ImageDraw.Draw(img)
     hl = (highlight or "").strip().lower()
 
-    # авто-подгонка размера шрифта под ширину кадра — чтобы текст НЕ вылезал за экран.
-    # учитываем поля, обводку и возможную жёлтую плашку у слова.
-    max_w = w * 0.84
-    disp_all = [(ln.upper() if upper else ln) for ln in lines if ln.strip()]
-    widest = max((d.textlength(ln, font=font) for ln in disp_all), default=1.0)
+    # перенос длинных строк по ширине при ПОСТОЯННОМ размере — чтобы субтитры не «скакали».
+    max_w = w * 0.86
+
+    def _fits(s):
+        return d.textlength(s.upper() if upper else s, font=font) <= max_w
+
+    wrapped = []
+    for ln in lines:
+        ws = ln.split()
+        if not ws:
+            continue
+        cur = ""
+        for wd in ws:
+            t = (cur + " " + wd).strip()
+            if cur and not _fits(t):
+                wrapped.append(cur)
+                cur = wd
+            else:
+                cur = t
+        if cur:
+            wrapped.append(cur)
+    lines = wrapped or lines
+    # только если ОДНО слово шире кадра — тогда уменьшаем шрифт (редкий случай), иначе размер постоянный
+    widest = max((d.textlength((ln.upper() if upper else ln), font=font) for ln in lines), default=1.0)
     if widest > max_w:
         font_size = max(30, int(font_size * max_w / widest))
         font = ImageFont.truetype(font_path, font_size)

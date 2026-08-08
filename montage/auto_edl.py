@@ -135,19 +135,11 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
                     "speed": 1.05, "motion": MOTIONS[count % len(MOTIONS)]}
             # жёсткие резы = динамика (переходы xfade доступны опционально в EDL)
             spoken = words_in_range(words, pos, pos + seg) if words else []
-            if not hook_done:
-                if hook_pref:
-                    beat["text"] = {"lines": hook_pref[0], "pos": "center", "size": 88,
-                                    "highlight": hook_pref[1]}
-                elif spoken:
-                    beat["text"] = {"lines": chunk_lines(spoken, per=2), "pos": "center",
-                                    "size": 88, "highlight": spoken[-1].strip(STRIP)}
-                else:
-                    beat["text"] = {"lines": wrap_words(clean_title(v)), "pos": "center", "size": 92}
+            if not hook_done:                     # первый beat — панч, БЕЗ авто-текст-хука
                 beat["motion"], beat["punch"] = "punch", 1.08
                 beat.pop("transition", None)
                 hook_done = True
-            elif words:
+            if words:                             # пословные субтитры на КАЖДОМ beat (вкл. первый)
                 cues = word_cues(words, pos, pos + seg, beat["speed"])
                 if cues:
                     beat["captions"] = cues

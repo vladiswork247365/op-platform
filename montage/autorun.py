@@ -101,11 +101,12 @@ def process(watch, out, fps, hook=None, grayscale=False, status_file=None):
                     cue.setdefault("yf", sy)
                 if b.get("text") and b["text"].get("pos", "lower") == "lower":
                     b["text"].setdefault("yf", sy)
-        # текстовое ТЗ пользователя → крупный хук в начале ролика (первый beat)
+        # текстовое ТЗ пользователя / хук от AI-режиссёра → в ВЕРХ (не на лицо), без субтитров поверх
         if hook and edl.get("beats"):
             edl["beats"][0]["text"] = {
                 "lines": auto_edl.wrap_words(hook, per=3, maxlines=2),
-                "pos": "center", "size": 96}
+                "pos": "upper", "size": 92}
+            edl["beats"][0].pop("captions", None)
         plan = os.path.join(work, "_auto.edl.json")
         with open(plan, "w", encoding="utf-8") as f:
             json.dump(edl, f, ensure_ascii=False, indent=2)
