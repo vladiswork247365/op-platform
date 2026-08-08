@@ -106,6 +106,9 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
     all_words = []
 
     MOTIONS = ["kick", "zoomin", "punch", "zoomout"]  # каждый рез с энергией (kick = панч-ин на склейке)
+    # динамичные переходы (whip-pan/смуф-слайд) через один — чередуем с жёстким резом,
+    # чтобы держать ритм и не превращать ролик в «презентацию». None = жёсткий рез.
+    TRANS = ["slideleft", None, "slideup", None, "smoothright", None, "wipeleft", None]
     for v in vids:
         words = transcribe_words(v) if (subs and transcribe_words) else None
         if words:
@@ -135,10 +138,14 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
                     "speed": 1.05, "motion": MOTIONS[count % len(MOTIONS)]}
             # жёсткие резы = динамика (переходы xfade доступны опционально в EDL)
             spoken = words_in_range(words, pos, pos + seg) if words else []
-            if not hook_done:                     # первый beat — панч, БЕЗ авто-текст-хука
+            if not hook_done:                     # первый beat — панч-вход, БЕЗ перехода и авто-хука
                 beat["motion"], beat["punch"] = "punch", 1.08
                 beat.pop("transition", None)
                 hook_done = True
+            else:                                 # остальные резы — динамичный переход через один
+                tr = TRANS[count % len(TRANS)]
+                if tr:
+                    beat["transition"] = tr
             if words:                             # пословные субтитры на КАЖДОМ beat (вкл. первый)
                 cues = word_cues(words, pos, pos + seg, beat["speed"])
                 if cues:
@@ -149,7 +156,8 @@ def build_edl(srcdir: str, target: float = 34.0, fps: int = 30, subs: bool = Tru
             count += 1
             if count % 3 == 0 and photo_i < len(imgs) and used < target:
                 beats.append({"src": os.path.basename(imgs[photo_i]), "dur": 0.5,
-                              "motion": "kenburns_in" if photo_i % 2 == 0 else "kenburns_out"})
+                              "motion": "kenburns_in" if photo_i % 2 == 0 else "kenburns_out",
+                              "transition": "dissolve"})
                 photo_i += 1
                 used += 0.5
             if used >= target:

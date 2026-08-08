@@ -43,7 +43,7 @@ def find_font(explicit: str | None = None) -> str:
 
 def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
                    pos="lower", font_path=None, font_size=84, box=False, y_frac=None,
-                   hl_color=YELLOW, upper=True):
+                   hl_color=RED, upper=True):   # выделение под бренд — фирменный красный
     """Нарисовать подпись (1–3 строки) на прозрачном холсте wxh.
 
     lines     — список строк (по ≤4 слова, как для Reels-субтитров)
@@ -120,11 +120,12 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
         for orig, wd, wdw in zip(words, disp, sizes):
             key = orig.strip(STRIP).lower()
             if hl and key == hl:
-                # активное слово — в жёлтой плашке, тёмный текст (стиль референса)
+                # активное слово — в фирменной КРАСНОЙ плашке, БЕЛЫЙ текст (как лого «СИСТЕМА ОП»)
                 px, py = int(font_size * 0.14), int(font_size * 0.04)
                 d.rounded_rectangle([cx - px, y - py, cx + wdw + px, y + font_size + int(font_size * 0.24)],
                                     radius=int(font_size * 0.16), fill=hl_color)
-                d.text((cx, y), wd, font=font, fill=(15, 15, 17, 255))
+                d.text((cx, y), wd, font=font, fill=WHITE,
+                       stroke_width=max(2, stroke // 2), stroke_fill=(120, 0, 5, 255))
             else:
                 d.text((cx, y), wd, font=font, fill=WHITE,
                        stroke_width=stroke, stroke_fill=OUTLINE)

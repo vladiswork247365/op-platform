@@ -14,9 +14,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 MODEL = os.path.join(ROOT, "studio", "engine", "yunet.onnx")
 
-_HALF = 0.06      # половина высоты блока субтитров (≈2 строки) в долях кадра
-_MARGIN = 0.035   # зазор от лица
-_UI_BOTTOM = 0.87  # ниже — зона кнопок платформы, туда не лезем
+_HALF = 0.065     # половина высоты блока субтитров (≈2 строки) в долях кадра
+_MARGIN = 0.05    # зазор от лица (больше — субтитры точно не «липнут» к подбородку)
+_UI_BOTTOM = 0.90  # ниже — зона кнопок платформы, туда не лезем
 _UI_TOP = 0.12
 
 
@@ -73,13 +73,15 @@ def subtitle_y_fraction(video_path):
     if not box:
         return None
     ft, fb = box
-    below = fb + _MARGIN + _HALF          # разместить под лицом
+    below = fb + _MARGIN + _HALF          # разместить ПОД лицом (приоритет)
     if below + _HALF <= _UI_BOTTOM:
-        return round(min(below, 0.80), 3)
-    above = ft - _MARGIN - _HALF          # лицо низко → над лицом
+        return round(min(below, 0.84), 3)
+    above = ft - _MARGIN - _HALF          # лицо низко → НАД лицом
     if above - _HALF >= _UI_TOP:
         return round(max(above, 0.16), 3)
-    return None                            # некуда — пусть решает дефолт
+    # лицо почти во весь кадр и низко: чистого места нет. Ставим максимально низко,
+    # прямо над кнопками платформы — это заведомо лучше дефолта по центру лица.
+    return round(_UI_BOTTOM - _HALF, 3)   # ≈0.835
 
 
 if __name__ == "__main__":
