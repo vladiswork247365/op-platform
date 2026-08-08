@@ -44,12 +44,12 @@ jobs:
 
       - name: Сохранить результат, если изменился
         run: |
-          if git diff --quiet -- content/; then
+          git add content/                       # включая НОВЫЕ файлы (git diff их не видит)
+          if git diff --cached --quiet; then
             echo "Изменений в content/ нет."
           else
             git config user.name "content-bot"
             git config user.email "actions@users.noreply.github.com"
-            git add content/
-            git commit -m "content: авто-генерация Reels-сценариев по наполнению сайта"
+            git commit -m "content: авто-обновление наполнения сайта / сценариев"
             git push
           fi
