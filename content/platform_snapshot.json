@@ -1,0 +1,24 @@
+{
+  "api_ok": true,
+  "checked": "2026-08-08T17:38:34Z",
+  "system": {
+    "ok": true,
+    "checks": [
+      {
+        "name": "PostgreSQL",
+        "ok": true
+      },
+      {
+        "name": "Redis",
+        "ok": true
+      },
+      {
+        "name": "Celery",
+        "ok": true,
+        "error": null
+      }
+    ],
+    "env": "production",
+    "ts": "2026-08-08T17:38:39Z"
+  }
+}
