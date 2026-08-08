@@ -109,7 +109,8 @@ def _basket(chat_id):
     b = baskets.get(chat_id)
     if not b:
         b = baskets[chat_id] = {"files": [], "job": tempfile.mkdtemp(prefix="tg_job_"),
-                                "brief": "", "status": None, "running": False}
+                                "brief": "", "status": None, "running": False,
+                                "lock": asyncio.Lock()}   # против гонки при альбомах
     return b
 
 
@@ -244,15 +245,18 @@ async def on_media(client, m: "Message"):
         kind, size = "видео", getattr(media, "file_size", 0) or 0
     if m.caption and not b["brief"]:
         b["brief"] = m.caption.strip()
-    idx = len(b["files"])
-    dst = os.path.join(b["job"], f"{idx:02d}_{os.path.basename(base)}")
-    await _say(b, m, f"📥 Качаю {kind} #{idx + 1} ({human(size)})…")
-    try:
-        await m.download(file_name=dst)
-    except Exception as e:
-        await _say(b, m, f"❌ Не смог скачать: {str(e)[:120]}")
-        return
-    b["files"].append(dst)
+    # сериализуем скачивание (альбом = несколько сообщений разом) — уникальный номер и папка
+    async with b["lock"]:
+        os.makedirs(b["job"], exist_ok=True)
+        idx = len(b["files"])
+        dst = os.path.join(b["job"], f"{idx:02d}_{os.path.basename(base)}")
+        await _say(b, m, f"📥 Качаю {kind} #{idx + 1} ({human(size)})…")
+        try:
+            await m.download(file_name=dst)
+        except Exception as e:
+            await _say(b, m, f"❌ Не смог скачать: {str(e)[:120]}")
+            return
+        b["files"].append(dst)
     await _prompt(b, m)
 
 

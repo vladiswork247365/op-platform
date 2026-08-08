@@ -47,6 +47,12 @@ python3 -c "import PIL, imageio_ffmpeg, numpy" 2>/dev/null || pip3 install -q -r
 python3 -c "import faster_whisper" 2>/dev/null || {
   echo "▶ Ставлю распознавание речи (faster-whisper) — субтитры по словам…"
   pip3 install -q faster-whisper || echo "⚠️ faster-whisper не встал — субтитры по речи будут недоступны (остальное работает)"; }
+# премиум-шрифт субтитров (Montserrat ExtraBold) — чтобы не «колхозный» вид
+mkdir -p montage/fonts
+[ -f montage/fonts/Montserrat-ExtraBold.ttf ] || {
+  echo "▶ Скачиваю шрифт Montserrat…"
+  curl -fsSL "https://github.com/JulietaUla/Montserrat/raw/master/fonts/ttf/Montserrat-ExtraBold.ttf" \
+    -o montage/fonts/Montserrat-ExtraBold.ttf || echo "⚠️ шрифт не скачался — будет системный"; }
 
 # 4) запуск
 echo
