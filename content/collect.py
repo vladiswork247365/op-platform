@@ -57,15 +57,46 @@ class _Text(HTMLParser):
                 self.parts.append(t + " ")
 
 
-def page_text(url: str, timeout: int = 25) -> str:
+def _clean(text: str) -> str:
+    text = re.sub(r"[ \t]+", " ", text or "")
+    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
+    return text.strip()
+
+
+def static_text(url: str, timeout: int = 25) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (SystemOP content bot)"})
     html = urllib.request.urlopen(req, timeout=timeout).read().decode("utf-8", "ignore")
     p = _Text()
     p.feed(html)
-    text = "".join(p.parts)
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
-    return text.strip()
+    return _clean("".join(p.parts))
+
+
+def rendered_text(url: str, timeout: int = 35) -> str | None:
+    """Рендер JS-сайта (SPA) через headless-браузер — иначе на systemop.* текста нет."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception:
+        return None
+    try:
+        with sync_playwright() as pw:
+            b = pw.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+            pg = b.new_page(user_agent="Mozilla/5.0 (SystemOP content bot)")
+            pg.goto(url, wait_until="networkidle", timeout=timeout * 1000)
+            pg.wait_for_timeout(1500)
+            txt = pg.inner_text("body")
+            b.close()
+            return _clean(txt)
+    except Exception as e:
+        sys.stderr.write(f"[render] {url}: {type(e).__name__}: {str(e)[:120]}\n")
+        return None
+
+
+def page_text(url: str) -> str:
+    """Сначала пробуем как настоящий браузер (SPA), при неудаче — статически."""
+    txt = rendered_text(url)
+    if txt and len(txt) > 40:
+        return txt
+    return static_text(url)
 
 
 def collect_sites() -> str:
@@ -103,9 +134,26 @@ def api_snapshot() -> dict:
     return snap
 
 
+def api_help() -> str:
+    """Каталог возможностей платформы из Owner Agent /help — реальные фичи для контента."""
+    if not API_KEY:
+        return ""
+    try:
+        req = urllib.request.Request(API_BASE + "/help", headers={"X-Owner-Agent-Key": API_KEY})
+        data = json.load(urllib.request.urlopen(req, timeout=20))
+        return json.dumps(data, ensure_ascii=False, indent=2)[:6000]
+    except Exception as e:
+        sys.stderr.write(f"[help] {type(e).__name__}: {str(e)[:120]}\n")
+        return ""
+
+
 def main():
     os.makedirs(HERE, exist_ok=True)
     site_md = collect_sites()
+    helptxt = api_help()
+    if helptxt:
+        site_md += f"\n\n## Возможности платформы (Owner Agent /help)\n\n```json\n{helptxt}\n```\n"
+        print(f"  ✓ каталог /help: {len(helptxt)} символов")
     with open(os.path.join(HERE, "site_content.md"), "w", encoding="utf-8") as f:
         f.write(site_md)
     snap = api_snapshot()

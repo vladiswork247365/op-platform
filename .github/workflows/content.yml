@@ -27,6 +27,11 @@ jobs:
             echo "::warning::OPENROUTER_API_KEY не задан — соберу наполнение сайта, но без генерации сценариев."
           fi
 
+      - name: Браузер для рендера сайта (SPA)
+        run: |
+          pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+
       - name: Считать наполнение сайта + API
         env:
           OWNER_AGENT_API_SECRET: ${{ secrets.OWNER_AGENT_API_SECRET }}
