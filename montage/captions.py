@@ -84,9 +84,15 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
         cx = x
         for orig, wd, wdw in zip(words, disp, sizes):
             key = orig.strip(STRIP).lower()
-            color = hl_color if hl and key == hl else WHITE
-            d.text((cx, y), wd, font=font, fill=color,
-                   stroke_width=stroke, stroke_fill=OUTLINE)
+            if hl and key == hl:
+                # активное слово — в жёлтой плашке, тёмный текст (стиль референса)
+                px, py = int(font_size * 0.14), int(font_size * 0.04)
+                d.rounded_rectangle([cx - px, y - py, cx + wdw + px, y + font_size + int(font_size * 0.24)],
+                                    radius=int(font_size * 0.16), fill=hl_color)
+                d.text((cx, y), wd, font=font, fill=(15, 15, 17, 255))
+            else:
+                d.text((cx, y), wd, font=font, fill=WHITE,
+                       stroke_width=stroke, stroke_fill=OUTLINE)
             cx += wdw + space
     img.save(out_path)
     return out_path
