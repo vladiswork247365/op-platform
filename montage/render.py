@@ -42,6 +42,40 @@ def has_audio(path: str) -> bool:
     return "Audio:" in p.stderr
 
 
+def _dims(path: str):
+    p = subprocess.run([FFMPEG, "-hide_banner", "-i", path], capture_output=True, text=True)
+    import re
+    m = re.search(r"Video:.*?, (\d{2,5})x(\d{2,5})", p.stderr)
+    return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+
+
+_BARCROP: dict[str, str] = {}
+
+
+def bars_crop(path: str) -> str:
+    """Обрезка вшитых чёрных полос (letterbox/pillarbox). Возвращает 'crop=...,'
+    или '' если полос нет. Кешируется по файлу."""
+    if path in _BARCROP:
+        return _BARCROP[path]
+    res = ""
+    try:
+        import re
+        from collections import Counter
+        p = subprocess.run([FFMPEG, "-hide_banner", "-i", path, "-vf", "cropdetect=24:2:0",
+                            "-frames:v", "90", "-f", "null", "-"], capture_output=True, text=True)
+        crops = re.findall(r"crop=(\d+):(\d+):(\d+):(\d+)", p.stderr)
+        iw, ih = _dims(path)
+        if crops and iw and ih:
+            cw, ch, cx, cy = (int(x) for x in Counter(crops).most_common(1)[0][0])
+            # применяем только если полосы значимые (>5% по высоте или ширине)
+            if 0 < cw <= iw and 0 < ch <= ih and (ch < ih * 0.95 or cw < iw * 0.95):
+                res = f"crop={cw}:{ch}:{cx}:{cy},"
+    except Exception:
+        res = ""
+    _BARCROP[path] = res
+    return res
+
+
 def is_image(path: str) -> bool:
     return os.path.splitext(path)[1].lower() in IMG_EXT
 
@@ -95,7 +129,9 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
     sil_idx = 1
 
     # ── видеоцепочка ──
-    fill = f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}"
+    # сперва срезаем вшитые чёрные полосы (letterbox), потом заполняем 9:16
+    bc = "" if is_image(src) else bars_crop(src)
+    fill = f"{bc}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}"
     if is_image(src):
         # Ken Burns: апскейлим, затем zoompan
         z = "kenburns_out" if motion == "kenburns_out" else "kenburns_in"
