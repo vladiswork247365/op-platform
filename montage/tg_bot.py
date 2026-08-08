@@ -58,6 +58,7 @@ except ImportError:
 sys.path.insert(0, HERE)
 import autorun     # noqa: E402  — готовая process(watch, out, fps, hook, grayscale)
 import transcribe  # noqa: E402  — распознавание голосового ТЗ (faster-whisper)
+import director     # noqa: E402  — AI-режиссёр (ТЗ+речь → настройки через OpenRouter)
 
 API_ID = int(need("TG_API_ID"))
 API_HASH = need("TG_API_HASH")
@@ -142,12 +143,24 @@ async def _process_basket(client, chat_id):
     status, job, n, raw = b["status"], b["job"], len(b["files"]), (b["brief"] or "")
     gray = bool(re.search(GRAY_RE, raw, re.I))
     cleaned = re.sub(GRAY_RE, "", raw, flags=re.I).strip()
-    hook = cleaned if 0 < len(cleaned.split()) <= 6 else None   # короткое ТЗ → хук; длинное → авто-хук
+    hook = cleaned if 0 < len(cleaned.split()) <= 6 else None   # запасной вариант без режиссёра
     async with render_lock:
         try:
+            loop = asyncio.get_event_loop()
+            # AI-режиссёр: если есть ключ OpenRouter — по ТЗ + речи сам решает ч/б и хук
+            if raw and os.environ.get("OPENROUTER_API_KEY"):
+                await status.edit_text("🧠 AI-режиссёр читает ТЗ и речь…")
+                firstvid = next((f for f in b["files"]
+                                 if os.path.splitext(f)[1].lower() in VIDEO_EXT), None)
+                tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)
+                      if firstvid else "") or ""
+                cfg = await loop.run_in_executor(None, director.direct, raw, tr)
+                if cfg:
+                    gray = cfg["grayscale"] or gray
+                    if cfg["hook"]:
+                        hook = cfg["hook"]
             gnote = " · ч/б" if gray else ""
             await status.edit_text(f"⚙️ Монтирую {n} файл(ов){gnote}: паузы → нарезка → субтитры → рендер…")
-            loop = asyncio.get_event_loop()
             reel = await loop.run_in_executor(None, autorun.process, job, OUT_DIR, FPS, hook, gray)
             await status.edit_text(f"⬆️ Готово ({human(os.path.getsize(reel))}). Отправляю…")
             await client.send_video(chat_id, reel,
