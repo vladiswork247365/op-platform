@@ -80,9 +80,25 @@ def chunk_lines(word_list, per: int = 3, maxlines: int = 2):
 
 if __name__ == "__main__":
     import argparse
-    ap = argparse.ArgumentParser(description="Транскрибация файла в слова с таймингами")
+    ap = argparse.ArgumentParser(description="Транскрибация файла: слова с таймингами или чистый текст")
     ap.add_argument("path")
     ap.add_argument("--lang", default="ru")
+    ap.add_argument("--text", action="store_true", help="печатать ПОЛНЫЙ текст и сохранить <файл>.txt")
+    ap.add_argument("--model", default="small", help="small (быстро) / medium (точнее)")
     a = ap.parse_args()
-    w = transcribe_words(a.path, lang=a.lang)
-    print("недоступно" if w is None else json.dumps(w[:20], ensure_ascii=False, indent=2))
+    if a.text:
+        txt = transcribe_text(a.path, model_size=a.model, lang=a.lang)
+        if not txt:
+            print("не удалось распознать (нет faster-whisper/модели/сети)")
+        else:
+            out = a.path + ".txt"
+            try:
+                open(out, "w", encoding="utf-8").write(txt)
+            except Exception:
+                out = None
+            print(txt)
+            if out:
+                print(f"\n[сохранено: {out}]")
+    else:
+        w = transcribe_words(a.path, lang=a.lang)
+        print("недоступно" if w is None else json.dumps(w[:20], ensure_ascii=False, indent=2))

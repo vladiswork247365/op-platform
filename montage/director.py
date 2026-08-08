@@ -11,17 +11,22 @@ import os
 import sys
 import urllib.request
 
-MODEL = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+# По умолчанию — Claude Opus (умный режиссёр) через OpenRouter. Точный slug модели можно
+# поменять в montage/.env строкой OPENROUTER_MODEL=... (список — на openrouter.ai/models).
+MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-4.1")
 
 SYS = (
-    "Ты — режиссёр коротких вертикальных Reels для русскоязычного эксперта по продажам "
-    "и бизнесу. По ТЗ автора и расшифровке его речи верни НАСТРОЙКИ монтажа СТРОГО в JSON, "
-    "без пояснений вне JSON. Поля:\n"
+    "Ты — сильный режиссёр коротких вертикальных Reels для русскоязычного эксперта по "
+    "продажам и бизнесу. Твоя задача — по ТЗ автора и расшифровке его речи принять решения "
+    "по монтажу так, чтобы ролик цеплял с первой секунды и удерживал до конца. Верни ответ "
+    "СТРОГО в JSON, без пояснений вне JSON. Поля:\n"
+    '- "hook": строка до 5 слов ЗАГЛАВНЫМИ — мощный хук в начало (интрига/обещание/'
+    "провокация по смыслу речи и ТЗ, без кавычек и эмодзи). Если хук не нужен — пустая строка.\n"
     '- "grayscale": true/false — чёрно-белый грейд (true, если автор просит ч/б, монохром, '
     "серый или явно мотивационный «нуар»; иначе false).\n"
-    '- "hook": строка до 5 слов ЗАГЛАВНЫМИ — цепляющий хук в начало ролика, по смыслу речи и ТЗ '
-    "(без кавычек, без эмодзи). Если хук не нужен — пустая строка.\n"
-    '- "reason": одна короткая фраза, почему такие настройки.'
+    '- "dense": true/false — джампкат: частый рез на каждую фразу с зум-панчами. true для '
+    "энергичной динамичной речи/эмоций/перечислений; false для спокойного вдумчивого тона.\n"
+    '- "reason": одна короткая фраза — почему такие решения.'
 )
 
 
@@ -48,6 +53,7 @@ def direct(brief: str, transcript: str = "", api_key: str | None = None, timeout
         hook = (cfg.get("hook") or "").strip().strip('"').strip()
         return {
             "grayscale": bool(cfg.get("grayscale")),
+            "dense": bool(cfg.get("dense")),
             "hook": hook if 0 < len(hook.split()) <= 6 else "",
             "reason": (cfg.get("reason") or "").strip()[:120],
         }
@@ -61,5 +67,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="AI-режиссёр: ТЗ → настройки")
     ap.add_argument("brief")
     ap.add_argument("--transcript", default="")
-    print(json.dumps(direct(ap.parse_args().brief, ap.parse_args().transcript),
-                     ensure_ascii=False, indent=2))
+    a = ap.parse_args()
+    print(f"модель: {MODEL}  |  ключ OpenRouter: {'есть' if os.environ.get('OPENROUTER_API_KEY') else 'НЕТ'}")
+    res = direct(a.brief, a.transcript)
+    if res is None:
+        print("режиссёр не ответил (нет ключа / неверный slug модели / нет сети). "
+              "Проверь OPENROUTER_API_KEY и OPENROUTER_MODEL в montage/.env")
+    else:
+        print(json.dumps(res, ensure_ascii=False, indent=2))

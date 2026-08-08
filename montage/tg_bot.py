@@ -206,6 +206,7 @@ async def _process_basket(client, chat_id):
                     cfg = await loop.run_in_executor(None, director.direct, raw, tr)
                     if cfg:
                         gray = cfg["grayscale"] or gray
+                        dense_on = dense_on or bool(cfg.get("dense"))
                         if cfg["hook"]:
                             hook = cfg["hook"]
                 reel = verdict = None
