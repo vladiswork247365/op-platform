@@ -32,22 +32,62 @@ FF = imageio_ffmpeg.get_ffmpeg_exe()
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
+def _beat_starts(beats):
+    """Кумулятивные старты битов на таймлайне + общая длительность."""
+    starts, t = [], 0.0
+    for b in beats:
+        starts.append(t)
+        d = b["dur"] if "dur" in b else (b.get("out", 0) - b.get("in", 0)) / b.get("speed", 1.0)
+        t += max(0.05, d)
+    return starts, t
+
+
 def _inject_cards(edl: dict, script: dict):
-    """Разложить плашки сценария по битам: хук — первой, остальные равномерно."""
+    """Плашки: хук — на вход, остальные — на момент 'at' (доля ролика) от режиссёра."""
     beats = edl.get("beats") or []
     if not beats:
         return
+    starts, total = _beat_starts(beats)
+    n = len(beats)
+
+    def beat_at(frac):
+        tt = min(max(0.0, frac), 1.0) * total
+        idx = 0
+        for j in range(n):
+            if starts[j] <= tt:
+                idx = j
+        return idx
+
     hook = (script.get("hook") or "").strip()
     if hook:
         beats[0]["card"] = {"headline": hook, "label": "", "sub": "", "color": "red", "yf": 0.13}
     cards = script.get("cards") or []
-    n = len(beats)
-    for i, c in enumerate(cards):
-        bi = min(n - 1, int((i + 1) / (len(cards) + 1) * n))
-        if beats[bi].get("card"):
-            bi = min(n - 1, bi + 1)
+    for k, c in enumerate(cards):
+        at = c.get("at")
+        bi = beat_at(at) if at is not None else min(n - 1, int((k + 1) / (len(cards) + 1) * n))
+        if bi == 0 and hook:
+            bi = min(n - 1, 1)          # не затирать хук
+        while bi < n - 1 and beats[bi].get("card"):
+            bi += 1                     # не класть две плашки на один бит
         beats[bi]["card"] = {"label": c.get("label", ""), "headline": c.get("headline", ""),
                              "sub": c.get("sub", ""), "color": c.get("color", "yellow"), "yf": 0.13}
+
+
+_STRIP = ".,!?—:;«»\"'()"
+
+
+def _apply_highlights(edl: dict, words):
+    """Подсветить в субтитрах слова, выбранные режиссёром (highlight_words)."""
+    hl = {w.strip(_STRIP).lower() for w in (words or []) if w.strip()}
+    if not hl:
+        return
+    for b in edl.get("beats", []):
+        for cue in (b.get("captions") or []):
+            for ln in cue.get("lines", []):
+                for w in ln.split():
+                    if w.strip(_STRIP).lower() in hl:
+                        cue["highlight"] = w.strip(_STRIP)
+                        break
 
 
 def _mix_bg(video: str, music_file: str, out: str, gain_db: int = -18) -> str:
@@ -83,7 +123,7 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
         return None
     _st("🎙 Озвучиваю сценарий твоим голосом…")
     audio = os.path.join(footage_dir, "_voice.mp3")
-    res = eleven.tts_timed(text, audio, voice_id)
+    res = eleven.tts_timed(text, audio, voice_id, settings=script.get("voice"))  # подача от Opus
     if not res:
         return None
     _, words = res
@@ -91,10 +131,12 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
     if total <= 0:
         return None
     _st("🎬 Собираю видеоряд под озвучку…")
-    edl = voiceover.build_edl(footage_dir, audio, words, total, fps=fps, sub_y=0.8)
-    if gray:
+    edl = voiceover.build_edl(footage_dir, audio, words, total, fps=fps, sub_y=0.8,
+                             pace=script.get("pace", "medium"))            # темп от Opus
+    if gray or script.get("grayscale"):                                    # ч/б от Opus
         edl["output"]["grayscale"] = True
-    _inject_cards(edl, script)
+    _inject_cards(edl, script)                                             # тайминг плашек от Opus
+    _apply_highlights(edl, script.get("highlight_words"))                  # акцент-слова от Opus
     plan = os.path.join(footage_dir, "_factory.edl.json")
     with open(plan, "w", encoding="utf-8") as f:
         json.dump(edl, f, ensure_ascii=False, indent=2)

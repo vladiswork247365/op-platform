@@ -90,23 +90,45 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "",
         sys.stderr.write(f"[scriptwriter] {type(e).__name__}: {str(e)[:150]}\n")
         return None
     cards = []
-    for c in (cfg.get("cards") or [])[:7]:
+    for c in (cfg.get("cards") or [])[:8]:
         if isinstance(c, dict) and c.get("headline"):
+            try:
+                at = float(c.get("at"))
+                at = min(1.0, max(0.0, at))
+            except (TypeError, ValueError):
+                at = None
             cards.append({"label": _clip(c.get("label", ""), 40),
                           "headline": _clip(c.get("headline", ""), 40),
                           "sub": _clip(c.get("sub", ""), 60),
-                          "color": c.get("color", "yellow")})
+                          "color": c.get("color", "yellow"), "at": at})
     mood = (cfg.get("music_mood") or "energetic").strip().lower()
     if mood not in ("energetic", "calm", "epic"):
         mood = "energetic"
+    pace = (cfg.get("pace") or "medium").strip().lower()
+    if pace not in ("fast", "medium"):
+        pace = "medium"
+    v = cfg.get("voice") or {}
+    def _f(x, lo, hi, d):
+        try:
+            return min(hi, max(lo, float(x)))
+        except (TypeError, ValueError):
+            return d
+    voice = {"stability": _f(v.get("stability"), 0.0, 1.0, 0.4),
+             "style": _f(v.get("style"), 0.0, 1.0, 0.5),
+             "speed": _f(v.get("speed"), 0.7, 1.2, 1.05)}
+    hl = [str(w).strip() for w in (cfg.get("highlight_words") or []) if str(w).strip()][:12]
     return {
         "hook": _clip(cfg.get("hook", ""), 80),
         "part1": _clip(cfg.get("part1", ""), 700),
         "part2": _clip(cfg.get("part2", ""), 900),
         "part3": _clip(cfg.get("part3", ""), 700),
         "cards": cards,
+        "highlight_words": hl,
         "cta_word": _clip(cfg.get("cta_word", "ОП"), 30),
         "music_mood": mood,
+        "grayscale": bool(cfg.get("grayscale")),
+        "pace": pace,
+        "voice": voice,
         "why": _clip(cfg.get("why", ""), 200),
     }
 
