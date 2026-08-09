@@ -44,6 +44,8 @@ SYS = (
     '  "strengths": ["1-3 сильные стороны"],\n'
     '  "weak_spots": ["2-4 слабых места"],\n'
     '  "fixes": ["2-4 конкретные правки ДО публикации"],\n'
+    '  "sound": "какой ТРЕНДОВЫЙ звук из Инсты добавить вручную под этот ролик: '
+    'вайб/жанр/темп и где должен бить дроп (под хук/оффер)",\n'
     '  "verdict": "1-2 фразы: постить или переделать и что"\n'
     '}'
 )
@@ -157,6 +159,8 @@ def as_text(v: dict) -> str:
         out.append("⚠️ Слабое:\n" + li(v["weak_spots"]))
     if v.get("fixes"):
         out.append("🛠 Усилить до постинга:\n" + li(v["fixes"]))
+    if v.get("sound"):
+        out.append(f"🎵 Трендовый звук: {v['sound']}")
     if v.get("verdict"):
         out.append(f"\n💡 {v['verdict']}")
     return "\n".join(out)
