@@ -17,6 +17,11 @@ import sys
 import urllib.error
 import urllib.request
 
+try:
+    import reel_types  # виральные механики монтажа под формат
+except Exception:
+    reel_types = None
+
 MODEL = os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.5"
 
 _MOTIONS_VID = {"punch", "zoomin", "zoomout", "kick"}
@@ -72,16 +77,23 @@ def _beats_text(beats: list[dict]) -> str:
 
 
 def plan_shots(beats: list[dict], clips: list[dict], script: dict | None = None,
-               api_key: str | None = None, timeout: int = 150) -> dict | None:
-    """→ {i: {"file","start","motion"}} по битам, или None (нет ключа/сети/ошибка)."""
+               rtype: str = "", api_key: str | None = None, timeout: int = 150) -> dict | None:
+    """→ {i: {"file","in","out","motion"}} по битам, или None (нет ключа/сети/ошибка)."""
     key = api_key or os.environ.get("OPENROUTER_API_KEY")
     if not key or not beats or not clips:
         return None
     valid_files = {c["file"] for c in clips}
     by_file = {c["file"]: c for c in clips}
     sb = _script_block(script)
+    play = reel_types.edit_play(rtype) if (reel_types and reel_types.valid(rtype)) else ""
+    fmt = ""
+    if play:
+        title = reel_types.title(rtype)
+        fmt = (f"ФОРМАТ: {title}\nМОНТАЖНЫЕ МЕХАНИКИ ЭТОГО ФОРМАТА (выжми из формата "
+               f"максимум — темп, переходы, зумы, плашки — применяй именно их):\n{play}\n\n")
     user = (
-        (sb + "\n\n" if sb else "")
+        fmt
+        + (sb + "\n\n" if sb else "")
         + "КАТАЛОГ КЛИПОВ (имя | тип и длина | вид | лицо | динамика | описание):\n"
         + "\n".join(f"- {ln}" for ln in _catalog_lines(clips))
         + "\n\nРАСКАДРОВКА (бит | что говорится | сколько длится бит):\n"
