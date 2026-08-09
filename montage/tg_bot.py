@@ -79,6 +79,10 @@ try:
     import previral      # noqa: E402  — предиктор виральности ДО публикации
 except Exception:
     previral = None
+try:
+    import trending      # noqa: E402  — рекомендация трендового звука для Инсты
+except Exception:
+    trending = None
 
 API_ID = int(need("TG_API_ID"))
 API_HASH = need("TG_API_HASH")
@@ -452,13 +456,20 @@ async def _finalize(client, chat_id, m):
             await status.delete()
         except Exception:
             pass
-    reel_types.log_reel(b.get("type") or reel_types.DEFAULT, b.get("brief") or "", reel)
+    rt = b.get("type") or reel_types.DEFAULT
+    reel_types.log_reel(rt, b.get("brief") or "", reel)
     await client.send_video(chat_id, reel,
-        caption="✅ ФИНАЛЬНЫЙ РОЛИК. Можно публиковать! 🚀\n"
-                "🎵 Для макс. охвата: в Инсте приглуши оригинальный звук и добавь АКТУАЛЬНЫЙ "
-                "трендовый саунд нативно — так алгоритм даёт буст.\n"
-                "Залей в Instagram/TikTok — панель подтянет статистику, а через 6ч будет разбор.",
+        caption="✅ ФИНАЛЬНЫЙ РОЛИК — голос + субтитры, БЕЗ вшитой музыки (специально под "
+                "трендовый звук).\nЗалей в Instagram — панель подтянет статистику, через 6ч будет разбор.",
         reply_markup=MAIN_KB)
+    # какой трендовый звук добавить ВРУЧНУЮ в Инсте (моторика алгоритма)
+    sound = (b.get("previral") or {}).get("sound")
+    pace = (b.get("script") or {}).get("pace", "medium")
+    msg = trending.recommend(_music_mood(b), rt, pace) if trending else ""
+    if sound:
+        msg = f"🎵 ЗВУК ДЛЯ ИНСТЫ — добавь ВРУЧНУЮ.\n• Под этот ролик: {sound}\n\n" + msg
+    if msg:
+        await client.send_message(chat_id, msg)
     baskets.pop(chat_id, None)
 
 

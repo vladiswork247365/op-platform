@@ -188,8 +188,13 @@ def _mix_bg(video: str, music_file: str, out: str, gain_db: int = -18) -> str:
 
 def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = None,
           gray: bool = False, mood: str = "energetic", fps: int = 30, status_cb=None,
-          rtype: str = ""):
-    """Собрать полный ролик по сценарию. → путь к ролику или None (нет озвучки)."""
+          rtype: str = "", bake_bg: bool = False):
+    """Собрать полный ролик по сценарию. → путь к ролику или None (нет озвучки).
+
+    bake_bg=False (по умолчанию): НЕ вшиваем фоновую музыку — экспорт «голос+субтитры»,
+    чтобы трендовый звук ты наложил нативно в Инсте (алго-буст). Трек, присланный
+    автором, уважаем всегда. bake_bg=True — вшить фон (трендовый из библиотеки/Jamendo).
+    """
     def _st(t):
         if status_cb:
             try:
@@ -240,13 +245,14 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
     subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
                     "--edl", plan, "--src", footage_dir, "--out", reel], check=True)
     # фоновая музыка: 1) трек, который прислал автор; иначе 2) Jamendo по настроению
-    mf = _user_music(footage_dir)
-    if not mf and trending and trending.have():
-        _st("🎵 Беру трендовый звук под настроение…")
-        mf = trending.pick(mood)
-    if not mf and music and music.have_key():
-        _st("🎵 Подбираю музыку…")
-        mf = music.get_track(os.path.join(footage_dir, "_bg.mp3"), mood)
+    mf = _user_music(footage_dir)                    # трек автора — уважаем всегда
+    if not mf and bake_bg:                            # авто-музыку вшиваем ТОЛЬКО если явно просят
+        if trending and trending.have():
+            _st("🎵 Беру трендовый звук под настроение…")
+            mf = trending.pick(mood)
+        elif music and music.have_key():
+            _st("🎵 Подбираю музыку…")
+            mf = music.get_track(os.path.join(footage_dir, "_bg.mp3"), mood)
     if mf:
         _st("🎵 Накладываю музыку под голос…")
         mixed = os.path.join(out_dir, "_mixed.mp4")
