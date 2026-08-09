@@ -22,6 +22,7 @@ import tempfile
 import imageio_ffmpeg
 
 from captions import render_caption, find_font
+from cards import render_card
 
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 IMG_EXT = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
@@ -184,8 +185,8 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
         t = beat["text"]
         cues = [{"lines": t.get("lines", []), "highlight": t.get("highlight"),
                  "pos": t.get("pos", "lower"), "size": t.get("size", 84)}]  # без времени = весь beat
+    cap_idx = 2  # 0=src, 1=silence, далее подписи/плашки
     if cues:
-        cap_idx = 2  # 0=src, 1=silence, далее подписи
         for j, cue in enumerate(cues):
             png = os.path.join(tmp, f"cap_{i:02d}_{j:02d}.png")
             render_caption(cue.get("lines", []), highlight=cue.get("highlight"),
@@ -202,6 +203,22 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
                      f"{vmap}[capin{j}]overlay=0:0{enable}[vtxt{j}]")
             vmap = f"[vtxt{j}]"
             cap_idx += 1
+
+    # ── графическая плашка-акцент (верх кадра) ──
+    card = beat.get("card")
+    if card:
+        cpng = os.path.join(tmp, f"card_{i:02d}.png")
+        render_card(card.get("headline", ""), out_path=cpng, label=card.get("label", ""),
+                    sub=card.get("sub", ""), color=card.get("color", "yellow"),
+                    w=W, h=H, y_frac=float(card.get("yf", 0.15)), font_path=font)
+        inputs += ["-loop", "1", "-framerate", str(fps), "-t", f"{dur}", "-i", cpng]
+        enable = ""
+        if "t0" in card:
+            enable = f":enable='between(t,{float(card['t0']):.2f},{float(card.get('t1', dur)):.2f})'"
+        filt += (f";[{cap_idx}:v]format=rgba[cardin];"
+                 f"{vmap}[cardin]overlay=0:0{enable}[vcard]")
+        vmap = "[vcard]"
+        cap_idx += 1
 
     cmd = [FFMPEG, "-y", *inputs, "-filter_complex", filt,
            "-map", vmap, "-map", amap, "-t", f"{dur}",
