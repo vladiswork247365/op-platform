@@ -150,7 +150,13 @@ def _parts_kb():
         [InlineKeyboardButton("✏️ Правка ч.1", callback_data="edit:1"),
          InlineKeyboardButton("ч.2", callback_data="edit:2"),
          InlineKeyboardButton("ч.3", callback_data="edit:3")],
+        [InlineKeyboardButton("🖊 Общие правки (ко всему ролику)", callback_data="edit:all")],
         [InlineKeyboardButton("🎬 Собрать финальный ролик", callback_data="final")]])
+
+
+def _edit_where(n) -> str:
+    """Куда правка: 'all' → ко всему ролику, иначе к части N."""
+    return "ко всему ролику" if str(n) == "all" else f"к части {n}"
 
 
 def _retry_kb():
@@ -417,9 +423,11 @@ async def cb_edit(client, cq):
     n = cq.data.split(":", 1)[1]
     b = _basket(cq.message.chat.id)
     b["await_edit"] = n
-    await cq.answer(f"Правка к части {n}")
-    await client.send_message(cq.message.chat.id,
-        f"✏️ Наговори или напиши правку к ЧАСТИ {n} (что поменять).")
+    where = _edit_where(n)
+    await cq.answer(f"Правка {where}")
+    tail = ("наговори/напиши, что поменять во всём ролике (хук, темп, кадры, плашки, звук)."
+            if n == "all" else "что поменять именно в этой части.")
+    await client.send_message(cq.message.chat.id, f"✏️ Правка {where}: {tail}")
 
 
 @app.on_callback_query(filters.regex(r"^final$"))
@@ -467,7 +475,9 @@ async def _finalize(client, chat_id, m):
         b["running"] = True
         status = await m.reply("🎬 Вношу правки и пересобираю финал…")
         loop = asyncio.get_event_loop()
-        edits_txt = "; ".join(f"часть {n}: {t}" for n, t in b["edits"])
+        edits_txt = "; ".join(
+            (f"общая правка: {t}" if str(n) == "all" else f"часть {n}: {t}")
+            for n, t in b["edits"])
         new_brief = (b.get("brief") or "") + "\nПРАВКИ АВТОРА: " + edits_txt
         rt = b.get("type") or reel_types.DEFAULT       # ключ формата → механики формата
         gray = bool(re.search(GRAY_RE, b.get("brief") or "", re.I))
@@ -796,8 +806,8 @@ async def on_voice(client, m: "Message"):
         b["edits"].append((n, text))
         b["await_edit"] = None
         await note.delete()
-        await m.reply(f"✏️ Правка к части {n} принята: «{text[:80]}».\n"
-                      "Ещё правки — жми кнопку части, или собери финал:", reply_markup=_parts_kb())
+        await m.reply(f"✏️ Правка {_edit_where(n)} принята: «{text[:80]}».\n"
+                      "Ещё правки — жми кнопку, или собери финал:", reply_markup=_parts_kb())
         return
     if _is_go(text) and b["files"]:
         await note.delete()
@@ -824,8 +834,8 @@ async def on_text(client, m: "Message"):
         n = b["await_edit"]
         b["edits"].append((n, text))
         b["await_edit"] = None
-        await m.reply(f"✏️ Правка к части {n} принята: «{text[:80]}».\n"
-                      "Ещё правки — жми кнопку части, или собери финал:", reply_markup=_parts_kb())
+        await m.reply(f"✏️ Правка {_edit_where(n)} принята: «{text[:80]}».\n"
+                      "Ещё правки — жми кнопку, или собери финал:", reply_markup=_parts_kb())
         return
     if _is_go(text) and b["files"]:
         await _process_basket(client, m.chat.id)
