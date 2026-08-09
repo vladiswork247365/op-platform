@@ -368,7 +368,7 @@ function reelsTable(){
     const v=verdict(r), doff=a.curve?dropoff(a.curve):null;
     const react=fmt(engTotal(r))+' <span style="color:var(--t3);font-size:10px">реакц.</span>';
     return `<tr onclick="openM('${r.id}')">
-      <td><div class="rt-title">${esc(r.title)}</div><div class="plat">${esc(a.platform||r.platform)}${r.duration?' · '+r.duration+'с':''} · ${esc(a.published||'')}</div></td>
+      <td><div class="rt-title">${esc(r.title)}${r.review?' <span title="Есть разбор от Claude" style="color:var(--red2)">🧠</span>':''}</div><div class="plat">${esc(a.platform||r.platform)}${r.duration?' · '+r.duration+'с':''} · ${esc(a.published||'')}</div></td>
       <td><span class="vbadge" style="background:${v.color}">${v.ic} ${v.label}</span></td>
       <td>${bar(readiness(r),'#FF2740')}</td>
       <td class="num">${fmt(a.views||0)}</td>
@@ -402,6 +402,18 @@ function render(){
      Скинь мне эти цифры (или CSV) — впишу в <code>reels.json</code>, и ролик появится в панели с полным разбором: прогноз ↔ факт, точка слива, влияние на досмотр.</div>`;
 }
 
+function reviewBlock(rv){
+  const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+  return `<div class="section-t" style="margin-top:8px">🧠 Разбор от Claude${rv.score!=null?' — '+esc(String(rv.score))+'/10':''}${rv.age_hours?' · через ~'+Math.round(rv.age_hours)+'ч':''}</div>
+    <div class="dropbox" style="text-align:left;color:var(--t2)">
+      ${rv.hook?`<div><b>Хук:</b> ${esc(rv.hook)}</div>`:''}
+      ${rv.retention?`<div style="margin-top:4px"><b>Удержание:</b> ${esc(rv.retention)}</div>`:''}
+      ${rv.engagement?`<div style="margin-top:4px"><b>Вовлечение:</b> ${esc(rv.engagement)}</div>`:''}
+      ${(rv.mistakes&&rv.mistakes.length)?`<div style="margin-top:6px"><b style="color:var(--red2)">❌ Ошибки:</b><ul style="margin:4px 0 0 18px">${li(rv.mistakes)}</ul></div>`:''}
+      ${(rv.fixes&&rv.fixes.length)?`<div style="margin-top:6px"><b style="color:#00C851">✅ Что поправить в следующем:</b><ul style="margin:4px 0 0 18px">${li(rv.fixes)}</ul></div>`:''}
+      ${rv.verdict?`<div style="margin-top:6px"><b>Итог:</b> ${esc(rv.verdict)}</div>`:''}
+    </div>`;
+}
 function openM(id){
   const r=DATA.reels.find(x=>x.id===id); if(!r)return;
   const a=r.actual||{}; const v=(r.variants||[]).find(x=>x.id===r.chosen)||(r.variants||[])[0];
@@ -432,6 +444,7 @@ function openM(id){
       <div class="cell"><div class="cv">${fmt(a.likes||0)}</div><div class="cl">лайки</div></div>
       <div class="cell"><div class="cv">${fmt(a.comments||0)}</div><div class="cl">комменты</div></div>
     </div>
+    ${r.review?reviewBlock(r.review):''}
     ${a.curve?`<div class="section-t" style="margin-top:6px">Кривая удержания: прогноз ↔ факт</div>${svg}
     <div class="legend"><span><i style="background:#E8000A"></i> прогноз (Claude)</span><span><i style="background:#00C851"></i> факт</span></div>
     <div class="dropbox">⚠ Главная точка слива: <b>${doff.seg}</b> — теряется <b>${doff.drop} п.п.</b> зрителей. Это участок для усиления (панч, вставка, ускорение, вопрос-петля).</div>`

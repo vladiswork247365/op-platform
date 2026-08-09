@@ -156,6 +156,7 @@ def to_actual(node, ins, duration_s=None):
         "comments": g("comments") if g("comments") is not None else node.get("comments_count"),
         "source": "instagram",
         "published": (node.get("timestamp") or "")[:10],
+        "published_at": node.get("timestamp"),   # полный ISO — для триггера «через 6ч»
         "permalink": node.get("permalink"),
         "avg_watch_s": round(avg_ms / 1000.0, 1) if avg_ms else None,
         "estimated": bool(avg_pct),  # кривая/хук/completion оценены, не из API
