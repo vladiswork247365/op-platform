@@ -27,6 +27,11 @@ try:
     import music
 except Exception:
     music = None
+try:
+    import shots    # «глаза»: Claude смотрит каждый клип
+    import editor   # монтажёр: Claude раскладывает кадр на фразу
+except Exception:
+    shots = editor = None
 
 FF = imageio_ffmpeg.get_ffmpeg_exe()
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -90,6 +95,68 @@ def _apply_highlights(edl: dict, words):
                         break
 
 
+def _beats_meta(edl: dict):
+    """Раскадровка для монтажёра: на каждый бит — что говорится + длина на таймлайне."""
+    meta = []
+    for i, b in enumerate(edl.get("beats", [])):
+        seg = b["dur"] if "dur" in b else (b.get("out", 0) - b.get("in", 0)) / b.get("speed", 1.0)
+        txt = " ".join(ln for cue in (b.get("captions") or []) for ln in cue.get("lines", []))
+        meta.append({"i": i, "text": txt.strip(), "seg": round(max(0.4, seg), 2)})
+    return meta
+
+
+def _apply_shot_plan(edl: dict, plan: dict, by_file: dict) -> int:
+    """Переписать биты по плану Claude: какой клип, момент старта, движение. → сколько применено.
+
+    Субтитры/переходы/панч сохраняются (они завязаны на тайминги голоса).
+    """
+    beats = edl.get("beats", [])
+    used = 0
+    for i, b in enumerate(beats):
+        p = plan.get(i)
+        if not p:
+            continue
+        info = by_file.get(p["file"])
+        if not info:
+            continue
+        seg = b["dur"] if "dur" in b else (b.get("out", 0) - b.get("in", 0)) / b.get("speed", 1.0)
+        seg = round(max(0.4, seg), 2)
+        cap, tr, punch = b.get("captions"), b.get("transition"), b.get("punch")
+        first = (i == 0)
+        mo = p.get("motion")
+        if info["is_image"]:
+            for k in ("in", "out", "speed"):
+                b.pop(k, None)
+            b["src"], b["dur"], b["audio"] = info["file"], seg, "mute"
+            b["motion"] = mo if mo in ("kenburns_in", "kenburns_out") else (
+                "kenburns_in" if i % 2 == 0 else "kenburns_out")
+        else:
+            avail = info.get("dur") or 0.0
+            if avail < seg * 0.5:            # клип слишком короткий — не трогаем бит
+                continue
+            b.pop("dur", None)
+            if avail >= seg + 0.05:
+                start = min(max(0.0, p.get("start", 0.0)), round(avail - seg, 2))
+                b["in"], b["out"], b["speed"] = round(start, 2), round(start + seg, 2), 1.0
+            else:                            # короче бита — лёгкое слоу-мо, синхрон держим
+                b["in"], b["out"] = 0.0, round(avail, 2)
+                b["speed"] = round(max(0.5, avail / seg), 3)
+            b["src"], b["audio"] = info["file"], "mute"
+            if first:
+                b["motion"], b["punch"] = "punch", 1.08
+            else:
+                b["motion"] = mo if mo in ("punch", "zoomin", "zoomout", "kick") else \
+                    b.get("motion", "zoomin")
+        if cap is not None:
+            b["captions"] = cap
+        if tr:
+            b["transition"] = tr
+        if punch and not first:
+            b["punch"] = punch
+        used += 1
+    return used
+
+
 def _mix_bg(video: str, music_file: str, out: str, gain_db: int = -18) -> str:
     """Подмешать фоновую музыку под голос (музыка тише, чуть глуше на пиках голоса)."""
     dur = voiceover.media_dur(video)
@@ -135,6 +202,19 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
                              pace=script.get("pace", "medium"))            # темп от Opus
     if gray or script.get("grayscale"):                                    # ч/б от Opus
         edl["output"]["grayscale"] = True
+    # Claude-монтаж: видит каждый клип и раскладывает какой кадр на какую фразу
+    if shots and editor:
+        try:
+            _st("👁 Claude смотрит твои клипы…")
+            clips = shots.analyze(footage_dir, status_cb=_st)
+            if clips:
+                _st("🎬 Раскладываю кадры под смысл (Claude-монтаж)…")
+                plan = editor.plan_shots(_beats_meta(edl), clips, script)
+                if plan:
+                    n = _apply_shot_plan(edl, plan, {c["file"]: c for c in clips})
+                    _st(f"🎬 Claude собрал раскадровку: кадров по смыслу — {n}")
+        except Exception as e:
+            sys.stderr.write(f"[factory_reel] shot-plan skipped: {type(e).__name__}: {e}\n")
     _inject_cards(edl, script)                                             # тайминг плашек от Opus
     _apply_highlights(edl, script.get("highlight_words"))                  # акцент-слова от Opus
     plan = os.path.join(footage_dir, "_factory.edl.json")
