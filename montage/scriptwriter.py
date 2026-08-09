@@ -96,6 +96,9 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "",
                           "headline": _clip(c.get("headline", ""), 40),
                           "sub": _clip(c.get("sub", ""), 60),
                           "color": c.get("color", "yellow")})
+    mood = (cfg.get("music_mood") or "energetic").strip().lower()
+    if mood not in ("energetic", "calm", "epic"):
+        mood = "energetic"
     return {
         "hook": _clip(cfg.get("hook", ""), 80),
         "part1": _clip(cfg.get("part1", ""), 700),
@@ -103,6 +106,7 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "",
         "part3": _clip(cfg.get("part3", ""), 700),
         "cards": cards,
         "cta_word": _clip(cfg.get("cta_word", "ОП"), 30),
+        "music_mood": mood,
         "why": _clip(cfg.get("why", ""), 200),
     }
 
