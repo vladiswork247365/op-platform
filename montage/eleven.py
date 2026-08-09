@@ -24,6 +24,22 @@ import urllib.request
 import uuid
 
 API = "https://api.elevenlabs.io"
+
+
+def _load_env():
+    """Подхватить montage/.env при запуске напрямую (бот грузит .env сам, но CLI — нет)."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for p in (os.path.join(here, ".env"), os.path.join(os.path.dirname(here), ".env")):
+        if os.path.exists(p):
+            for line in open(p, encoding="utf-8"):
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip())
+
+
+_load_env()
+
 MODEL = os.environ.get("ELEVEN_MODEL", "eleven_multilingual_v2")   # мультиязычный — есть русский
 
 
