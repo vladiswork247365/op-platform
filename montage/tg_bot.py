@@ -90,6 +90,8 @@ API_HASH = need("TG_API_HASH")
 BOT_TOKEN = need("TG_BOT_TOKEN")
 ALLOW = {x.strip().lstrip("@").lower() for x in os.environ.get("TG_ALLOW", "").split(",") if x.strip()}
 FPS = int(os.environ.get("TG_FPS", "30"))
+POLISH_TARGET = int(os.environ.get("POLISH_TARGET", "8"))   # цель по виральности (из 10)
+POLISH_MAX = int(os.environ.get("POLISH_MAX", "2"))          # сколько раз авто-усиливать
 
 app = Client("reels_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN,
              workdir=HERE)
@@ -352,6 +354,42 @@ async def cb_assemble(client, cq):
     await _assemble(client, cq.message.chat.id, cq.message)
 
 
+async def _polish(b, out, vid, gray, rtype, sf, loop):
+    """Авто-работа над ошибками: пока ролик слабоват — усиливаем сценарий+монтаж по
+    разбору и пересобираем. Держим ЛУЧШУЮ версию. Меняет b['reel'] и b['previral'].
+    → (кол-во проходов, стартовый балл, финальный балл)."""
+    best_reel, best_v = b["reel"], (b.get("previral") or {})
+    best_score = best_v.get("score", 0) or 0
+    start_score = best_score
+    cur_v = best_v
+    passes = 0
+    for it in range(POLISH_MAX):
+        score = cur_v.get("score", 0) or 0
+        fixes = (cur_v.get("weak_spots") or []) + (cur_v.get("fixes") or [])
+        if score >= POLISH_TARGET or not fixes:
+            break
+        passes += 1
+        sf(f"🤖 Довожу до миллиона: усиливаю хук и монтаж (проход {it + 1}/{POLISH_MAX})…")
+        improve = "УСИЛЕНИЯ ПО РАЗБОРУ (обязательно устрани эти слабые места ролика): " \
+                  + "; ".join(fixes[:8])
+        new_brief = (b.get("brief") or "") + "\n" + improve
+        sc = await loop.run_in_executor(None, lambda nb=new_brief: scriptwriter.write_script(nb, "", rtype))
+        if sc:
+            b["script"] = sc
+        reel = await loop.run_in_executor(
+            None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
+                                             _music_mood(b), FPS, sf, rtype))
+        if not reel:
+            break
+        cur_v = ((await loop.run_in_executor(None, lambda r=reel: previral.check(r, b["script"], rtype)))
+                 if previral else {}) or {}
+        cur_score = cur_v.get("score", 0) or 0
+        if cur_score >= best_score:                 # запоминаем лучшую версию
+            best_reel, best_v, best_score = reel, cur_v, cur_score
+    b["reel"], b["previral"] = best_reel, best_v
+    return passes, start_score, best_score
+
+
 async def _assemble(client, chat_id, m):
     b = baskets.get(chat_id)
     if not b or not b.get("script"):
@@ -386,30 +424,31 @@ async def _assemble(client, chat_id, m):
                                        reply_markup=_retry_kb())
                 return
             b["reel"] = reel
+            # предиктор виральности — Claude смотрит готовый ролик глазами
+            if previral and os.environ.get("OPENROUTER_API_KEY"):
+                _sf("🔮 Оцениваю виральность до публикации…")
+                b["previral"] = (await loop.run_in_executor(
+                    None, lambda: previral.check(reel, b["script"], rtype))) or {}
+                # авто-работа над ошибками: если слабовато — сам усиливаю и пересобираю
+                score = (b["previral"] or {}).get("score", 0) or 0
+                if score and score < POLISH_TARGET:
+                    passes, s0, s1 = await _polish(b, out, vid, gray, rtype, _sf, loop)
+                    if passes:
+                        await client.send_message(
+                            chat_id, f"🤖 Работа над ошибками: сделал {passes} проход(а), "
+                            f"виральность {s0}/10 → {s1}/10. Оставил лучшую версию.")
+            reel = b["reel"]
             parts = await loop.run_in_executor(None, lambda: factory_reel.split_three(reel, b["job"]))
             b["parts"] = parts
             b["stage"] = "review_parts"
             await status.edit_text("Готовы 3 части — глянь каждую 👇")
             for i, p in enumerate(parts):
                 await client.send_video(chat_id, p, caption=f"Часть {i + 1}/3")
-            # предиктор виральности ДО публикации — Claude смотрит готовый ролик глазами
-            if previral and os.environ.get("OPENROUTER_API_KEY"):
-                pv = await client.send_message(chat_id, "🔮 Оцениваю виральность до публикации…")
-                try:
-                    v = await loop.run_in_executor(None, lambda: previral.check(reel, b["script"], rtype))
-                    if v:
-                        b["previral"] = v
-                        await pv.edit_text(previral.as_text(v))
-                    else:
-                        await pv.delete()
-                except Exception:
-                    try:
-                        await pv.delete()
-                    except Exception:
-                        pass
+            if b.get("previral"):
+                await client.send_message(chat_id, previral.as_text(b["previral"]))
             await client.send_message(
-                chat_id, "Правки по частям — жми кнопку и наговори/напиши голосом. "
-                "Всё устраивает — «Собрать финальный ролик».", reply_markup=_parts_kb())
+                chat_id, "Готово. Хочешь — правь части/общими правками, или сразу "
+                "«Собрать финальный ролик».", reply_markup=_parts_kb())
         except Exception as e:
             await status.edit_text(f"❌ Ошибка сборки: {str(e)[:200]}", reply_markup=_retry_kb())
         finally:
