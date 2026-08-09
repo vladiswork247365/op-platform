@@ -76,11 +76,18 @@ def voices():
         return None
 
 
-def _voice_settings():
-    return {"stability": float(os.environ.get("ELEVEN_STABILITY", "0.45")),
-            "similarity_boost": float(os.environ.get("ELEVEN_SIMILARITY", "0.85")),
-            "style": float(os.environ.get("ELEVEN_STYLE", "0.35")),
-            "use_speaker_boost": True}
+def _voice_settings(override: dict | None = None):
+    s = {"stability": float(os.environ.get("ELEVEN_STABILITY", "0.45")),
+         "similarity_boost": float(os.environ.get("ELEVEN_SIMILARITY", "0.85")),
+         "style": float(os.environ.get("ELEVEN_STYLE", "0.35")),
+         "use_speaker_boost": True}
+    if override:  # режиссёр (Opus) задаёт подачу: stability/style/speed
+        for k in ("stability", "style"):
+            if override.get(k) is not None:
+                s[k] = float(override[k])
+        if override.get("speed") is not None:
+            s["speed"] = float(override["speed"])
+    return s
 
 
 def tts(text: str, out_mp3: str, voice_id: str | None = None, timeout: int = 120):
@@ -123,11 +130,12 @@ def _chars_to_words(chars, starts, ends):
     return words
 
 
-def tts_timed(text: str, out_mp3: str, voice_id: str | None = None, timeout: int = 120):
+def tts_timed(text: str, out_mp3: str, voice_id: str | None = None, timeout: int = 120,
+              settings: dict | None = None):
     """Озвучка + тайминги слов. → (mp3_path, [{start,end,word}]) или None.
 
-    Использует /with-timestamps: возвращает аудио и посимвольный alignment, который
-    сворачиваем в слова — из них строятся синхронные субтитры.
+    settings — подача голоса от режиссёра (stability/style/speed).
+    Использует /with-timestamps: аудио + посимвольный alignment → слова для субтитров.
     """
     if not have_key():
         return None
@@ -136,7 +144,7 @@ def tts_timed(text: str, out_mp3: str, voice_id: str | None = None, timeout: int
         sys.stderr.write("[eleven.tts_timed] нет voice_id (ELEVEN_VOICE_ID)\n")
         return None
     body = json.dumps({"text": text, "model_id": MODEL,
-                       "voice_settings": _voice_settings()}).encode("utf-8")
+                       "voice_settings": _voice_settings(settings)}).encode("utf-8")
     try:
         resp = _req(f"/v1/text-to-speech/{vid}/with-timestamps", data=body,
                     headers={"Content-Type": "application/json", "Accept": "application/json"},

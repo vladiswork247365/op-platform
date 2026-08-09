@@ -57,8 +57,11 @@ def _words_to_cues(words, t0: float, t1: float, per: int = 3, sub_y: float = 0.8
 
 
 def build_edl(footage_dir: str, audio_file: str, words: list, total: float,
-              fps: int = 30, sub_y: float = 0.835) -> dict:
-    """EDL: видеоряд под длину озвучки, родной звук выключен, субтитры по словам озвучки."""
+              fps: int = 30, sub_y: float = 0.835, pace: str = "medium") -> dict:
+    """EDL: видеоряд под длину озвучки, родной звук выключен, субтитры по словам озвучки.
+
+    pace='fast' — плотнее резы и субтитры (драйв); 'medium' — обычный ритм.
+    """
     files = sorted(glob.glob(os.path.join(footage_dir, "*")))
     vids = [f for f in files if os.path.splitext(f)[1].lower() in auto_edl.VIDEO_EXT]
     imgs = [f for f in files if os.path.splitext(f)[1].lower() in auto_edl.IMAGE_EXT]
@@ -66,6 +69,8 @@ def build_edl(footage_dir: str, audio_file: str, words: list, total: float,
     if not srcs:
         raise SystemExit("нет видео/фото для видеоряда")
 
+    beat_len = 1.7 if pace == "fast" else BEAT      # плотность резов
+    per = 2 if pace == "fast" else 3                # плотность субтитров
     beats, acc, i = [], 0.0, 0
     cursor = {f: 0.0 for f in vids}          # позиция чтения внутри каждого клипа
     total = max(total, 1.0)
@@ -73,8 +78,8 @@ def build_edl(footage_dir: str, audio_file: str, words: list, total: float,
         src = srcs[i % len(srcs)]
         remain = total - acc
         if src in vids:
-            d = media_dur(src) or BEAT
-            seg = min(BEAT, remain, max(1.0, d))
+            d = media_dur(src) or beat_len
+            seg = min(beat_len, remain, max(1.0, d))
             pos = cursor[src]
             if pos + seg > d:                # клип кончился — с начала
                 pos = 0.0
@@ -92,7 +97,7 @@ def build_edl(footage_dir: str, audio_file: str, words: list, total: float,
             tr = TRANS[i % len(TRANS)]
             if tr:
                 beat["transition"] = tr
-        cues = _words_to_cues(words, acc, acc + seg, sub_y=sub_y)
+        cues = _words_to_cues(words, acc, acc + seg, per=per, sub_y=sub_y)
         if cues:
             beat["captions"] = cues
         beats.append(beat)
