@@ -70,6 +70,11 @@ try:
     import voiceover # noqa: E402  — режим «говорю без звука»
 except Exception:
     eleven = voiceover = None
+try:
+    import scriptwriter  # noqa: E402  — AI-сценарист (Opus + завод)
+    import factory_reel  # noqa: E402  — оркестратор: сценарий → ролик из 3 частей
+except Exception:
+    scriptwriter = factory_reel = None
 
 API_ID = int(need("TG_API_ID"))
 API_HASH = need("TG_API_HASH")
@@ -107,8 +112,11 @@ GO_WORDS = {"го", "гоу", "поехали", "погнали", "генери�
 baskets = {}  # chat_id -> {files, job, brief, status, running}
 
 
-NEW_BTN = "🎬 Создать новый ролик"
+NEW_BTN = "🚀 Создать новый ролик на миллион"
+GET_SCRIPT_BTN = "📝 Получить сценарий для ролика"
 MAIN_KB = ReplyKeyboardMarkup([[KeyboardButton(NEW_BTN)]], resize_keyboard=True)
+COLLECT_KB = ReplyKeyboardMarkup([[KeyboardButton(GET_SCRIPT_BTN)], [KeyboardButton(NEW_BTN)]],
+                                 resize_keyboard=True)
 
 
 def _types_kb():
@@ -118,14 +126,37 @@ def _types_kb():
     return InlineKeyboardMarkup(rows)
 
 
+def _script_kb():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("✅ Утвердить и собрать (3 части)", callback_data="assemble")],
+        [InlineKeyboardButton("✏️ Изменить / добавить ТЗ", callback_data="recollect")]])
+
+
+def _parts_kb():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("✏️ Правка ч.1", callback_data="edit:1"),
+         InlineKeyboardButton("ч.2", callback_data="edit:2"),
+         InlineKeyboardButton("ч.3", callback_data="edit:3")],
+        [InlineKeyboardButton("🎬 Собрать финальный ролик", callback_data="final")]])
+
+
+def _cq_allowed(cq) -> bool:
+    if not ALLOW:
+        return True
+    u = cq.from_user
+    return bool(u and (str(u.id) in ALLOW or (u.username or "").lower() in ALLOW))
+
+
 @app.on_message(filters.command("start"))
 async def start(_, m: "Message"):
     await m.reply(
-        "👋 Я собираю Reels. Жми «🎬 Создать новый ролик» и выбери ТИП — у каждого типа "
-        "свои правила монтажа и своя папка-библиотека (без путаницы).\n\n"
-        "Дальше: пришли исходники (видео/фото), наговори/напиши ТЗ, потом /go.\n"
-        "⚡ «джампкат» — частый рез · 🧠 сам проверяю качество · "
-        "🎙 «озвучь: …» — твой клон-голос.",
+        "👋 Контент-завод на миллион. Как это работает:\n\n"
+        f"1️⃣ Жми «{NEW_BTN}» → выбери ТИП.\n"
+        "2️⃣ Кидай СЫРЬЁ за день (видео/фото) и ТЗ (текст/голос, сколько нужно).\n"
+        f"3️⃣ Жми «{GET_SCRIPT_BTN}» — Opus напишет виральный сценарий твоим голосом.\n"
+        "4️⃣ Утверждаешь → соберу ролик и пришлю 3 частями.\n"
+        "5️⃣ Правишь части голосом → «Собрать финальный ролик» → публикуй.\n\n"
+        "У каждого типа своя папка-библиотека (без путаницы).",
         reply_markup=MAIN_KB)
 
 
@@ -139,12 +170,10 @@ async def new_reel(_, m: "Message"):
 
 
 @app.on_callback_query(filters.regex(r"^type:"))
-async def pick_type(_, cq):
-    if ALLOW:
-        u = cq.from_user
-        if not (u and (str(u.id) in ALLOW or (u.username or "").lower() in ALLOW)):
-            await cq.answer("Доступ ограничён", show_alert=True)
-            return
+async def pick_type(client, cq):
+    if not _cq_allowed(cq):
+        await cq.answer("Доступ ограничён", show_alert=True)
+        return
     key = cq.data.split(":", 1)[1]
     if not reel_types.valid(key):
         await cq.answer("Неизвестный тип")
@@ -152,15 +181,182 @@ async def pick_type(_, cq):
     baskets.pop(cq.message.chat.id, None)
     b = _basket(cq.message.chat.id)
     b["type"] = key
+    b["stage"] = "collect"
     await cq.answer(f"Тип: {reel_types.title(key)}")
-    mode = "джампкат" if reel_types.dense_default(key) else "спокойный монтаж"
     try:
-        await cq.message.edit_text(
-            f"✅ Тип: {reel_types.title(key)}  (по умолчанию: {mode})\n"
-            f"{reel_types.hint(key)}\n\n"
-            "Теперь пришли исходники (видео/фото) + ТЗ, потом /go.")
+        await cq.message.edit_text(f"✅ Тип: {reel_types.title(key)}\n{reel_types.hint(key)}")
     except Exception:
-        await cq.message.reply(f"✅ Тип: {reel_types.title(key)}. Пришли исходники + ТЗ, потом /go.")
+        pass
+    await client.send_message(
+        cq.message.chat.id,
+        "📥 Кидай СЫРЬЁ (видео/фото за день, сколько угодно) и ТЗ (текстом или голосом, "
+        "хоть 1, хоть 100 раз). Я всё складываю в этот ролик.\n\n"
+        f"Как всё скинешь — жми «{GET_SCRIPT_BTN}».",
+        reply_markup=COLLECT_KB)
+
+
+@app.on_message(filters.regex(f"^{re.escape(GET_SCRIPT_BTN)}$"))
+async def get_script_btn(client, m: "Message"):
+    if not allowed(m):
+        return
+    await _make_script(client, m.chat.id, m)
+
+
+@app.on_callback_query(filters.regex(r"^recollect$"))
+async def cb_recollect(client, cq):
+    if not _cq_allowed(cq):
+        return
+    b = _basket(cq.message.chat.id)
+    b["stage"] = "collect"
+    await cq.answer("Добавляй ТЗ/исходники")
+    await client.send_message(cq.message.chat.id,
+        f"Ок, добавляй ещё ТЗ или исходники. Потом снова «{GET_SCRIPT_BTN}».",
+        reply_markup=COLLECT_KB)
+
+
+async def _make_script(client, chat_id, m):
+    b = baskets.get(chat_id)
+    if not b or not b["files"]:
+        await m.reply("Сначала кинь исходники (видео/фото), потом жми кнопку.")
+        return
+    if not (scriptwriter and os.environ.get("OPENROUTER_API_KEY")):
+        await m.reply("Нужен OPENROUTER_API_KEY (Opus) для сценария. Впиши в montage/.env.")
+        return
+    status = await m.reply("🧠 Изучаю сырьё и ТЗ, пишу сценарий (Opus)…")
+    loop = asyncio.get_event_loop()
+    firstvid = next((f for f in b["files"]
+                     if os.path.splitext(f)[1].lower() in VIDEO_EXT), None)
+    tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)
+          if firstvid else "") or ""
+    rt = reel_types.title(b.get("type") or reel_types.DEFAULT)
+    script = await loop.run_in_executor(None, lambda: scriptwriter.write_script(b["brief"], tr, rt))
+    if not script:
+        await status.edit_text("❌ Сценарист не ответил. Проверь баланс OpenRouter (Opus 402?).")
+        return
+    b["script"] = script
+    b["stage"] = "review_script"
+    await status.edit_text("📝 Сценарий готов:\n\n" + scriptwriter.as_text(script),
+                           reply_markup=_script_kb())
+
+
+@app.on_callback_query(filters.regex(r"^assemble$"))
+async def cb_assemble(client, cq):
+    if not _cq_allowed(cq):
+        return
+    await cq.answer("Собираю ролик…")
+    await _assemble(client, cq.message.chat.id, cq.message)
+
+
+async def _assemble(client, chat_id, m):
+    b = baskets.get(chat_id)
+    if not b or not b.get("script"):
+        await m.reply("Сначала сценарий — жми «Получить сценарий».")
+        return
+    if not (factory_reel and eleven and eleven.have_key() and eleven.default_voice()):
+        await m.reply("Для сборки нужен ElevenLabs (ELEVEN_KEY + ELEVEN_VOICE_ID) — см. VOICE-SETUP.md.")
+        return
+    if b.get("running"):
+        return
+    b["running"] = True
+    status = await m.reply("🎬 Собираю ролик: озвучка + твои кадры + субтитры + плашки + музыка…")
+    loop = asyncio.get_event_loop()
+    gray = bool(re.search(GRAY_RE, b.get("brief") or "", re.I))
+    rtype = b.get("type") or reel_types.DEFAULT
+    out = reel_types.out_dir(rtype)
+    vid = eleven.default_voice()
+
+    def _sf(t):
+        try:
+            asyncio.run_coroutine_threadsafe(status.edit_text(t), loop)
+        except Exception:
+            pass
+    async with render_lock:
+        try:
+            reel = await loop.run_in_executor(
+                None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
+                                                 "energetic", FPS, _sf))
+            if not reel:
+                await status.edit_text("❌ Не собралось (озвучка). Проверь баланс ElevenLabs.")
+                return
+            b["reel"] = reel
+            parts = await loop.run_in_executor(None, lambda: factory_reel.split_three(reel, b["job"]))
+            b["parts"] = parts
+            b["stage"] = "review_parts"
+            await status.edit_text("Готовы 3 части — глянь каждую 👇")
+            for i, p in enumerate(parts):
+                await client.send_video(chat_id, p, caption=f"Часть {i + 1}/3")
+            await client.send_message(
+                chat_id, "Правки по частям — жми кнопку и наговори/напиши голосом. "
+                "Всё устраивает — «Собрать финальный ролик».", reply_markup=_parts_kb())
+        except Exception as e:
+            await status.edit_text(f"❌ Ошибка сборки: {str(e)[:200]}")
+        finally:
+            b["running"] = False
+
+
+@app.on_callback_query(filters.regex(r"^edit:"))
+async def cb_edit(client, cq):
+    if not _cq_allowed(cq):
+        return
+    n = cq.data.split(":", 1)[1]
+    b = _basket(cq.message.chat.id)
+    b["await_edit"] = n
+    await cq.answer(f"Правка к части {n}")
+    await client.send_message(cq.message.chat.id,
+        f"✏️ Наговори или напиши правку к ЧАСТИ {n} (что поменять).")
+
+
+@app.on_callback_query(filters.regex(r"^final$"))
+async def cb_final(client, cq):
+    if not _cq_allowed(cq):
+        return
+    await cq.answer("Готовлю финал…")
+    await _finalize(client, cq.message.chat.id, cq.message)
+
+
+async def _finalize(client, chat_id, m):
+    b = baskets.get(chat_id)
+    if not b or not b.get("reel"):
+        await m.reply("Нечего финалить — сначала собери ролик.")
+        return
+    if b.get("running"):
+        return
+    reel = b["reel"]
+    # если были правки — перепишем сценарий с их учётом и пересоберём
+    if b.get("edits") and scriptwriter and factory_reel:
+        b["running"] = True
+        status = await m.reply("🎬 Вношу правки и пересобираю финал…")
+        loop = asyncio.get_event_loop()
+        edits_txt = "; ".join(f"часть {n}: {t}" for n, t in b["edits"])
+        new_brief = (b.get("brief") or "") + "\nПРАВКИ АВТОРА: " + edits_txt
+        rt = reel_types.title(b.get("type") or reel_types.DEFAULT)
+        gray = bool(re.search(GRAY_RE, b.get("brief") or "", re.I))
+        out = reel_types.out_dir(b.get("type") or reel_types.DEFAULT)
+        vid = eleven.default_voice() if eleven else None
+        async with render_lock:
+            try:
+                sc = await loop.run_in_executor(None, lambda: scriptwriter.write_script(new_brief, "", rt))
+                if sc:
+                    b["script"] = sc
+                r = await loop.run_in_executor(
+                    None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
+                                                     "energetic", FPS, lambda t: None))
+                if r:
+                    reel = b["reel"] = r
+            except Exception as e:
+                await status.edit_text(f"❌ Ошибка пересборки: {str(e)[:150]}")
+            finally:
+                b["running"] = False
+        try:
+            await status.delete()
+        except Exception:
+            pass
+    reel_types.log_reel(b.get("type") or reel_types.DEFAULT, b.get("brief") or "", reel)
+    await client.send_video(chat_id, reel,
+        caption="✅ ФИНАЛЬНЫЙ РОЛИК. Можно публиковать! 🚀\n"
+                "Залей в Instagram/TikTok — панель подтянет статистику сама.",
+        reply_markup=MAIN_KB)
+    baskets.pop(chat_id, None)
 
 
 def _basket(chat_id):
@@ -169,6 +365,9 @@ def _basket(chat_id):
         b = baskets[chat_id] = {"files": [], "job": tempfile.mkdtemp(prefix="tg_job_"),
                                 "brief": "", "status": None, "running": False,
                                 "type": None,             # тип ролика (кнопкой), None = по умолчанию
+                                "stage": None,            # collect / review_script / review_parts
+                                "await_edit": None,       # ждём правку к части N (голосом/текстом)
+                                "edits": [], "script": None, "reel": None, "parts": [],
                                 "lock": asyncio.Lock()}   # против гонки при альбомах
     return b
 
@@ -373,7 +572,15 @@ async def on_voice(client, m: "Message"):
         except Exception:
             pass
     if not text:
-        await note.edit_text("Не расслышал 🙈 Повтори ТЗ голосом или напиши текстом.")
+        await note.edit_text("Не расслышал 🙈 Повтори голосом или напиши текстом.")
+        return
+    if b.get("await_edit"):                       # правка к части (голосом)
+        n = b["await_edit"]
+        b["edits"].append((n, text))
+        b["await_edit"] = None
+        await note.delete()
+        await m.reply(f"✏️ Правка к части {n} принята: «{text[:80]}».\n"
+                      "Ещё правки — жми кнопку части, или собери финал:", reply_markup=_parts_kb())
         return
     if _is_go(text) and b["files"]:
         await note.delete()
@@ -395,12 +602,19 @@ async def on_text(client, m: "Message"):
     if b["running"]:
         return
     text = (m.text or "").strip()
+    if b.get("await_edit"):                       # правка к части (текстом)
+        n = b["await_edit"]
+        b["edits"].append((n, text))
+        b["await_edit"] = None
+        await m.reply(f"✏️ Правка к части {n} принята: «{text[:80]}».\n"
+                      "Ещё правки — жми кнопку части, или собери финал:", reply_markup=_parts_kb())
+        return
     if _is_go(text) and b["files"]:
         await _process_basket(client, m.chat.id)
         return
     b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
     if not b["files"]:
-        await m.reply(f"📝 ТЗ понял: «{text}».\nПришли исходники (видео/фото) → потом /go.")
+        await m.reply(f"📝 ТЗ понял: «{text}».\nПришли исходники (видео/фото).")
     else:
         await _prompt(b, m)
 
