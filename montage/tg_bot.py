@@ -51,11 +51,13 @@ def need(var):
 load_env()
 try:
     from pyrogram import Client, filters
-    from pyrogram.types import Message
+    from pyrogram.types import (Message, InlineKeyboardMarkup, InlineKeyboardButton,
+                                ReplyKeyboardMarkup, KeyboardButton)
 except ImportError:
     sys.exit("❌ Не установлен Pyrogram. Выполни:  pip3 install pyrogram tgcrypto")
 
 sys.path.insert(0, HERE)
+import reel_types  # noqa: E402  — типы роликов: свои правила + папка-библиотека
 import autorun     # noqa: E402  — готовая process(watch, out, fps, hook, grayscale) → (reel, verdict)
 import transcribe  # noqa: E402  — распознавание голосового ТЗ (faster-whisper)
 import director     # noqa: E402  — AI-режиссёр (ТЗ+речь → настройки через OpenRouter)
@@ -105,19 +107,60 @@ GO_WORDS = {"го", "гоу", "поехали", "погнали", "генери�
 baskets = {}  # chat_id -> {files, job, brief, status, running}
 
 
+NEW_BTN = "🎬 Создать новый ролик"
+MAIN_KB = ReplyKeyboardMarkup([[KeyboardButton(NEW_BTN)]], resize_keyboard=True)
+
+
+def _types_kb():
+    """Инлайн-кнопки выбора типа ролика (по 1 в ряд — длинные названия)."""
+    rows = [[InlineKeyboardButton(reel_types.title(k), callback_data=f"type:{k}")]
+            for k in reel_types.TYPES]
+    return InlineKeyboardMarkup(rows)
+
+
 @app.on_message(filters.command("start"))
 async def start(_, m: "Message"):
     await m.reply(
-        "👋 Я собираю Reels. Порядок работы:\n\n"
-        "1️⃣ Пришли ИСХОДНИКИ — одно или несколько видео/фото.\n"
-        "2️⃣ Наговори или напиши ТЗ — какой ролик нужен (голосовое понимаю). "
-        "Скажешь «чёрно-белый» — сделаю ч/б.\n"
-        "3️⃣ Досылай ещё или скажи /go (или «генерируй») — соберу ролик.\n\n"
-        "⚡ Скажешь «джампкат» (или «динамичный монтаж») — нарежу часто, рез на каждую фразу.\n"
-        "🧠 После сборки сам проверяю качество и переделываю, если есть огрех.\n"
-        "🎙 Скажешь «озвучь: …текст…» — сниму твоим клон-голосом (нужен ElevenLabs, "
-        "см. VOICE-SETUP.md): снимаешь молча, голос и субтитры лягут сами.\n\n"
-        "Видео лучше как файл (до 2 ГБ).")
+        "👋 Я собираю Reels. Жми «🎬 Создать новый ролик» и выбери ТИП — у каждого типа "
+        "свои правила монтажа и своя папка-библиотека (без путаницы).\n\n"
+        "Дальше: пришли исходники (видео/фото), наговори/напиши ТЗ, потом /go.\n"
+        "⚡ «джампкат» — частый рез · 🧠 сам проверяю качество · "
+        "🎙 «озвучь: …» — твой клон-голос.",
+        reply_markup=MAIN_KB)
+
+
+@app.on_message((filters.regex(f"^{re.escape(NEW_BTN)}$") | filters.command("new")))
+async def new_reel(_, m: "Message"):
+    if not allowed(m):
+        return
+    baskets.pop(m.chat.id, None)   # начинаем ролик заново
+    lines = "\n".join(f"• {reel_types.title(k)} — {reel_types.hint(k)}" for k in reel_types.TYPES)
+    await m.reply("Какой ТИП ролика делаем?\n\n" + lines, reply_markup=_types_kb())
+
+
+@app.on_callback_query(filters.regex(r"^type:"))
+async def pick_type(_, cq):
+    if ALLOW:
+        u = cq.from_user
+        if not (u and (str(u.id) in ALLOW or (u.username or "").lower() in ALLOW)):
+            await cq.answer("Доступ ограничён", show_alert=True)
+            return
+    key = cq.data.split(":", 1)[1]
+    if not reel_types.valid(key):
+        await cq.answer("Неизвестный тип")
+        return
+    baskets.pop(cq.message.chat.id, None)
+    b = _basket(cq.message.chat.id)
+    b["type"] = key
+    await cq.answer(f"Тип: {reel_types.title(key)}")
+    mode = "джампкат" if reel_types.dense_default(key) else "спокойный монтаж"
+    try:
+        await cq.message.edit_text(
+            f"✅ Тип: {reel_types.title(key)}  (по умолчанию: {mode})\n"
+            f"{reel_types.hint(key)}\n\n"
+            "Теперь пришли исходники (видео/фото) + ТЗ, потом /go.")
+    except Exception:
+        await cq.message.reply(f"✅ Тип: {reel_types.title(key)}. Пришли исходники + ТЗ, потом /go.")
 
 
 def _basket(chat_id):
@@ -125,6 +168,7 @@ def _basket(chat_id):
     if not b:
         b = baskets[chat_id] = {"files": [], "job": tempfile.mkdtemp(prefix="tg_job_"),
                                 "brief": "", "status": None, "running": False,
+                                "type": None,             # тип ролика (кнопкой), None = по умолчанию
                                 "lock": asyncio.Lock()}   # против гонки при альбомах
     return b
 
@@ -157,9 +201,12 @@ async def _process_basket(client, chat_id):
         return
     b["running"] = True
     status, job, n, raw = b["status"], b["job"], len(b["files"]), (b["brief"] or "")
+    rtype = b.get("type") or reel_types.DEFAULT
+    out_dir = reel_types.out_dir(rtype)          # своя папка-библиотека под тип
     gray = bool(re.search(GRAY_RE, raw, re.I))
     voiceover_on = bool(re.search(VOICE_RE, raw, re.I))
-    dense_on = bool(re.search(DENSE_RE, raw, re.I))
+    # тип задаёт режим по умолчанию (продающий/кейс = джампкат), ТЗ/режиссёр могут включить
+    dense_on = reel_types.dense_default(rtype) or bool(re.search(DENSE_RE, raw, re.I))
     cleaned = re.sub(GRAY_RE, "", raw, flags=re.I).strip()
     hook = cleaned if 0 < len(cleaned.split()) <= 6 else None   # запасной вариант без режиссёра
     stage_file = os.path.join(job, "_stage.txt")
@@ -218,7 +265,7 @@ async def _process_basket(client, chat_id):
                         if len(script.split()) >= 3:
                             prog["stage"] = "🎙 Озвучиваю скрипт твоим голосом"
                             res = await loop.run_in_executor(
-                                None, voiceover.build, job, script, OUT_DIR, None, FPS, 0.835, gray, None)
+                                None, voiceover.build, job, script, out_dir, None, FPS, 0.835, gray, None)
                             if res:
                                 reel = res[0]
                             else:
@@ -232,7 +279,7 @@ async def _process_basket(client, chat_id):
                     prog["stage"] = ("🎬 Монтирую ролик" + (" · джампкат" if dense_on else "")
                                      + (" · ч/б" if gray else ""))
                     reel, verdict = await loop.run_in_executor(
-                        None, lambda: autorun.process(job, OUT_DIR, FPS, hook, gray,
+                        None, lambda: autorun.process(job, out_dir, FPS, hook, gray,
                                                       stage_file, True, dense_on))
             finally:
                 stop.set()
@@ -240,9 +287,11 @@ async def _process_basket(client, chat_id):
             await status.edit_text(f"⬆️ Готово за {int(time.time()-prog['t0'])}с "
                                    f"({human(os.path.getsize(reel))}). Отправляю…")
             qc_line = ("\n" + qc.summary(verdict)) if (verdict and qc) else ""
+            reel_types.log_reel(rtype, raw, reel)   # в библиотеку типа
             await client.send_video(chat_id, reel,
-                caption="✅ Готовый Reel. Залей в Instagram/TikTok — панель подтянет статистику сама."
-                        + qc_line + note)
+                caption=f"✅ Готовый Reel · тип: {reel_types.title(rtype)}\n"
+                        "Залей в Instagram/TikTok — панель подтянет статистику сама."
+                        + qc_line + note, reply_markup=MAIN_KB)
             await status.delete()
         except Exception as e:
             stop.set()

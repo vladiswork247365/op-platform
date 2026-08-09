@@ -13,3 +13,6 @@ out/*
 !out/.gitkeep
 _cap_test.png
 *.mp4
+library/
+out/
+sources/
