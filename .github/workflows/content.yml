@@ -23,8 +23,8 @@ jobs:
 
       - name: Проверка ключа генерации
         run: |
-          if [ -z "${{ secrets.OPENROUTER_API_KEY }}" ]; then
-            echo "::warning::OPENROUTER_API_KEY не задан — соберу наполнение сайта, но без генерации сценариев."
+          if [ -z "${{ secrets.OPENROUTER_API_KEY || secrets.OPENROUTER || secrets.OPENROUTER_KEY || secrets.OPENROUTERKEY || secrets.OPENROUTERTOKEN }}" ]; then
+            echo "::warning::Ключ OpenRouter не найден в секретах репозитория — соберу наполнение сайта, но без генерации сценариев."
           fi
 
       - name: Браузер для рендера сайта (SPA)
@@ -42,7 +42,7 @@ jobs:
 
       - name: Сгенерировать сценарии
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY || secrets.OPENROUTER || secrets.OPENROUTER_KEY || secrets.OPENROUTERKEY || secrets.OPENROUTERTOKEN }}
           OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
         run: |
           STAMP="$(date -u +'%Y-%m-%d %H:%M UTC')" python3 content/generate.py
