@@ -28,6 +28,10 @@ try:
 except Exception:
     music = None
 try:
+    import trending  # трендовый звук из библиотеки (буст охватов)
+except Exception:
+    trending = None
+try:
     import shots    # «глаза»: Claude смотрит каждый клип
     import editor   # монтажёр: Claude раскладывает кадр на фразу
 except Exception:
@@ -237,6 +241,9 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
                     "--edl", plan, "--src", footage_dir, "--out", reel], check=True)
     # фоновая музыка: 1) трек, который прислал автор; иначе 2) Jamendo по настроению
     mf = _user_music(footage_dir)
+    if not mf and trending and trending.have():
+        _st("🎵 Беру трендовый звук под настроение…")
+        mf = trending.pick(mood)
     if not mf and music and music.have_key():
         _st("🎵 Подбираю музыку…")
         mf = music.get_track(os.path.join(footage_dir, "_bg.mp3"), mood)
