@@ -8,12 +8,13 @@
 from __future__ import annotations
 import json
 import os
+import re
 import sys
 import urllib.request
 
 # По умолчанию — Claude Opus (умный режиссёр) через OpenRouter. Точный slug модели можно
 # поменять в montage/.env строкой OPENROUTER_MODEL=... (список — на openrouter.ai/models).
-MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-4.1")
+MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-4.5")
 
 SYS = (
     "Ты — сильный режиссёр коротких вертикальных Reels для русскоязычного эксперта по "
@@ -41,6 +42,7 @@ def direct(brief: str, transcript: str = "", api_key: str | None = None, timeout
         "messages": [{"role": "system", "content": SYS},
                      {"role": "user", "content": user}],
         "temperature": 0.5,
+        "max_tokens": 800,
         "response_format": {"type": "json_object"},
     }).encode("utf-8")
     req = urllib.request.Request(
@@ -49,7 +51,13 @@ def direct(brief: str, transcript: str = "", api_key: str | None = None, timeout
                  "HTTP-Referer": "https://platform.systemop.top", "X-Title": "OP Reels Director"})
     try:
         r = json.load(urllib.request.urlopen(req, timeout=timeout))
-        cfg = json.loads(r["choices"][0]["message"]["content"])
+        content = ((r.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+        m = re.sub(r"^```(?:json)?\s*|\s*```$", "", content.strip())
+        try:
+            cfg = json.loads(m)
+        except Exception:                                # выдернуть {…} из текста
+            i, j = m.find("{"), m.rfind("}")
+            cfg = json.loads(m[i:j + 1]) if 0 <= i < j else {}
         hook = (cfg.get("hook") or "").strip().strip('"').strip()
         return {
             "grayscale": bool(cfg.get("grayscale")),

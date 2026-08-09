@@ -8,7 +8,9 @@ OpenRouter (по умолчанию Claude Opus). Без ключа/баланс
 from __future__ import annotations
 import json
 import os
+import re
 import sys
+import urllib.error
 import urllib.request
 
 try:
@@ -16,7 +18,32 @@ try:
 except Exception:
     kb = None
 
-MODEL = os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.1"
+# Opus 4.5 — новее и в 3 раза дешевле старого 4.1 ($5/$25 vs $15/$75 за 1М).
+# Хочешь дешевле для потока — поставь anthropic/claude-sonnet-4.5 в montage/.env.
+MODEL = os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.5"
+
+# Последняя понятная причина сбоя (её показывает бот в Телеграме вместо «проверь баланс»).
+LAST_ERROR = ""
+
+
+def _human_error(status: int, api_msg: str) -> str:
+    """Код ответа OpenRouter + текст → понятная подсказка для Телеграма."""
+    api_msg = (api_msg or "").strip()
+    low = api_msg.lower()
+    if status == 401 or "no auth" in low or "invalid api key" in low:
+        return "Неверный OPENROUTER_API_KEY. Проверь ключ в montage/.env."
+    if status == 402 or "insufficient" in low or "credit" in low:
+        return f"На OpenRouter не хватает средств для этой модели ({MODEL})."
+    if "data policy" in low or "no endpoints" in low or "no allowed providers" in low:
+        return ("OpenRouter блокирует модель настройками приватности. Зайди на "
+                "openrouter.ai/settings/privacy и включи доступ к моделям (или включи VPN).")
+    if status == 404 or "not found" in low or "not a valid model" in low:
+        return f"Модель «{MODEL}» недоступна на твоём аккаунте. Поменяй OPENROUTER_MODEL в montage/.env."
+    if status == 429 or "rate" in low:
+        return "OpenRouter ограничил частоту запросов (429). Подожди минуту и попробуй снова."
+    if status:
+        return f"OpenRouter вернул ошибку {status}: {api_msg[:160]}"
+    return api_msg[:200] or "неизвестная ошибка сети/OpenRouter"
 
 # ── ОБЩИЙ ВИРАЛЬНЫЙ ПРОМПТ (правится под задачу) ──
 VIRALITY_PROMPT = (
@@ -57,6 +84,32 @@ def _clip(s, n):
     return s[:n]
 
 
+def _parse_json(content: str):
+    """Достать JSON из ответа модели: чистый JSON, ```json…```, или {…} внутри текста.
+
+    Anthropic-модели на OpenRouter часто игнорируют response_format и оборачивают
+    ответ в markdown/добавляют преамбулу — из-за этого строгий json.loads падал,
+    а деньги за ответ уже списывались. Здесь парсим устойчиво.
+    """
+    content = (content or "").strip()
+    if not content:
+        return None
+    if content.startswith("```"):                       # ```json … ```
+        content = re.sub(r"^```(?:json)?\s*", "", content)
+        content = re.sub(r"\s*```$", "", content).strip()
+    try:
+        return json.loads(content)
+    except Exception:
+        pass
+    i, j = content.find("{"), content.rfind("}")         # выдернуть {…} из текста
+    if 0 <= i < j:
+        try:
+            return json.loads(content[i:j + 1])
+        except Exception:
+            return None
+    return None
+
+
 def write_script(briefs, transcript: str = "", rtype_hint: str = "",
                  api_key: str | None = None, timeout: int = 180):
     """briefs — строка или список ТЗ; transcript — расшифровка сырых данных. → dict|None."""
@@ -77,16 +130,42 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "",
         "messages": [{"role": "system", "content": sys_prompt},
                      {"role": "user", "content": user}],
         "temperature": 0.7,
+        "max_tokens": 4000,                     # хватит на весь JSON, не обрежется
         "response_format": {"type": "json_object"},
     }).encode("utf-8")
     req = urllib.request.Request(
         "https://openrouter.ai/api/v1/chat/completions", data=body,
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
                  "HTTP-Referer": "https://systemop.pro", "X-Title": "OP Reels Scriptwriter"})
+    global LAST_ERROR
+    LAST_ERROR = ""
     try:
         r = json.load(urllib.request.urlopen(req, timeout=timeout))
-        cfg = json.loads(r["choices"][0]["message"]["content"])
+        if isinstance(r, dict) and r.get("error"):          # OpenRouter иногда шлёт ошибку в 200
+            em = r["error"]
+            msg = em.get("message") if isinstance(em, dict) else str(em)
+            code = em.get("code") if isinstance(em, dict) else 0
+            LAST_ERROR = _human_error(int(code or 0), msg)
+            sys.stderr.write(f"[scriptwriter] api-error: {msg}\n")
+            return None
+        content = ((r.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+        cfg = _parse_json(content)
+        if cfg is None:
+            LAST_ERROR = ("Модель ответила, но не в формате JSON (ответ пришёл, деньги "
+                          "списались). Обычно лечится сменой модели в OPENROUTER_MODEL.")
+            sys.stderr.write(f"[scriptwriter] bad-json: {content[:200]}\n")
+            return None
+    except urllib.error.HTTPError as e:
+        try:
+            detail = json.loads(e.read().decode("utf-8", "ignore"))
+            api_msg = (detail.get("error") or {}).get("message") or str(detail)
+        except Exception:
+            api_msg = ""
+        LAST_ERROR = _human_error(e.code, api_msg)
+        sys.stderr.write(f"[scriptwriter] HTTP {e.code}: {api_msg[:200]}\n")
+        return None
     except Exception as e:
+        LAST_ERROR = _human_error(0, f"{type(e).__name__}: {str(e)[:150]}")
         sys.stderr.write(f"[scriptwriter] {type(e).__name__}: {str(e)[:150]}\n")
         return None
     cards = []

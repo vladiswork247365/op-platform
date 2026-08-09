@@ -163,6 +163,34 @@ def _music_mood(b) -> str:
     return (b.get("script") or {}).get("music_mood") or "energetic"
 
 
+async def _live(m, initial: str):
+    """Живой статус: спиннер + текущий этап + таймер. Меняй state['stage'] по ходу.
+    Возвращает (status_msg, state, stop_event, task). В конце: stop.set(); await task."""
+    status = await m.reply(initial)
+    state = {"stage": initial, "t0": time.time()}
+    stop = asyncio.Event()
+
+    async def _loop():
+        frames = "◐◓◑◒"
+        i = 0
+        while not stop.is_set():
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=2.5)
+                break
+            except asyncio.TimeoutError:
+                pass
+            el = int(time.time() - state["t0"])
+            mm, ss = divmod(el, 60)
+            clock = f"{mm}:{ss:02d}" if mm else f"{ss} сек"
+            try:
+                await status.edit_text(f"{state['stage']}  {frames[i % 4]}\n⏱ прошло {clock}")
+            except Exception:
+                pass
+            i += 1
+
+    return status, state, stop, asyncio.create_task(_loop())
+
+
 @app.on_message(filters.command("start"))
 async def start(_, m: "Message"):
     await m.reply(
@@ -263,17 +291,26 @@ async def _make_script(client, chat_id, m):
     if not (scriptwriter and os.environ.get("OPENROUTER_API_KEY")):
         await m.reply("Нужен OPENROUTER_API_KEY (Opus) для сценария. Впиши в montage/.env.")
         return
-    status = await m.reply(f"🧠 Изучаю {len(b['files'])} исходн. и {b.get('tz_count', 0)} ТЗ, "
-                           "пишу сценарий (Opus)…")
-    loop = asyncio.get_event_loop()
-    firstvid = next((f for f in b["files"]
-                     if os.path.splitext(f)[1].lower() in VIDEO_EXT), None)
-    tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)
-          if firstvid else "") or ""
-    rt = reel_types.title(b.get("type") or reel_types.DEFAULT)
-    script = await loop.run_in_executor(None, lambda: scriptwriter.write_script(b["brief"], tr, rt))
+    status, state, stop, task = await _live(
+        m, f"🧠 Беру {len(b['files'])} исходн. и {b.get('tz_count', 0)} ТЗ…")
+    script = None
+    try:
+        loop = asyncio.get_event_loop()
+        firstvid = next((f for f in b["files"]
+                         if os.path.splitext(f)[1].lower() in VIDEO_EXT), None)
+        tr = ""
+        if firstvid:
+            state["stage"] = "🎙 Распознаю речь в сырье…"
+            tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)) or ""
+        state["stage"] = "✍️ Пишу виральный сценарий (Opus)…"
+        rt = reel_types.title(b.get("type") or reel_types.DEFAULT)
+        script = await loop.run_in_executor(None, lambda: scriptwriter.write_script(b["brief"], tr, rt))
+    finally:
+        stop.set()
+        await task
     if not script:
-        await status.edit_text("❌ Сценарист не ответил. Проверь баланс OpenRouter (Opus 402?).")
+        why = getattr(scriptwriter, "LAST_ERROR", "") or "нет ответа от OpenRouter"
+        await status.edit_text(f"❌ Сценарий не собрался.\nПричина: {why}")
         return
     b["script"] = script
     b["stage"] = "review_script"
