@@ -106,6 +106,8 @@ def fetch(query: str = "", limit: int = 0, timeout: int = 30) -> list[dict]:
     try:
         data = json.load(urllib.request.urlopen(req, timeout=timeout))
     except Exception as e:
+        global _token_cache
+        _token_cache = None      # токен мог протухнуть — перелогинимся при след. запросе
         sys.stderr.write(f"[trendsee.fetch] {type(e).__name__}: {str(e)[:150]}\n")
         return []
     out = []
