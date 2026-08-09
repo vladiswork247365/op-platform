@@ -114,9 +114,12 @@ baskets = {}  # chat_id -> {files, job, brief, status, running}
 
 NEW_BTN = "🚀 Создать новый ролик на миллион"
 GET_SCRIPT_BTN = "📝 Получить сценарий для ролика"
+ENOUGH_BTN = "✅ Сырья достаточно"
 MAIN_KB = ReplyKeyboardMarkup([[KeyboardButton(NEW_BTN)]], resize_keyboard=True)
 COLLECT_KB = ReplyKeyboardMarkup([[KeyboardButton(GET_SCRIPT_BTN)], [KeyboardButton(NEW_BTN)]],
                                  resize_keyboard=True)
+ENOUGH_KB = ReplyKeyboardMarkup([[KeyboardButton(ENOUGH_BTN)], [KeyboardButton(NEW_BTN)]],
+                                resize_keyboard=True)
 
 
 def _types_kb():
@@ -129,6 +132,7 @@ def _types_kb():
 def _script_kb():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("✅ Утвердить и собрать (3 части)", callback_data="assemble")],
+        [InlineKeyboardButton("➕ Добавить сырьё", callback_data="addsrc")],
         [InlineKeyboardButton("✏️ Изменить / добавить ТЗ", callback_data="recollect")]])
 
 
@@ -224,6 +228,31 @@ async def cb_recollect(client, cq):
     await client.send_message(cq.message.chat.id,
         f"Ок, добавляй ещё ТЗ или исходники. Потом снова «{GET_SCRIPT_BTN}».",
         reply_markup=COLLECT_KB)
+
+
+@app.on_callback_query(filters.regex(r"^addsrc$"))
+async def cb_addsrc(client, cq):
+    if not _cq_allowed(cq):
+        return
+    b = _basket(cq.message.chat.id)
+    b["stage"] = "add_more"
+    await cq.answer("Кидай ещё сырьё")
+    await client.send_message(cq.message.chat.id,
+        f"➕ Кидай ещё видео/фото — не хватило под сценарий. Сейчас в ролике: "
+        f"{len(b['files'])} шт.\nКак хватит — жми «{ENOUGH_BTN}».", reply_markup=ENOUGH_KB)
+
+
+@app.on_message(filters.regex(f"^{re.escape(ENOUGH_BTN)}$"))
+async def enough_btn(client, m: "Message"):
+    if not allowed(m):
+        return
+    b = _basket(m.chat.id)
+    if not b.get("script"):
+        await m.reply("Сначала получи сценарий.", reply_markup=COLLECT_KB)
+        return
+    b["stage"] = "review_script"
+    await m.reply(f"Принял. Сырья в ролике: {len(b['files'])} шт.", reply_markup=MAIN_KB)
+    await m.reply("📝 Сценарий:\n\n" + scriptwriter.as_text(b["script"]), reply_markup=_script_kb())
 
 
 async def _make_script(client, chat_id, m):
@@ -401,9 +430,14 @@ async def _say(b, m, text):
 
 
 async def _prompt(b, m):
+    if b.get("stage") == "add_more":     # догрузка сырья после сценария
+        await m.reply(f"➕ В ролике сырья: {len(b['files'])} шт. Кидай ещё или жми «{ENOUGH_BTN}».",
+                      reply_markup=ENOUGH_KB)
+        return
     bnote = f"\n📝 ТЗ: «{b['brief'][:70]}»" if b["brief"] else "\n📝 ТЗ пока нет — наговори или напиши."
-    await _say(b, m, f"🧺 Исходников: {len(b['files'])}.{bnote}\n"
-                     "Пришли ещё, добавь ТЗ, или /go — генерирую.")
+    tail = (f"\nКак всё скинешь — жми «{GET_SCRIPT_BTN}»." if b.get("type")
+            else "\nПришли ещё, добавь ТЗ, или /go — генерирую.")
+    await _say(b, m, f"🧺 Исходников: {len(b['files'])}.{bnote}{tail}")
 
 
 async def _process_basket(client, chat_id):
