@@ -24,21 +24,42 @@ _MOTIONS_IMG = {"kenburns_in", "kenburns_out"}
 
 SYS = (
     "Ты — топовый монтажёр коротких вертикальных Reels для русскоязычной аудитории. "
-    "У тебя есть КАТАЛОГ клипов автора (с описаниями) и РАСКАДРОВКА по битам (что "
-    "говорится в каждый момент озвучки). Задача: подобрать на КАЖДЫЙ бит самый сильный "
-    "клип, чтобы картинка усиливала слова и держала внимание до конца.\n\n"
+    "У тебя есть УТВЕРЖДЁННЫЙ СЦЕНАРИЙ, КАТАЛОГ клипов автора (с описаниями и длиной) "
+    "и РАСКАДРОВКА по битам (что говорится в каждый момент озвучки и сколько бит длится). "
+    "Задача: смонтировать ролик ЛОГИЧНО под сценарий — на КАЖДЫЙ бит подобрать самый "
+    "сильный клип И ЛОГИЧНО ЕГО ОБРЕЗАТЬ (выбрать в клипе осмысленный непрерывный кусок "
+    "in→out), чтобы картинка совпадала со словами и держала внимание до конца.\n\n"
     "ПРАВИЛА:\n"
-    "1) Бит 0 — ХУК: самый цепляющий/динамичный кадр (energy high), паттерн-интеррапт.\n"
-    "2) Смысл кадра = смысл фразы: про продукт/цифру/экран — ставь product/screen/b_roll; "
-    "личное/эмоция/обращение — можно talking_head.\n"
-    "3) НЕ ставь один и тот же клип на два бита подряд. Клипы можно переиспользовать, если "
-    "их мало, но чередуй и бери разные моменты (start).\n"
-    "4) Для видео выбери момент старта (start, сек) с самым выразительным кадром внутри клипа.\n"
-    "5) motion: для видео — punch|zoomin|zoomout|kick; для фото — kenburns_in|kenburns_out.\n\n"
+    "1) СЛЕДУЙ СЦЕНАРИЮ: хук цепляет, основа доказывает, финал — оффер. Кадр обязан "
+    "усиливать смысл фразы именно этого бита.\n"
+    "2) ОБРЕЗКА: для КАЖДОГО видео укажи in и out (секунды ВНУТРИ клипа) — самый "
+    "выразительный непрерывный кусок, где происходит суть. Не бери случайный момент и не "
+    "оставляй пустое/невыразительное начало. Бит длится seg секунд: если твой кусок длиннее "
+    "— он проиграется чуть быстрее, короче — чуть медленнее, это норм.\n"
+    "3) Бит 0 — ХУК: самый цепляющий/динамичный кадр (energy high), паттерн-интеррапт.\n"
+    "4) НЕ ставь один и тот же клип на два бита подряд. Переиспользуй клип только с ДРУГИМ "
+    "куском (другие in/out) и чередуй.\n"
+    "5) Смысл кадра: продукт/цифра/экран → product/screen/b_roll; личное/эмоция/обращение "
+    "→ talking_head.\n"
+    "6) motion: для видео — punch|zoomin|zoomout|kick; для фото — kenburns_in|kenburns_out "
+    "(у фото in/out не нужны).\n\n"
     "Верни СТРОГО JSON без пояснений, РОВНО по одному объекту на каждый бит:\n"
-    '{"beats":[{"i":0,"file":"имя_файла_из_каталога","start":0.0,'
-    '"motion":"punch","reason":"кратко почему"}]}'
+    '{"beats":[{"i":0,"file":"имя_файла_из_каталога","in":0.0,"out":2.0,'
+    '"motion":"punch","reason":"кратко почему этот кадр и эта обрезка"}]}'
 )
+
+
+def _script_block(script: dict | None) -> str:
+    if not script:
+        return ""
+    parts = [f'ХУК: {script.get("hook", "")}']
+    for k, label in (("part1", "Часть 1 (завязка)"), ("part2", "Часть 2 (основа)"),
+                     ("part3", "Часть 3 (финал+оффер)")):
+        if script.get(k):
+            parts.append(f"{label}: {script[k]}")
+    if script.get("cta_word"):
+        parts.append(f'CTA-слово: {script["cta_word"]}')
+    return "УТВЕРЖДЁННЫЙ СЦЕНАРИЙ (монтируй строго под него):\n" + "\n".join(parts)
 
 
 def _beats_text(beats: list[dict]) -> str:
@@ -58,14 +79,15 @@ def plan_shots(beats: list[dict], clips: list[dict], script: dict | None = None,
         return None
     valid_files = {c["file"] for c in clips}
     by_file = {c["file"]: c for c in clips}
-    hook = (script or {}).get("hook", "")
+    sb = _script_block(script)
     user = (
-        (f"ХУК РОЛИКА: {hook}\n\n" if hook else "")
-        + "КАТАЛОГ КЛИПОВ (что есть у автора):\n"
+        (sb + "\n\n" if sb else "")
+        + "КАТАЛОГ КЛИПОВ (имя | тип и длина | вид | лицо | динамика | описание):\n"
         + "\n".join(f"- {ln}" for ln in _catalog_lines(clips))
-        + "\n\nРАСКАДРОВКА (что говорится в каждый бит озвучки):\n"
+        + "\n\nРАСКАДРОВКА (бит | что говорится | сколько длится бит):\n"
         + _beats_text(beats)
-        + f"\n\nВерни план ровно на {len(beats)} бит(ов)."
+        + f"\n\nВерни план ровно на {len(beats)} бит(ов). Для КАЖДОГО видео укажи in и out "
+        "(осмысленная обрезка внутри клипа)."
     )
     body = json.dumps({
         "model": MODEL,
@@ -106,15 +128,20 @@ def plan_shots(beats: list[dict], clips: list[dict], script: dict | None = None,
             if not f:
                 continue
         info = by_file[f]
-        try:
-            start = max(0.0, float(item.get("start", 0.0)))
-        except (TypeError, ValueError):
-            start = 0.0
+
+        def _num(key, default=None):
+            try:
+                return max(0.0, float(item.get(key)))
+            except (TypeError, ValueError):
+                return default
+
+        tin = _num("in", _num("start", 0.0))          # in (или старое start)
+        tout = _num("out", None)                        # осмысленная обрезка до out
         motion = (item.get("motion") or "").strip().lower()
         allowed = _MOTIONS_IMG if info["is_image"] else _MOTIONS_VID
         if motion not in allowed:
             motion = None
-        plan[bi] = {"file": f, "start": start, "motion": motion}
+        plan[bi] = {"file": f, "in": tin or 0.0, "out": tout, "motion": motion}
     return plan or None
 
 

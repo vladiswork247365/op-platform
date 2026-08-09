@@ -134,14 +134,23 @@ def _apply_shot_plan(edl: dict, plan: dict, by_file: dict) -> int:
             avail = info.get("dur") or 0.0
             if avail < seg * 0.5:            # клип слишком короткий — не трогаем бит
                 continue
+            # логичная обрезка от Claude: берём кусок in→out, скоростью подгоняем под бит
+            tin = min(max(0.0, p.get("in", 0.0)), max(0.0, avail - 0.2))
+            tout = p.get("out")
+            trim = (tout - tin) if isinstance(tout, (int, float)) and tout > tin \
+                else min(seg, avail - tin)
+            speed = min(2.0, max(0.5, (trim / seg) if seg > 0 else 1.0))
+            actual = seg * speed             # столько секунд источника проиграем за бит
+            if actual > avail:               # клип короче — берём весь, синхрон держим скоростью
+                actual = avail
+                speed = min(2.0, max(0.5, actual / seg))
+                tin = 0.0
+            elif tin + actual > avail:       # не вылезаем за конец клипа
+                tin = max(0.0, avail - actual)
             b.pop("dur", None)
-            if avail >= seg + 0.05:
-                start = min(max(0.0, p.get("start", 0.0)), round(avail - seg, 2))
-                b["in"], b["out"], b["speed"] = round(start, 2), round(start + seg, 2), 1.0
-            else:                            # короче бита — лёгкое слоу-мо, синхрон держим
-                b["in"], b["out"] = 0.0, round(avail, 2)
-                b["speed"] = round(max(0.5, avail / seg), 3)
             b["src"], b["audio"] = info["file"], "mute"
+            b["in"], b["out"] = round(tin, 3), round(tin + actual, 3)
+            b["speed"] = round(speed, 3)
             if first:
                 b["motion"], b["punch"] = "punch", 1.08
             else:
