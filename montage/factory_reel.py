@@ -244,23 +244,24 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
     _st("🎨 Рендерю (озвучка + субтитры + плашки)…")
     subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
                     "--edl", plan, "--src", footage_dir, "--out", reel], check=True)
-    # фоновая музыка: 1) трек, который прислал автор; иначе 2) Jamendo по настроению
-    mf = _user_music(footage_dir)                    # трек автора — уважаем всегда
-    if not mf and bake_bg:                            # авто-музыку вшиваем ТОЛЬКО если явно просят
-        if trending and trending.have():
+    # По умолчанию — БЕЗ фоновой музыки (голос + субтитры): трендовый звук добавляешь
+    # нативно в Инсте. Музыку вшиваем ТОЛЬКО если явно попросили bake_bg=True.
+    if bake_bg:
+        mf = _user_music(footage_dir)                # трек автора — приоритет
+        if not mf and trending and trending.have():
             _st("🎵 Беру трендовый звук под настроение…")
             mf = trending.pick(mood)
-        elif music and music.have_key():
+        elif not mf and music and music.have_key():
             _st("🎵 Подбираю музыку…")
             mf = music.get_track(os.path.join(footage_dir, "_bg.mp3"), mood)
-    if mf:
-        _st("🎵 Накладываю музыку под голос…")
-        mixed = os.path.join(out_dir, "_mixed.mp4")
-        if _mix_bg(reel, mf, mixed) == mixed:
-            try:
-                os.replace(mixed, reel)
-            except Exception:
-                pass
+        if mf:
+            _st("🎵 Накладываю музыку под голос…")
+            mixed = os.path.join(out_dir, "_mixed.mp4")
+            if _mix_bg(reel, mf, mixed) == mixed:
+                try:
+                    os.replace(mixed, reel)
+                except Exception:
+                    pass
     return reel
 
 
