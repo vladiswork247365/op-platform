@@ -119,9 +119,10 @@ def _parse_json(content: str):
 
 
 def write_script(briefs, transcript: str = "", rtype_hint: str = "", footage: str = "",
-                 reference: str = "", api_key: str | None = None, timeout: int = 180):
+                 reference: str = "", trends: str = "", api_key: str | None = None,
+                 timeout: int = 180):
     """briefs — ТЗ; transcript — речь из сырья; footage — что Claude увидел в кадрах;
-    reference — контент по ссылке автора (ориентир результата). → dict|None."""
+    reference — контент по ссылке автора; trends — что заходит у других (TrendSee). → dict|None."""
     key = api_key or os.environ.get("OPENROUTER_API_KEY")
     if not key:
         return None
@@ -161,9 +162,11 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "", footage: st
         ref_block = ("РЕФЕРЕНС-ОРИЕНТИР (ссылка автора — целься в ТАКОЙ результат: разбери, "
                      "почему заходит, и повтори механику, НЕ копируя дословно):\n"
                      + _clip(reference, 2500) + "\n\n")
+    trends_block = (_clip(trends, 2500) + "\n\n") if trends else ""
     user = ((factory_ctx + "\n\n" if factory_ctx else "")
             + fmt + "\n"
             + work
+            + trends_block
             + footage_block
             + ref_block
             + f"ТЗ АВТОРА (может быть несколько):\n{_clip(briefs, 4000) or '(не задано)'}\n\n"
