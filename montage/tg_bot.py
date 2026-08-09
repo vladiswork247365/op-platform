@@ -16,6 +16,7 @@
 """
 from __future__ import annotations
 import asyncio
+import json
 import os
 import re
 import sys
@@ -482,6 +483,7 @@ def _basket(chat_id):
                                 "stage": None,            # collect / review_script / review_parts
                                 "await_edit": None,       # ждём правку к части N (голосом/текстом)
                                 "tz_count": 0,            # сколько ТЗ принято
+                                "tz_list": [],            # тексты всех ТЗ по этому ролику (/tz)
                                 "edits": [], "script": None, "reel": None, "parts": [],
                                 "lock": asyncio.Lock()}   # против гонки при альбомах
     return b
@@ -655,8 +657,7 @@ async def on_media(client, m: "Message"):
             return
         kind, size = "видео", getattr(media, "file_size", 0) or 0
     if m.caption and not b["brief"]:
-        b["brief"] = m.caption.strip()
-        b["tz_count"] = b.get("tz_count", 0) + 1
+        _add_tz(b, m.chat.id, m.caption.strip(), "подпись")
     # сериализуем скачивание (альбом = несколько сообщений разом) — уникальный номер и папка
     async with b["lock"]:
         os.makedirs(b["job"], exist_ok=True)
@@ -670,6 +671,63 @@ async def on_media(client, m: "Message"):
             return
         b["files"].append(dst)
     await _prompt(b, m)
+
+
+TZ_LOG = os.path.join(HERE, "library", "tz_history.jsonl")   # история ТЗ (gitignored)
+
+
+def _save_tz(chat_id, rtype, text, kind):
+    """Сохранить ТЗ на диск, чтобы не терялось при перезапуске бота."""
+    try:
+        os.makedirs(os.path.dirname(TZ_LOG), exist_ok=True)
+        rec = {"ts": time.strftime("%Y-%m-%d %H:%M"), "chat": chat_id,
+               "type": rtype, "kind": kind, "text": text}
+        with open(TZ_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def _add_tz(b, chat_id, text, kind):
+    """ТЗ в текущий ролик: в бриф, в счётчик, в список и на диск."""
+    b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
+    b["tz_count"] = b.get("tz_count", 0) + 1
+    b.setdefault("tz_list", []).append(text)
+    _save_tz(chat_id, b.get("type") or "", text, kind)
+
+
+def _recent_tz(n=15):
+    try:
+        lines = open(TZ_LOG, encoding="utf-8").read().splitlines()[-n:]
+    except Exception:
+        return ""
+    out = []
+    for ln in lines:
+        try:
+            r = json.loads(ln)
+            tp = f" · {r['type']}" if r.get("type") else ""
+            out.append(f"[{r.get('ts', '')}{tp}] {r.get('text', '')[:200]}")
+        except Exception:
+            pass
+    return "\n".join(out)
+
+
+@app.on_message(filters.command("tz"))
+async def show_tz(_, m: "Message"):
+    if not allowed(m):
+        return
+    b = baskets.get(m.chat.id)
+    lst = (b or {}).get("tz_list") or []
+    if lst:
+        body = "\n".join(f"{i + 1}. {t}" for i, t in enumerate(lst))
+        await m.reply(f"📋 ТЗ по текущему ролику ({len(lst)} шт.):\n\n{body}")
+        return
+    hist = _recent_tz()
+    if hist:
+        await m.reply("📋 Последние ТЗ (сохранённые, из истории):\n\n" + hist)
+    else:
+        await m.reply("Пока нет сохранённых ТЗ. Кидай ТЗ боту — они появятся здесь и сохранятся "
+                      "на диск (не потеряются при перезапуске).")
 
 
 @app.on_message(filters.voice)
@@ -708,8 +766,7 @@ async def on_voice(client, m: "Message"):
         await note.delete()
         await _process_basket(client, m.chat.id)
         return
-    b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
-    b["tz_count"] = b.get("tz_count", 0) + 1
+    _add_tz(b, m.chat.id, text, "голос")
     await note.delete()
     if not b["files"]:
         await m.reply(f"📝 ТЗ #{b['tz_count']} принято (голос): «{text[:60]}».\n"
@@ -718,7 +775,7 @@ async def on_voice(client, m: "Message"):
         await _prompt(b, m)
 
 
-@app.on_message(filters.text & ~filters.command(["go", "start"]))
+@app.on_message(filters.text & ~filters.command(["go", "start", "tz", "new"]))
 async def on_text(client, m: "Message"):
     if not allowed(m):
         return
@@ -736,8 +793,7 @@ async def on_text(client, m: "Message"):
     if _is_go(text) and b["files"]:
         await _process_basket(client, m.chat.id)
         return
-    b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
-    b["tz_count"] = b.get("tz_count", 0) + 1
+    _add_tz(b, m.chat.id, text, "текст")
     if not b["files"]:
         await m.reply(f"📝 ТЗ #{b['tz_count']} принято: «{text[:60]}».\n"
                       "Пришли исходники (видео/фото).")
