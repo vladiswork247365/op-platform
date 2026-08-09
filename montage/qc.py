@@ -33,7 +33,7 @@ FF = imageio_ffmpeg.get_ffmpeg_exe()
 # по умолчанию — та же модель, что у режиссёра (Opus). Можно удешевить контроль,
 # задав OPENROUTER_VISION_MODEL=openai/gpt-4o-mini (кадры-картинки дороже текста).
 MODEL = (os.environ.get("OPENROUTER_VISION_MODEL")
-         or os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.1")
+         or os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.5")
 
 
 def _probe(path: str) -> str:
