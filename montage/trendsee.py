@@ -127,9 +127,22 @@ def fetch(query: str = "", limit: int = 0, timeout: int = 30) -> list[dict]:
     return out
 
 
-def digest(query: str = "", top: int = 12) -> str:
-    """Текст-ориентир для сценариста из реальных трендов. "" — если пусто/не настроено."""
-    items = fetch(query)
+_BANK_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "library", "trend_bank.json")
+
+
+def _bank_posts():
+    try:
+        return json.load(open(_BANK_FILE, encoding="utf-8")).get("posts") or []
+    except Exception:
+        return []
+
+
+def digest(query: str = "", top: int = 15) -> str:
+    """Текст-ориентир для сценариста. Приоритет — банк трендов (500+ ключей), иначе
+    живой одиночный запрос. "" — если пусто/не настроено."""
+    items = _bank_posts()                 # готовый банк (собран /trends) — мгновенно
+    if not items:
+        items = fetch(query)              # фолбэк: живой запрос по нише
     if not items:
         return ""
     lines = ["ЧТО ЗАХОДИТ У ДРУГИХ СЕЙЧАС (реальные залетевшие ролики из TrendSee — разбери, "

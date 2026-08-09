@@ -93,6 +93,10 @@ try:
 except Exception:
     trendsee = None
 try:
+    import trendsee_harvest  # noqa: E402  — банк трендов по 500+ ключам (кнопка /trends)
+except Exception:
+    trendsee_harvest = None
+try:
     import trending      # noqa: E402  — рекомендация трендового звука для Инсты
 except Exception:
     trending = None
@@ -907,6 +911,40 @@ def _recent_tz(n=15):
     return "\n".join(out)
 
 
+@app.on_message(filters.command("trends"))
+async def cmd_trends(client, m: "Message"):
+    """Собрать банк трендов по 500+ ключам (фоном) — сценарии станут учитывать тренды."""
+    if not allowed(m):
+        return
+    if not (trendsee and trendsee.available()):
+        await m.reply("Сначала подключи TrendSee: TRENDSEE_EMAIL/PASSWORD (или TRENDSEE_TOKEN) "
+                      "в montage/.env.")
+        return
+    if not trendsee_harvest:
+        await m.reply("Модуль банка трендов недоступен.")
+        return
+    n = len(trendsee_harvest.load_keywords())
+    status = await m.reply(f"🔥 Собираю банк трендов по {n} ключам… это несколько минут, "
+                           "ботом пока можно пользоваться.")
+    loop = asyncio.get_event_loop()
+
+    def _cb(t):
+        try:
+            asyncio.run_coroutine_threadsafe(status.edit_text(t), loop)
+        except Exception:
+            pass
+    try:
+        bank = await loop.run_in_executor(None, lambda: trendsee_harvest.harvest(status_cb=_cb))
+    except Exception as e:
+        await status.edit_text(f"❌ Банк не собрался: {str(e)[:150]}")
+        return
+    if bank.get("count"):
+        await status.edit_text(f"✅ Банк трендов готов: {bank['count']} топ-роликов по "
+                               f"{bank['keywords']} ключам. Теперь сценарии учитывают их.")
+    else:
+        await status.edit_text("Тренды не собрались — проверь доступ TrendSee (логин/пароль).")
+
+
 @app.on_message(filters.command("tz"))
 async def show_tz(_, m: "Message"):
     if not allowed(m):
@@ -970,7 +1008,7 @@ async def on_voice(client, m: "Message"):
         await _prompt(b, m)
 
 
-@app.on_message(filters.text & ~filters.command(["go", "start", "tz", "new"]))
+@app.on_message(filters.text & ~filters.command(["go", "start", "tz", "new", "trends"]))
 async def on_text(client, m: "Message"):
     if not allowed(m):
         return
