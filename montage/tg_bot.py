@@ -304,7 +304,7 @@ async def _make_script(client, chat_id, m):
             state["stage"] = "🎙 Распознаю речь в сырье…"
             tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)) or ""
         state["stage"] = "✍️ Пишу виральный сценарий (Opus)…"
-        rt = reel_types.title(b.get("type") or reel_types.DEFAULT)
+        rt = b.get("type") or reel_types.DEFAULT       # ключ формата → механики формата
         script = await loop.run_in_executor(None, lambda: scriptwriter.write_script(b["brief"], tr, rt))
     finally:
         stop.set()
@@ -354,7 +354,7 @@ async def _assemble(client, chat_id, m):
         try:
             reel = await loop.run_in_executor(
                 None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
-                                                 _music_mood(b), FPS, _sf))
+                                                 _music_mood(b), FPS, _sf, rtype))
             if not reel:
                 await status.edit_text("❌ Не собралось (озвучка). Проверь баланс ElevenLabs.")
                 return
@@ -409,9 +409,9 @@ async def _finalize(client, chat_id, m):
         loop = asyncio.get_event_loop()
         edits_txt = "; ".join(f"часть {n}: {t}" for n, t in b["edits"])
         new_brief = (b.get("brief") or "") + "\nПРАВКИ АВТОРА: " + edits_txt
-        rt = reel_types.title(b.get("type") or reel_types.DEFAULT)
+        rt = b.get("type") or reel_types.DEFAULT       # ключ формата → механики формата
         gray = bool(re.search(GRAY_RE, b.get("brief") or "", re.I))
-        out = reel_types.out_dir(b.get("type") or reel_types.DEFAULT)
+        out = reel_types.out_dir(rt)
         vid = eleven.default_voice() if eleven else None
         async with render_lock:
             try:
@@ -420,7 +420,7 @@ async def _finalize(client, chat_id, m):
                     b["script"] = sc
                 r = await loop.run_in_executor(
                     None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
-                                                     _music_mood(b), FPS, lambda t: None))
+                                                     _music_mood(b), FPS, lambda t: None, rt))
                 if r:
                     reel = b["reel"] = r
             except Exception as e:

@@ -17,6 +17,10 @@ try:
     import kb  # промпт + база знаний + стиль автора из factory/
 except Exception:
     kb = None
+try:
+    import reel_types  # виральные механики под формат
+except Exception:
+    reel_types = None
 
 # Opus 4.5 — новее и в 3 раза дешевле старого 4.1 ($5/$25 vs $15/$75 за 1М).
 # Хочешь дешевле для потока — поставь anthropic/claude-sonnet-4.5 в montage/.env.
@@ -120,9 +124,18 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "",
         briefs = "\n".join(f"- {b}" for b in briefs if b)
     sys_prompt = (kb.prompt("scenarist") if kb else "") or VIRALITY_PROMPT
     factory_ctx = (kb.context() if kb else "")
+    # формат + его виральные механики (rtype_hint может быть ключом типа или названием)
+    rt_title, rt_play = (rtype_hint or "продающий"), ""
+    if reel_types and reel_types.valid(rtype_hint):
+        rt_title = reel_types.title(rtype_hint)
+        rt_play = reel_types.script_play(rtype_hint)
+    fmt = f"ФОРМАТ РОЛИКА: {rt_title}\n"
+    if rt_play:
+        fmt += ("ВИРАЛЬНЫЕ МЕХАНИКИ ЭТОГО ФОРМАТА (выжми из формата максимум, применяй "
+                "именно эти механики):\n" + rt_play + "\n")
     user = ((factory_ctx + "\n\n" if factory_ctx else "")
-            + f"ТИП РОЛИКА: {rtype_hint or 'продающий'}\n\n"
-            f"ТЗ АВТОРА (может быть несколько):\n{_clip(briefs, 4000) or '(не задано)'}\n\n"
+            + fmt + "\n"
+            + f"ТЗ АВТОРА (может быть несколько):\n{_clip(briefs, 4000) or '(не задано)'}\n\n"
             f"РАСШИФРОВКА СЫРЫХ ДАННЫХ (речь из присланных видео, если есть):\n"
             f"{_clip(transcript, 6000) or '(нет)'}")
     body = json.dumps({

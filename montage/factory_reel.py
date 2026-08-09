@@ -183,7 +183,8 @@ def _mix_bg(video: str, music_file: str, out: str, gain_db: int = -18) -> str:
 
 
 def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = None,
-          gray: bool = False, mood: str = "energetic", fps: int = 30, status_cb=None):
+          gray: bool = False, mood: str = "energetic", fps: int = 30, status_cb=None,
+          rtype: str = ""):
     """Собрать полный ролик по сценарию. → путь к ролику или None (нет озвучки)."""
     def _st(t):
         if status_cb:
@@ -218,7 +219,7 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
             clips = shots.analyze(footage_dir, status_cb=_st)
             if clips:
                 _st("🎬 Раскладываю кадры под смысл (Claude-монтаж)…")
-                plan = editor.plan_shots(_beats_meta(edl), clips, script)
+                plan = editor.plan_shots(_beats_meta(edl), clips, script, rtype)
                 if plan:
                     n = _apply_shot_plan(edl, plan, {c["file"]: c for c in clips})
                     _st(f"🎬 Claude собрал раскадровку: кадров по смыслу — {n}")
