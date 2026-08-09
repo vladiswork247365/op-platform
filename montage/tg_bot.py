@@ -75,6 +75,10 @@ try:
     import factory_reel  # noqa: E402  — оркестратор: сценарий → ролик из 3 частей
 except Exception:
     scriptwriter = factory_reel = None
+try:
+    import previral      # noqa: E402  — предиктор виральности ДО публикации
+except Exception:
+    previral = None
 
 API_ID = int(need("TG_API_ID"))
 API_HASH = need("TG_API_HASH")
@@ -367,6 +371,21 @@ async def _assemble(client, chat_id, m):
             await status.edit_text("Готовы 3 части — глянь каждую 👇")
             for i, p in enumerate(parts):
                 await client.send_video(chat_id, p, caption=f"Часть {i + 1}/3")
+            # предиктор виральности ДО публикации — Claude смотрит готовый ролик глазами
+            if previral and os.environ.get("OPENROUTER_API_KEY"):
+                pv = await client.send_message(chat_id, "🔮 Оцениваю виральность до публикации…")
+                try:
+                    v = await loop.run_in_executor(None, lambda: previral.check(reel, b["script"], rtype))
+                    if v:
+                        b["previral"] = v
+                        await pv.edit_text(previral.as_text(v))
+                    else:
+                        await pv.delete()
+                except Exception:
+                    try:
+                        await pv.delete()
+                    except Exception:
+                        pass
             await client.send_message(
                 chat_id, "Правки по частям — жми кнопку и наговори/напиши голосом. "
                 "Всё устраивает — «Собрать финальный ролик».", reply_markup=_parts_kb())
@@ -436,7 +455,9 @@ async def _finalize(client, chat_id, m):
     reel_types.log_reel(b.get("type") or reel_types.DEFAULT, b.get("brief") or "", reel)
     await client.send_video(chat_id, reel,
         caption="✅ ФИНАЛЬНЫЙ РОЛИК. Можно публиковать! 🚀\n"
-                "Залей в Instagram/TikTok — панель подтянет статистику сама.",
+                "🎵 Для макс. охвата: в Инсте приглуши оригинальный звук и добавь АКТУАЛЬНЫЙ "
+                "трендовый саунд нативно — так алгоритм даёт буст.\n"
+                "Залей в Instagram/TikTok — панель подтянет статистику, а через 6ч будет разбор.",
         reply_markup=MAIN_KB)
     baskets.pop(chat_id, None)
 
