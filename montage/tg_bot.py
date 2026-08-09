@@ -153,6 +153,12 @@ def _parts_kb():
         [InlineKeyboardButton("🎬 Собрать финальный ролик", callback_data="final")]])
 
 
+def _retry_kb():
+    """Кнопка «продолжить/повторить последнее действие» — показываем при ошибке."""
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔁 Продолжить предыдущее действие", callback_data="retry")]])
+
+
 def _cq_allowed(cq) -> bool:
     if not ALLOW:
         return True
@@ -301,6 +307,7 @@ async def _make_script(client, chat_id, m):
     if not (scriptwriter and os.environ.get("OPENROUTER_API_KEY")):
         await m.reply("Нужен OPENROUTER_API_KEY (Opus) для сценария. Впиши в montage/.env.")
         return
+    b["last_action"] = "make_script"
     status, state, stop, task = await _live(
         m, f"🧠 Беру {len(b['files'])} исходн. и {b.get('tz_count', 0)} ТЗ…")
     script = None
@@ -322,7 +329,8 @@ async def _make_script(client, chat_id, m):
         await task
     if not script:
         why = getattr(scriptwriter, "LAST_ERROR", "") or "нет ответа от OpenRouter"
-        await status.edit_text(f"❌ Сценарий не собрался.\nПричина: {why}")
+        await status.edit_text(f"❌ Сценарий не собрался.\nПричина: {why}",
+                               reply_markup=_retry_kb())
         return
     b["script"] = script
     b["stage"] = "review_script"
@@ -346,6 +354,7 @@ async def _assemble(client, chat_id, m):
     if not (factory_reel and eleven and eleven.have_key() and eleven.default_voice()):
         await m.reply("Для сборки нужен ElevenLabs (ELEVEN_KEY + ELEVEN_VOICE_ID) — см. VOICE-SETUP.md.")
         return
+    b["last_action"] = "assemble"
     if b.get("running"):
         return
     b["running"] = True
@@ -367,7 +376,8 @@ async def _assemble(client, chat_id, m):
                 None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
                                                  _music_mood(b), FPS, _sf, rtype))
             if not reel:
-                await status.edit_text("❌ Не собралось (озвучка). Проверь баланс ElevenLabs.")
+                await status.edit_text("❌ Не собралось (озвучка). Проверь баланс ElevenLabs.",
+                                       reply_markup=_retry_kb())
                 return
             b["reel"] = reel
             parts = await loop.run_in_executor(None, lambda: factory_reel.split_three(reel, b["job"]))
@@ -395,7 +405,7 @@ async def _assemble(client, chat_id, m):
                 chat_id, "Правки по частям — жми кнопку и наговори/напиши голосом. "
                 "Всё устраивает — «Собрать финальный ролик».", reply_markup=_parts_kb())
         except Exception as e:
-            await status.edit_text(f"❌ Ошибка сборки: {str(e)[:200]}")
+            await status.edit_text(f"❌ Ошибка сборки: {str(e)[:200]}", reply_markup=_retry_kb())
         finally:
             b["running"] = False
 
@@ -420,6 +430,29 @@ async def cb_final(client, cq):
     await _finalize(client, cq.message.chat.id, cq.message)
 
 
+@app.on_callback_query(filters.regex(r"^retry$"))
+async def cb_retry(client, cq):
+    """Повторить последнее действие, которое упало (сценарий/сборка/финал)."""
+    if not _cq_allowed(cq):
+        return
+    b = baskets.get(cq.message.chat.id)
+    action = (b or {}).get("last_action")
+    if not action:
+        await cq.answer("Нечего продолжать 🤔", show_alert=True)
+        return
+    labels = {"make_script": "сценарий", "assemble": "сборку", "finalize": "финал"}
+    await cq.answer(f"Продолжаю {labels.get(action, '')}…")
+    chat_id, m = cq.message.chat.id, cq.message
+    if action == "make_script":
+        await _make_script(client, chat_id, m)
+    elif action == "assemble":
+        await _assemble(client, chat_id, m)
+    elif action == "finalize":
+        await _finalize(client, chat_id, m)
+    else:
+        await client.send_message(chat_id, "Не знаю, что продолжить. Начни заново кнопкой.")
+
+
 async def _finalize(client, chat_id, m):
     b = baskets.get(chat_id)
     if not b or not b.get("reel"):
@@ -427,6 +460,7 @@ async def _finalize(client, chat_id, m):
         return
     if b.get("running"):
         return
+    b["last_action"] = "finalize"
     reel = b["reel"]
     # если были правки — перепишем сценарий с их учётом и пересоберём
     if b.get("edits") and scriptwriter and factory_reel:
@@ -450,7 +484,9 @@ async def _finalize(client, chat_id, m):
                 if r:
                     reel = b["reel"] = r
             except Exception as e:
-                await status.edit_text(f"❌ Ошибка пересборки: {str(e)[:150]}")
+                await status.edit_text(f"❌ Ошибка пересборки: {str(e)[:150]}",
+                                       reply_markup=_retry_kb())
+                return
             finally:
                 b["running"] = False
         try:
@@ -484,6 +520,7 @@ def _basket(chat_id):
                                 "await_edit": None,       # ждём правку к части N (голосом/текстом)
                                 "tz_count": 0,            # сколько ТЗ принято
                                 "tz_list": [],            # тексты всех ТЗ по этому ролику (/tz)
+                                "last_action": None,      # последнее действие — для кнопки «повторить»
                                 "edits": [], "script": None, "reel": None, "parts": [],
                                 "lock": asyncio.Lock()}   # против гонки при альбомах
     return b
