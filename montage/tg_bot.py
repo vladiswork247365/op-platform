@@ -303,7 +303,9 @@ async def _make_script(client, chat_id, m):
         if firstvid:
             state["stage"] = "🎙 Распознаю речь в сырье…"
             tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)) or ""
-        state["stage"] = "✍️ Пишу виральный сценарий (Opus)…"
+        state["stage"] = "🧠 Захожу в панель — работа над ошибками…"
+        await asyncio.sleep(0.4)
+        state["stage"] = "✍️ Пишу виральный сценарий с учётом прошлых роликов (Opus)…"
         rt = b.get("type") or reel_types.DEFAULT       # ключ формата → механики формата
         script = await loop.run_in_executor(None, lambda: scriptwriter.write_script(b["brief"], tr, rt))
     finally:

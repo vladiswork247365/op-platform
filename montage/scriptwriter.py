@@ -21,6 +21,10 @@ try:
     import reel_types  # виральные механики под формат
 except Exception:
     reel_types = None
+try:
+    import lessons  # работа над ошибками: уроки из панели (reels.json)
+except Exception:
+    lessons = None
 
 # Opus 4.5 — новее и в 3 раза дешевле старого 4.1 ($5/$25 vs $15/$75 за 1М).
 # Хочешь дешевле для потока — поставь anthropic/claude-sonnet-4.5 в montage/.env.
@@ -133,8 +137,20 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "",
     if rt_play:
         fmt += ("ВИРАЛЬНЫЕ МЕХАНИКИ ЭТОГО ФОРМАТА (выжми из формата максимум, применяй "
                 "именно эти механики):\n" + rt_play + "\n")
+    # работа над ошибками: перед новым сценарием учимся на прошлых роликах из панели
+    work = ""
+    if lessons:
+        try:
+            d = lessons.digest(rtype_hint if (reel_types and reel_types.valid(rtype_hint)) else "")
+        except Exception:
+            d = ""
+        if d:
+            work = ("РАБОТА НАД ОШИБКАМИ — сначала изучи свои прошлые ролики из панели и "
+                    "ОБЯЗАТЕЛЬНО учти: повтори то, что заходило, и НЕ повторяй прошлых ошибок.\n"
+                    + d + "\n\n")
     user = ((factory_ctx + "\n\n" if factory_ctx else "")
             + fmt + "\n"
+            + work
             + f"ТЗ АВТОРА (может быть несколько):\n{_clip(briefs, 4000) or '(не задано)'}\n\n"
             f"РАСШИФРОВКА СЫРЫХ ДАННЫХ (речь из присланных видео, если есть):\n"
             f"{_clip(transcript, 6000) or '(нет)'}")
