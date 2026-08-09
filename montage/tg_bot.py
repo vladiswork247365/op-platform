@@ -89,6 +89,10 @@ try:
 except Exception:
     weblink = None
 try:
+    import trendsee      # noqa: E402  — тренды «что заходит у других» (TrendSee API)
+except Exception:
+    trendsee = None
+try:
     import trending      # noqa: E402  — рекомендация трендового звука для Инсты
 except Exception:
     trending = None
@@ -401,13 +405,19 @@ async def _make_script(client, chat_id, m):
                 None, lambda: shots.analyze(b["job"], status_cb=lambda t: state.update(stage=t)))
             b["clips"] = clips or []
             footage = shots.catalog_text(clips) if clips else ""
+        # тренды «что заходит у других» (TrendSee) — если подключён
+        trends = ""
+        if trendsee and trendsee.available():
+            state["stage"] = "🔥 Смотрю тренды: что заходит у других (TrendSee)…"
+            trends = await loop.run_in_executor(None, lambda: trendsee.digest())
         state["stage"] = "🧠 Захожу в панель — работа над ошибками…"
         await asyncio.sleep(0.4)
-        state["stage"] = "✍️ Пишу виральный сценарий (сырьё + ТЗ + прошлые ролики, Opus)…"
+        state["stage"] = "✍️ Пишу виральный сценарий (тренды + сырьё + ТЗ + прошлые ролики, Opus)…"
         rt = b.get("type") or reel_types.DEFAULT       # ключ формата → механики формата
         ref = b.get("reference", "")
         script = await loop.run_in_executor(
-            None, lambda: scriptwriter.write_script(b["brief"], tr, rt, footage=footage, reference=ref))
+            None, lambda: scriptwriter.write_script(b["brief"], tr, rt, footage=footage,
+                                                    reference=ref, trends=trends))
     finally:
         stop.set()
         await task
