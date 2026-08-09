@@ -81,6 +81,14 @@ try:
 except Exception:
     previral = None
 try:
+    import shots         # noqa: E402  — «глаза»: Claude смотрит сырьё (кэш _shots.json)
+except Exception:
+    shots = None
+try:
+    import weblink       # noqa: E402  — ссылка-референс к ТЗ (тянет контент по URL)
+except Exception:
+    weblink = None
+try:
     import trending      # noqa: E402  — рекомендация трендового звука для Инсты
 except Exception:
     trending = None
@@ -124,11 +132,12 @@ baskets = {}  # chat_id -> {files, job, brief, status, running}
 
 
 NEW_BTN = "🚀 Создать новый ролик на миллион"
+LOOK_BTN = "👁 Claude, посмотри сырьё"
 GET_SCRIPT_BTN = "📝 Получить сценарий для ролика"
 ENOUGH_BTN = "✅ Сырья достаточно"
 MAIN_KB = ReplyKeyboardMarkup([[KeyboardButton(NEW_BTN)]], resize_keyboard=True)
-COLLECT_KB = ReplyKeyboardMarkup([[KeyboardButton(GET_SCRIPT_BTN)], [KeyboardButton(NEW_BTN)]],
-                                 resize_keyboard=True)
+COLLECT_KB = ReplyKeyboardMarkup([[KeyboardButton(LOOK_BTN)], [KeyboardButton(GET_SCRIPT_BTN)],
+                                  [KeyboardButton(NEW_BTN)]], resize_keyboard=True)
 ENOUGH_KB = ReplyKeyboardMarkup([[KeyboardButton(ENOUGH_BTN)], [KeyboardButton(NEW_BTN)]],
                                 resize_keyboard=True)
 
@@ -257,10 +266,65 @@ async def pick_type(client, cq):
         pass
     await client.send_message(
         cq.message.chat.id,
-        "📥 Кидай СЫРЬЁ (видео/фото за день, сколько угодно) и ТЗ (текстом или голосом, "
-        "хоть 1, хоть 100 раз). Я всё складываю в этот ролик.\n\n"
-        f"Как всё скинешь — жми «{GET_SCRIPT_BTN}».",
+        "📥 Порядок:\n"
+        "1) Кидай СЫРЬЁ (видео/фото за день, сколько угодно).\n"
+        f"2) Жми «{LOOK_BTN}» — я посмотрю кадры и скажу, что вижу (смотрю 1 раз, запоминаю).\n"
+        "3) Дай ТЗ (текст/голос) — можно и ссылку-референс, я её прочитаю как ориентир.\n"
+        f"4) Жми «{GET_SCRIPT_BTN}» — напишу сценарий под твои кадры + ТЗ + референс.",
         reply_markup=COLLECT_KB)
+
+
+def _clips_summary(clips) -> str:
+    lines = []
+    for c in clips[:20]:
+        typ = "фото" if c.get("is_image") else f"видео {c.get('dur', 0):.0f}с"
+        desc = (c.get("desc") or c.get("kind", "")).strip()
+        face = " · лицо" if c.get("has_face") else ""
+        lines.append(f"• {desc} ({typ}{face})")
+    if len(clips) > 20:
+        lines.append(f"…и ещё {len(clips) - 20}")
+    return "\n".join(lines)
+
+
+async def _look_footage(b, m, quiet=False):
+    """Claude смотрит сырьё ОДИН раз (кэш _shots.json) и запоминает в b['clips']."""
+    if b.get("clips"):
+        return b["clips"]                       # уже смотрел — не тратим API повторно
+    if not (shots and os.environ.get("OPENROUTER_API_KEY")) or not b.get("files"):
+        return []
+    status, state, stop, task = await _live(m, f"👁 Смотрю сырьё ({len(b['files'])} шт.)…")
+    loop = asyncio.get_event_loop()
+    try:
+        clips = await loop.run_in_executor(
+            None, lambda: shots.analyze(b["job"], status_cb=lambda t: state.update(stage=t)))
+    finally:
+        stop.set()
+        await task
+    b["clips"] = clips or []
+    if not clips:
+        await status.edit_text("Не смог посмотреть сырьё (нет ключа/сети/клипов).")
+        return []
+    if quiet:
+        await status.delete()
+    else:
+        await status.edit_text("👁 Посмотрел сырьё, вот что вижу:\n\n" + _clips_summary(clips)
+                               + f"\n\nТеперь дай ТЗ (текст/голос) — и жми «{GET_SCRIPT_BTN}».")
+    return clips
+
+
+@app.on_message(filters.regex(f"^{re.escape(LOOK_BTN)}$"))
+async def look_btn(client, m: "Message"):
+    if not allowed(m):
+        return
+    b = _basket(m.chat.id)
+    if not b.get("files"):
+        await m.reply("Сначала кинь сырьё (видео/фото) — потом я его посмотрю.")
+        return
+    if not (shots and os.environ.get("OPENROUTER_API_KEY")):
+        await m.reply("Для просмотра сырья нужен OPENROUTER_API_KEY в montage/.env.")
+        return
+    b["clips"] = []                             # смотрим заново по кнопке (кэш всё равно спасёт)
+    await _look_footage(b, m)
 
 
 @app.on_message(filters.regex(f"^{re.escape(GET_SCRIPT_BTN)}$"))
@@ -327,11 +391,23 @@ async def _make_script(client, chat_id, m):
         if firstvid:
             state["stage"] = "🎙 Распознаю речь в сырье…"
             tr = (await loop.run_in_executor(None, transcribe.transcribe_text, firstvid)) or ""
+        # Claude смотрит сырьё 1 раз (кэш) — сценарий ляжет на реальные кадры
+        footage = ""
+        if b.get("clips"):
+            footage = shots.catalog_text(b["clips"]) if shots else ""
+        elif shots and os.environ.get("OPENROUTER_API_KEY"):
+            state["stage"] = "👁 Смотрю сырьё, чтобы сценарий лёг на кадры…"
+            clips = await loop.run_in_executor(
+                None, lambda: shots.analyze(b["job"], status_cb=lambda t: state.update(stage=t)))
+            b["clips"] = clips or []
+            footage = shots.catalog_text(clips) if clips else ""
         state["stage"] = "🧠 Захожу в панель — работа над ошибками…"
         await asyncio.sleep(0.4)
-        state["stage"] = "✍️ Пишу виральный сценарий с учётом прошлых роликов (Opus)…"
+        state["stage"] = "✍️ Пишу виральный сценарий (сырьё + ТЗ + прошлые ролики, Opus)…"
         rt = b.get("type") or reel_types.DEFAULT       # ключ формата → механики формата
-        script = await loop.run_in_executor(None, lambda: scriptwriter.write_script(b["brief"], tr, rt))
+        ref = b.get("reference", "")
+        script = await loop.run_in_executor(
+            None, lambda: scriptwriter.write_script(b["brief"], tr, rt, footage=footage, reference=ref))
     finally:
         stop.set()
         await task
@@ -569,6 +645,8 @@ def _basket(chat_id):
                                 "await_edit": None,       # ждём правку к части N (голосом/текстом)
                                 "tz_count": 0,            # сколько ТЗ принято
                                 "tz_list": [],            # тексты всех ТЗ по этому ролику (/tz)
+                                "clips": [],              # что Claude увидел в сырье (смотрит 1 раз)
+                                "reference": "",          # контент по ссылке-референсу из ТЗ
                                 "last_action": None,      # последнее действие — для кнопки «повторить»
                                 "edits": [], "script": None, "reel": None, "parts": [],
                                 "lock": asyncio.Lock()}   # против гонки при альбомах
@@ -782,6 +860,27 @@ def _add_tz(b, chat_id, text, kind):
     _save_tz(chat_id, b.get("type") or "", text, kind)
 
 
+async def _capture_link(m, b, text):
+    """Если в ТЗ есть ссылка — прочитать её как референс-ориентир (учтётся в сценарии)."""
+    if not weblink:
+        return
+    url = weblink.find_url(text)
+    if not url:
+        return
+    note = await m.reply("🔗 Открываю ссылку-референс…")
+    try:
+        loop = asyncio.get_event_loop()
+        ref = await loop.run_in_executor(None, lambda: weblink.fetch(url))
+    except Exception:
+        ref = ""
+    if ref:
+        b["reference"] = ref
+        await note.edit_text("🔗 Взял ссылку как референс-ориентир (учту в сценарии):\n\n"
+                             + ref[:350])
+    else:
+        await note.edit_text("🔗 Ссылку не смог прочитать — учту её как обычный текст ТЗ.")
+
+
 def _recent_tz(n=15):
     try:
         lines = open(TZ_LOG, encoding="utf-8").read().splitlines()[-n:]
@@ -880,6 +979,7 @@ async def on_text(client, m: "Message"):
         await _process_basket(client, m.chat.id)
         return
     _add_tz(b, m.chat.id, text, "текст")
+    await _capture_link(m, b, text)               # ссылка в ТЗ → референс-ориентир
     if not b["files"]:
         await m.reply(f"📝 ТЗ #{b['tz_count']} принято: «{text[:60]}».\n"
                       "Пришли исходники (видео/фото).")

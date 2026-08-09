@@ -118,9 +118,10 @@ def _parse_json(content: str):
     return None
 
 
-def write_script(briefs, transcript: str = "", rtype_hint: str = "",
-                 api_key: str | None = None, timeout: int = 180):
-    """briefs — строка или список ТЗ; transcript — расшифровка сырых данных. → dict|None."""
+def write_script(briefs, transcript: str = "", rtype_hint: str = "", footage: str = "",
+                 reference: str = "", api_key: str | None = None, timeout: int = 180):
+    """briefs — ТЗ; transcript — речь из сырья; footage — что Claude увидел в кадрах;
+    reference — контент по ссылке автора (ориентир результата). → dict|None."""
     key = api_key or os.environ.get("OPENROUTER_API_KEY")
     if not key:
         return None
@@ -148,9 +149,23 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "",
             work = ("РАБОТА НАД ОШИБКАМИ — сначала изучи свои прошлые ролики из панели и "
                     "ОБЯЗАТЕЛЬНО учти: повтори то, что заходило, и НЕ повторяй прошлых ошибок.\n"
                     + d + "\n\n")
+    footage_block = ""
+    if footage:
+        footage_block = ("ЧТО ЕСТЬ В КАДРАХ (Claude посмотрел присланное сырьё — пиши сценарий "
+                         "ПОД эти реальные кадры, чтобы картинка совпадала со словами). "
+                         "НЕ обязательно задействовать ВСЁ сырьё — бери только то, что "
+                         "усиливает ролик; слабое/не по теме игнорируй:\n"
+                         + _clip(footage, 3000) + "\n\n")
+    ref_block = ""
+    if reference:
+        ref_block = ("РЕФЕРЕНС-ОРИЕНТИР (ссылка автора — целься в ТАКОЙ результат: разбери, "
+                     "почему заходит, и повтори механику, НЕ копируя дословно):\n"
+                     + _clip(reference, 2500) + "\n\n")
     user = ((factory_ctx + "\n\n" if factory_ctx else "")
             + fmt + "\n"
             + work
+            + footage_block
+            + ref_block
             + f"ТЗ АВТОРА (может быть несколько):\n{_clip(briefs, 4000) or '(не задано)'}\n\n"
             f"РАСШИФРОВКА СЫРЫХ ДАННЫХ (речь из присланных видео, если есть):\n"
             f"{_clip(transcript, 6000) or '(нет)'}")
