@@ -147,6 +147,18 @@ def _cq_allowed(cq) -> bool:
     return bool(u and (str(u.id) in ALLOW or (u.username or "").lower() in ALLOW))
 
 
+def _music_mood(b) -> str:
+    """Настроение музыки: приоритет — слово в ТЗ, иначе выбор Opus, иначе energetic."""
+    raw = (b.get("brief") or "").lower()
+    if re.search(r"спокойн|л[её]гк|минимал|эмбиент|фонов|расслаб", raw):
+        return "calm"
+    if re.search(r"эпичн|мощн|драйв|пафосн|масштабн", raw):
+        return "epic"
+    if re.search(r"энергичн|бодр|зажиг|динамичн|качов", raw):
+        return "energetic"
+    return (b.get("script") or {}).get("music_mood") or "energetic"
+
+
 @app.on_message(filters.command("start"))
 async def start(_, m: "Message"):
     await m.reply(
@@ -274,7 +286,7 @@ async def _assemble(client, chat_id, m):
         try:
             reel = await loop.run_in_executor(
                 None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
-                                                 "energetic", FPS, _sf))
+                                                 _music_mood(b), FPS, _sf))
             if not reel:
                 await status.edit_text("❌ Не собралось (озвучка). Проверь баланс ElevenLabs.")
                 return
@@ -340,7 +352,7 @@ async def _finalize(client, chat_id, m):
                     b["script"] = sc
                 r = await loop.run_in_executor(
                     None, lambda: factory_reel.build(b["job"], b["script"], out, vid, gray,
-                                                     "energetic", FPS, lambda t: None))
+                                                     _music_mood(b), FPS, lambda t: None))
                 if r:
                     reel = b["reel"] = r
             except Exception as e:

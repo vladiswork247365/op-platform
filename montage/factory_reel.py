@@ -103,18 +103,36 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
     _st("🎨 Рендерю (озвучка + субтитры + плашки)…")
     subprocess.run([sys.executable, os.path.join(HERE, "render.py"),
                     "--edl", plan, "--src", footage_dir, "--out", reel], check=True)
-    # фоновая музыка (если подключён ключ)
-    if music and music.have_key():
+    # фоновая музыка: 1) трек, который прислал автор; иначе 2) Jamendo по настроению
+    mf = _user_music(footage_dir)
+    if not mf and music and music.have_key():
         _st("🎵 Подбираю музыку…")
         mf = music.get_track(os.path.join(footage_dir, "_bg.mp3"), mood)
-        if mf:
-            mixed = os.path.join(out_dir, "_mixed.mp4")
-            if _mix_bg(reel, mf, mixed) == mixed:
-                try:
-                    os.replace(mixed, reel)
-                except Exception:
-                    pass
+    if mf:
+        _st("🎵 Накладываю музыку под голос…")
+        mixed = os.path.join(out_dir, "_mixed.mp4")
+        if _mix_bg(reel, mf, mixed) == mixed:
+            try:
+                os.replace(mixed, reel)
+            except Exception:
+                pass
     return reel
+
+
+_AUDIO_EXT = {".mp3", ".m4a", ".wav", ".aac", ".ogg"}
+
+
+def _user_music(footage_dir: str):
+    """Трек, который прислал автор (аудио-файл среди исходников). None — если нет."""
+    try:
+        for f in sorted(os.listdir(footage_dir)):
+            if f.startswith("_"):
+                continue
+            if os.path.splitext(f)[1].lower() in _AUDIO_EXT:
+                return os.path.join(footage_dir, f)
+    except Exception:
+        pass
+    return None
 
 
 def split_three(reel: str, out_dir: str):
