@@ -263,7 +263,8 @@ async def _make_script(client, chat_id, m):
     if not (scriptwriter and os.environ.get("OPENROUTER_API_KEY")):
         await m.reply("Нужен OPENROUTER_API_KEY (Opus) для сценария. Впиши в montage/.env.")
         return
-    status = await m.reply("🧠 Изучаю сырьё и ТЗ, пишу сценарий (Opus)…")
+    status = await m.reply(f"🧠 Изучаю {len(b['files'])} исходн. и {b.get('tz_count', 0)} ТЗ, "
+                           "пишу сценарий (Opus)…")
     loop = asyncio.get_event_loop()
     firstvid = next((f for f in b["files"]
                      if os.path.splitext(f)[1].lower() in VIDEO_EXT), None)
@@ -408,6 +409,7 @@ def _basket(chat_id):
                                 "type": None,             # тип ролика (кнопкой), None = по умолчанию
                                 "stage": None,            # collect / review_script / review_parts
                                 "await_edit": None,       # ждём правку к части N (голосом/текстом)
+                                "tz_count": 0,            # сколько ТЗ принято
                                 "edits": [], "script": None, "reel": None, "parts": [],
                                 "lock": asyncio.Lock()}   # против гонки при альбомах
     return b
@@ -434,7 +436,8 @@ async def _prompt(b, m):
         await m.reply(f"➕ В ролике сырья: {len(b['files'])} шт. Кидай ещё или жми «{ENOUGH_BTN}».",
                       reply_markup=ENOUGH_KB)
         return
-    bnote = f"\n📝 ТЗ: «{b['brief'][:70]}»" if b["brief"] else "\n📝 ТЗ пока нет — наговори или напиши."
+    cnt = b.get("tz_count", 0)
+    bnote = f"\n📝 ТЗ принято: {cnt} шт." if cnt else "\n📝 ТЗ пока нет — наговори или напиши."
     tail = (f"\nКак всё скинешь — жми «{GET_SCRIPT_BTN}»." if b.get("type")
             else "\nПришли ещё, добавь ТЗ, или /go — генерирую.")
     await _say(b, m, f"🧺 Исходников: {len(b['files'])}.{bnote}{tail}")
@@ -581,6 +584,7 @@ async def on_media(client, m: "Message"):
         kind, size = "видео", getattr(media, "file_size", 0) or 0
     if m.caption and not b["brief"]:
         b["brief"] = m.caption.strip()
+        b["tz_count"] = b.get("tz_count", 0) + 1
     # сериализуем скачивание (альбом = несколько сообщений разом) — уникальный номер и папка
     async with b["lock"]:
         os.makedirs(b["job"], exist_ok=True)
@@ -633,9 +637,11 @@ async def on_voice(client, m: "Message"):
         await _process_basket(client, m.chat.id)
         return
     b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
+    b["tz_count"] = b.get("tz_count", 0) + 1
     await note.delete()
     if not b["files"]:
-        await m.reply(f"📝 ТЗ понял (голос): «{text}».\nТеперь пришли исходники (видео/фото) → потом /go.")
+        await m.reply(f"📝 ТЗ #{b['tz_count']} принято (голос): «{text[:60]}».\n"
+                      "Пришли исходники (видео/фото).")
     else:
         await _prompt(b, m)
 
@@ -659,9 +665,12 @@ async def on_text(client, m: "Message"):
         await _process_basket(client, m.chat.id)
         return
     b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
+    b["tz_count"] = b.get("tz_count", 0) + 1
     if not b["files"]:
-        await m.reply(f"📝 ТЗ понял: «{text}».\nПришли исходники (видео/фото).")
+        await m.reply(f"📝 ТЗ #{b['tz_count']} принято: «{text[:60]}».\n"
+                      "Пришли исходники (видео/фото).")
     else:
+        await m.reply(f"📝 ТЗ #{b['tz_count']} принято.")
         await _prompt(b, m)
 
 
