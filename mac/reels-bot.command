@@ -26,10 +26,17 @@ elif command -v curl >/dev/null 2>&1 && command -v unzip >/dev/null 2>&1; then
     TMPD="$(mktemp -d)"
     if unzip -oq "$TMPZIP" -d "$TMPD" 2>/dev/null; then
       SRC="$TMPD/op-platform-main"
-      [ -d "$SRC/montage" ] && cp -f "$SRC"/montage/*.py montage/ 2>/dev/null
-      [ -d "$SRC/montage" ] && cp -f "$SRC"/montage/requirements*.txt montage/ 2>/dev/null
-      [ -d "$SRC/mac" ]     && cp -f "$SRC"/mac/*.command mac/ 2>/dev/null
-      echo "  ✓ код свежий (ключи .env и шрифты сохранены)"
+      if [ -d "$SRC/montage" ]; then
+        cp -f "$SRC"/montage/*.py montage/ 2>/dev/null
+        cp -f "$SRC"/montage/requirements*.txt montage/ 2>/dev/null
+        cp -f "$SRC"/montage/stress_dict.json montage/ 2>/dev/null      # словарь ударений
+        # твои поправки ударений (stress_overrides.json) и данные (reels.json) НЕ трогаем
+        [ -f montage/stress_overrides.json ] || cp -f "$SRC"/montage/stress_overrides.json montage/ 2>/dev/null
+        mkdir -p montage/assets && cp -Rf "$SRC"/montage/assets/. montage/assets/ 2>/dev/null  # музыка из коробки
+      fi
+      [ -d "$SRC/factory/prompts" ] && { mkdir -p factory/prompts; cp -f "$SRC"/factory/prompts/*.md factory/prompts/ 2>/dev/null; }
+      [ -d "$SRC/mac" ] && cp -f "$SRC"/mac/*.command mac/ 2>/dev/null
+      echo "  ✓ код+музыка+словарь ударений свежие (ключи .env, поправки и шрифты сохранены)"
     fi
     rm -rf "$TMPD"
   else
