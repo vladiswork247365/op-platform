@@ -45,7 +45,9 @@ def strip(text: str) -> str:
 
 
 def _off() -> bool:
-    return os.environ.get("STRESS", "on").strip().lower() in ("off", "0", "no", "false", "")
+    # ПО УМОЛЧАНИЮ ВЫКЛЮЧЕНО. Знак ударения U+0301 на некоторых клон-голосах ElevenLabs
+    # ломает произношение (тянет гласные, «баааляяя»). Включить осознанно: STRESS=on.
+    return os.environ.get("STRESS", "off").strip().lower() not in ("on", "1", "yes", "true")
 
 
 def _load_dict() -> dict:
