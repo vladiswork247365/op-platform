@@ -51,6 +51,43 @@ def _beat_starts(beats):
     return starts, t
 
 
+def _apply_face_sub_y(edl: dict, footage_dir: str, status_cb=None):
+    """Субтитры сами встают МИМО ЛИЦА: по каждому клипу считаем зону (face_zone по YuNet)
+    и проставляем Y-долю на субтитры этого бита. Кэш по файлу — не считаем дважды.
+
+    Автор задал SUB_Y вручную → уважаем, не трогаем. Нет opencv/модели/лица → дефолт стиля.
+    Внутри одного клипа позиция стабильна (кэш), меняется только на смене кадра.
+    """
+    if os.environ.get("SUB_Y"):                 # ручная настройка приоритетнее авто
+        return
+    try:
+        import face_zone
+    except Exception:
+        return
+    cache, applied = {}, 0
+    for b in edl.get("beats", []):
+        src, cues = b.get("src"), (b.get("captions") or [])
+        if not src or not cues:
+            continue
+        if src not in cache:
+            yf = None
+            try:
+                yf = face_zone.subtitle_y_fraction(os.path.join(footage_dir, src))
+            except Exception:
+                yf = None
+            cache[src] = yf
+        yf = cache[src]
+        if yf:
+            for cue in cues:
+                cue["yf"] = yf                  # перекрываем дефолт — точно мимо лица
+            applied += 1
+    if applied and status_cb:
+        try:
+            status_cb("🙂 Субтитры поставил мимо лица (авто по кадру)")
+        except Exception:
+            pass
+
+
 def _inject_cards(edl: dict, script: dict):
     """Плашки: хук — на вход, остальные — на момент 'at' (доля ролика) от режиссёра.
 
@@ -251,6 +288,7 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
                     _st(f"🎬 Claude собрал раскадровку: кадров по смыслу — {n}")
         except Exception as e:
             sys.stderr.write(f"[factory_reel] shot-plan skipped: {type(e).__name__}: {e}\n")
+    _apply_face_sub_y(edl, footage_dir, _st)                               # субтитры сами мимо лица
     _inject_cards(edl, script)                                             # тайминг плашек от Opus
     _apply_highlights(edl, script.get("highlight_words"))                  # акцент-слова от Opus
     plan = os.path.join(footage_dir, "_factory.edl.json")
