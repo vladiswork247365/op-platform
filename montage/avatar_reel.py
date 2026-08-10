@@ -199,7 +199,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Min,{font},{size},&H00FFFFFF,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,{outline},{shadow},5,40,40,40,1
+Style: Min,{font},{size},&H00FFFFFF,&H00000000,&H64000000,{bold},0,0,0,100,100,0,0,1,{outline},{shadow},5,40,40,40,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -215,11 +215,19 @@ def _ass_ts(t: float) -> str:
 
 
 def build_ass(cues, out_path: str, yf: float = 0.63):
-    """Минимал-субтитры в ASS: мелкие, строчными, белые, тонкая обводка, по центру мимо лица."""
+    """Субтитры в ASS под стиль SUB_STYLE: big (жирные белые строчными, дефолт) / minimal (тонкие).
+    Белые, тёмная обводка, по центру мимо лица, строчными."""
+    style = os.environ.get("SUB_STYLE", "big").strip().lower()
+    minimal = style in ("minimal", "min", "thin", "clean", "premium")
     font = os.environ.get("SUB_ASS_FONT", "Arial")
-    size = int(os.environ.get("SUB_SIZE", str(max(28, int(W * 0.05)))))
+    if minimal:
+        size = int(os.environ.get("SUB_SIZE", str(max(28, int(W * 0.045)))))
+        bold, outline, shadow = 0, 2, 1
+    else:                                          # big — жирные крупные с плотной обводкой
+        size = int(os.environ.get("SUB_SIZE", str(max(34, int(W * 0.056)))))
+        bold, outline, shadow = -1, 3, 1
     y = int(max(0.2, min(0.9, yf)) * H)
-    head = _ASS_HEAD.format(W=W, H=H, font=font, size=size, outline=2, shadow=1)
+    head = _ASS_HEAD.format(W=W, H=H, font=font, size=size, bold=bold, outline=outline, shadow=shadow)
     lines = [head]
     for c in cues:
         txt = c["text"].replace("\n", " ").strip().lower()
