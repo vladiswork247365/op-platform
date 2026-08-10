@@ -85,16 +85,28 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
     if isinstance(lines, str):
         lines = [lines]
     font_path = find_font(font_path)
-    # СТИЛЬ СУБТИТРОВ. minimal (по умолчанию) — как в топ-референсах: мелкие аккуратные
-    # белые субтитры строчными, по центру, БЕЗ капса/красных плашек/боксов, лёгкая тень.
-    # bold — прежний громкий вирал-стиль (крупный капс + красная подсветка). SUB_STYLE=bold.
-    style = os.environ.get("SUB_STYLE", "minimal").strip().lower()
-    minimal = style in ("minimal", "min", "clean", "premium")
+    # СТИЛЬ СУБТИТРОВ (SUB_STYLE):
+    #   big  (ПО УМОЛЧАНИЮ) — жирные БЕЛЫЕ субтитры строчными, тёмная обводка + мягкая тень +
+    #        лёгкое затемнение-скрим под текстом. Как в топ-«залетающих» роликах.
+    #   minimal — тонкие мелкие белые строчными (спокойный премиум).
+    #   loud    — крупный КАПС + красная подсветка слова + плашки (прежний громкий вирал).
+    style = os.environ.get("SUB_STYLE", "big").strip().lower()
+    minimal = style in ("minimal", "min", "thin", "clean", "premium")
+    loud = style in ("loud", "caps", "viral", "hormozi", "plashki", "bold_caps", "red")
+    big = not minimal and not loud                                  # новый дефолт
     lower = False
+    scrim_a = 0
     if minimal:
         upper, lower, box, highlight = False, True, False, None
         font_path = light_font(font_path)                          # тонкий шрифт, не жирный капс
         font_size = int(os.environ.get("SUB_SIZE", str(max(28, int(w * 0.044)))))  # ~47 на 1080
+        if y_frac is None and pos != "center":
+            y_frac = float(os.environ.get("SUB_Y", "0.63"))
+    elif big:
+        upper, lower, box, highlight = False, True, False, None    # жирный шрифт — find_font (Montserrat)
+        font_size = int(os.environ.get("SUB_SIZE", str(max(34, int(w * 0.056)))))  # ~60 на 1080
+        if os.environ.get("SUB_SCRIM", "on").strip().lower() not in ("off", "0", "no", "false"):
+            scrim_a = int(os.environ.get("SUB_SCRIM_ALPHA", "96"))  # мягкое затемнение под текстом
         if y_frac is None and pos != "center":
             y_frac = float(os.environ.get("SUB_Y", "0.63"))
     font = ImageFont.truetype(font_path, font_size)
@@ -145,8 +157,20 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
         y0 = int(h * 0.74) - total_h // 2
     y0 = max(6, min(y0, h - total_h - 6))
 
-    stroke = 2 if minimal else max(4, font_size // 12)   # minimal — тонкая обводка + мягкая тень
+    stroke = 2 if minimal else (max(4, font_size // 14) if big else max(4, font_size // 12))
     space = d.textlength(" ", font=font)
+    # скрим: мягкое затемнение под всем блоком текста (для big-стиля) — чтобы белый читался
+    if scrim_a > 0:
+        def _lw(ln):
+            ws = [w.lower() if lower else w for w in ln.split() if w]
+            return sum(d.textlength(w, font=font) for w in ws) + space * max(0, len(ws) - 1)
+        mw = max((_lw(ln) for ln in lines), default=0.0)
+        if mw > 0:
+            cx0 = (w - mw) / 2
+            padx, pady = int(font_size * 0.5), int(font_size * 0.32)
+            y_bot = y0 + (len(lines) - 1) * line_h + int(font_size * 1.15)
+            d.rounded_rectangle([cx0 - padx, y0 - pady, cx0 + mw + padx, y_bot + pady // 2],
+                                radius=int(font_size * 0.34), fill=(8, 8, 10, scrim_a))
     for i, ln in enumerate(lines):
         words = [wd for wd in ln.split() if wd]
         if not words:
@@ -175,6 +199,11 @@ def render_caption(lines, highlight=None, out_path="cap.png", w=1080, h=1920,
                 d.text((cx + 2, y + 3), wd, font=font, fill=(0, 0, 0, 120))
                 d.text((cx, y), wd, font=font, fill=WHITE,
                        stroke_width=stroke, stroke_fill=(0, 0, 0, 200))
+            elif big:
+                # жирный белый + плотная тёмная обводка + мягкая тень (стиль «залетающих»)
+                d.text((cx + 3, y + 4), wd, font=font, fill=(0, 0, 0, 150))
+                d.text((cx, y), wd, font=font, fill=WHITE,
+                       stroke_width=stroke, stroke_fill=(0, 0, 0, 235))
             else:
                 d.text((cx, y), wd, font=font, fill=WHITE,
                        stroke_width=stroke, stroke_fill=OUTLINE)

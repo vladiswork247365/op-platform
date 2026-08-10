@@ -91,12 +91,13 @@ def _apply_face_sub_y(edl: dict, footage_dir: str, status_cb=None):
 def _inject_cards(edl: dict, script: dict):
     """Плашки: хук — на вход, остальные — на момент 'at' (доля ролика) от режиссёра.
 
-    В minimal-стиле (по умолчанию) плашек НЕТ — чистая говорящая голова + субтитры, как в
-    топ-референсах. Вернуть плашки: SUB_STYLE=bold или CARDS=on.
+    В стилях big (по умолчанию) и minimal плашек НЕТ — чистая говорящая голова + субтитры.
+    Плашки только в громком стиле: SUB_STYLE=loud (или принудительно CARDS=on).
     """
-    style = os.environ.get("SUB_STYLE", "minimal").strip().lower()
+    style = os.environ.get("SUB_STYLE", "big").strip().lower()
     cards_on = os.environ.get("CARDS", "").strip().lower() in ("on", "1", "yes", "true")
-    if style in ("minimal", "min", "clean", "premium") and not cards_on:
+    loud = style in ("loud", "caps", "viral", "hormozi", "plashki", "bold_caps", "red")
+    if not (loud or cards_on):
         return
     beats = edl.get("beats") or []
     if not beats:
