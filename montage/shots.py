@@ -15,6 +15,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import hashlib
 import subprocess
 import sys
 import tempfile
@@ -24,12 +25,42 @@ import urllib.request
 import imageio_ffmpeg
 
 FF = imageio_ffmpeg.get_ffmpeg_exe()
+_HERE = os.path.dirname(os.path.abspath(__file__))
+# глобальный кэш анализа по СОДЕРЖИМОМУ файла — один и тот же клип не анализируем дважды
+_GLOBAL_CACHE = os.path.join(_HERE, "library", "shots_cache.json")
 
 VIDEO_EXT = {".mp4", ".mov", ".m4v", ".avi", ".mkv", ".webm", ".hevc"}
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
 
 MODEL = (os.environ.get("OPENROUTER_VISION_MODEL")
          or os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.5")
+
+
+def _content_key(path: str) -> str:
+    """Ключ по содержимому: размер + md5 первых 256КБ (быстро, стабильно к переименованию)."""
+    try:
+        size = os.path.getsize(path)
+        h = hashlib.md5()
+        with open(path, "rb") as fh:
+            h.update(fh.read(262144))
+        return f"{size}:{h.hexdigest()}"
+    except Exception:
+        return ""
+
+
+def _load_json(path):
+    try:
+        return json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_json(path, data):
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        json.dump(data, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
 SYS = (
     "Ты — ассистент виральных видеомонтажёров. Тебе дают несколько кадров ОДНОГО "
@@ -139,13 +170,9 @@ def analyze(footage_dir: str, api_key: str | None = None, status_cb=None) -> lis
     if not files:
         return []
     cache_path = os.path.join(footage_dir, "_shots.json")
-    cache = {}
-    if os.path.exists(cache_path):
-        try:
-            cache = json.load(open(cache_path, encoding="utf-8"))
-        except Exception:
-            cache = {}
-    catalog, changed, done = [], False, 0
+    cache = _load_json(cache_path)          # кэш этой папки (имя:mtime)
+    gcache = _load_json(_GLOBAL_CACHE)      # глобальный кэш по содержимому
+    catalog, changed, gchanged, done = [], False, False, 0
     for idx, f in enumerate(files):
         full = os.path.join(footage_dir, f)
         try:
@@ -155,6 +182,14 @@ def analyze(footage_dir: str, api_key: str | None = None, status_cb=None) -> lis
         ck = f"{f}:{mtime}"
         if ck in cache:
             catalog.append(cache[ck])
+            continue
+        conkey = _content_key(full)          # тот же клип (даже переименованный) — не анализируем
+        if conkey and conkey in gcache:
+            item = dict(gcache[conkey])
+            item["file"] = f
+            cache[ck] = item
+            catalog.append(item)
+            changed = True
             continue
         if status_cb:
             try:
@@ -169,15 +204,16 @@ def analyze(footage_dir: str, api_key: str | None = None, status_cb=None) -> lis
             rec = _vision(frames, key) if frames else {}
         item = _norm(rec, f, is_img, dur)
         cache[ck] = item
+        if conkey:
+            gcache[conkey] = item
+            gchanged = True
         catalog.append(item)
         changed = True
         done += 1
     if changed:
-        try:
-            json.dump(cache, open(cache_path, "w", encoding="utf-8"),
-                      ensure_ascii=False, indent=2)
-        except Exception:
-            pass
+        _save_json(cache_path, cache)
+    if gchanged:
+        _save_json(_GLOBAL_CACHE, gcache)
     return catalog
 
 
