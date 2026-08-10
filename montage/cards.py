@@ -23,7 +23,20 @@ PALETTES = {
     "black":  (16, 16, 18, 255),
     "white":  (245, 245, 247, 255),
 }
-CYCLE = ["yellow", "cyan", "pink"]   # чередование по ходу ролика (как в референсе)
+# ЕДИНЫЙ СТИЛЬ: плашки живут в фирменной палитре — красный (как логотип и как подсветка
+# в субтитрах), с чёрным как единственной альтернативой. Пёстрые цвета из сценария сводим к
+# бренду, чтобы ролик читался как одно целое, а не как шаблон-радуга. И красный/чёрный ВСЕГДА
+# видны на любом сырье (белая плашка терялась на светлых скринах). Выключить: CARD_BRAND=off.
+_BRAND = {"red", "black"}
+CYCLE = ["red", "black"]              # чередование по ходу ролика — в бренде
+
+
+def _brand_color(color: str) -> str:
+    """Свести цвет плашки к фирменной палитре (единый стиль). CARD_BRAND=off — как есть."""
+    if os.environ.get("CARD_BRAND", "on").strip().lower() in ("off", "0", "no", "false"):
+        return color or "red"
+    c = (color or "").strip().lower()
+    return c if c in _BRAND else "red"     # всё пёстрое/белое → фирменный красный
 
 
 def _text_color(bg):
@@ -46,10 +59,10 @@ def _wrap(draw, text, font, max_w):
     return lines or [text]
 
 
-def render_card(headline, out_path="card.png", label="", sub="", color="yellow",
+def render_card(headline, out_path="card.png", label="", sub="", color="red",
                 w=1080, h=1920, y_frac=0.16, font_path=None, upper=True):
     """Нарисовать плашку на прозрачном холсте wxh. Возвращает (path, y_center_frac)."""
-    bg = PALETTES.get(color, PALETTES["yellow"])
+    bg = PALETTES.get(_brand_color(color), PALETTES["red"])
     fg = _text_color(bg)
     sub_fg = (fg[0], fg[1], fg[2], 210)
     font_path = find_font(font_path)

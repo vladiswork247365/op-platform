@@ -134,16 +134,15 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
     bc = "" if is_image(src) else bars_crop(src)
     fill = f"{bc}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}"
     if is_image(src):
-        # Ken Burns: апскейлим, затем zoompan
-        z = "kenburns_out" if motion == "kenburns_out" else "kenburns_in"
-        big_w, big_h = even(W * 2), even(H * 2)
+        # Скрин/фото: НЕ дешёвый ползущий зум. Чистый статичный кадр + короткий «кик» на резе
+        # (быстро оседает к 1.0 и держится), единый стиль с видео. Overscan лёгкий (1.12×) —
+        # текст на скринах остаётся резким (без прежнего 2× апскейла-мыла).
         frames = max(1, int(dur * fps))
-        if z == "kenburns_in":
-            zexpr = "min(zoom+0.0010,1.18)"
-        else:
-            zexpr = "if(lte(zoom,1.0),1.18,max(zoom-0.0010,1.0))"
-        vchain = (f"[0:v]scale={big_w}:{big_h}:force_original_aspect_ratio=increase,"
-                  f"crop={big_w}:{big_h},zoompan=z='{zexpr}':d={frames}:"
+        over_w, over_h = even(W * 1.12), even(H * 1.12)
+        zexpr = "max(1.0,1.075-on*0.011)"          # ~0.2с оседания, дальше статично и резко
+        vchain = (f"[0:v]scale={over_w}:{over_h}:force_original_aspect_ratio=increase,"
+                  f"crop={over_w}:{over_h},zoompan=z='{zexpr}':d={frames}:"
+                  f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
                   f"s={W}x{H}:fps={fps},format=yuv420p,setsar=1[vbase]")
     else:
         pts = f"setpts=PTS/{speed}," if speed != 1.0 else ""

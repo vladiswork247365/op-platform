@@ -42,6 +42,22 @@ _load_env()
 
 MODEL = os.environ.get("ELEVEN_MODEL", "eleven_multilingual_v2")   # мультиязычный — есть русский
 
+try:
+    import stress as _stress   # русские ударения: ставим U+0301 перед отправкой в TTS
+except Exception:
+    _stress = None
+_ACUTE, _GRAVE = "́", "̀"
+
+
+def _spoken(text: str) -> str:
+    """Текст для TTS с проставленными ударениями (ElevenLabs читает U+0301 верно)."""
+    if not _stress:
+        return text
+    try:
+        return _stress.accentize(text)
+    except Exception:
+        return text
+
 
 def api_key(explicit: str | None = None) -> str | None:
     return explicit or os.environ.get("ELEVEN_KEY") or os.environ.get("ELEVEN_API_KEY")
@@ -98,7 +114,7 @@ def tts(text: str, out_mp3: str, voice_id: str | None = None, timeout: int = 120
     if not vid:
         sys.stderr.write("[eleven.tts] нет voice_id (ELEVEN_VOICE_ID)\n")
         return None
-    body = json.dumps({"text": text, "model_id": MODEL,
+    body = json.dumps({"text": _spoken(text), "model_id": MODEL,
                        "voice_settings": _voice_settings()}).encode("utf-8")
     try:
         resp = _req(f"/v1/text-to-speech/{vid}", data=body,
@@ -113,9 +129,15 @@ def tts(text: str, out_mp3: str, voice_id: str | None = None, timeout: int = 120
 
 
 def _chars_to_words(chars, starts, ends):
-    """Посимвольный alignment → слова с таймингами (для субтитров)."""
+    """Посимвольный alignment → слова с таймингами (для субтитров).
+
+    Знаки ударения (U+0301/U+0300), которые мы вставили для TTS, в субтитры не пускаем —
+    они висят чёрточкой над буквой. Тайминг ударной гласной от этого не страдает.
+    """
     words, cur, cs, ce = [], "", None, None
     for ch, s, e in zip(chars, starts, ends):
+        if ch in (_ACUTE, _GRAVE):
+            continue                      # знак ударения — только для голоса, не для субтитра
         if ch.isspace():
             if cur:
                 words.append({"start": round(cs, 3), "end": round(ce, 3), "word": cur})
@@ -143,7 +165,7 @@ def tts_timed(text: str, out_mp3: str, voice_id: str | None = None, timeout: int
     if not vid:
         sys.stderr.write("[eleven.tts_timed] нет voice_id (ELEVEN_VOICE_ID)\n")
         return None
-    body = json.dumps({"text": text, "model_id": MODEL,
+    body = json.dumps({"text": _spoken(text), "model_id": MODEL,
                        "voice_settings": _voice_settings(settings)}).encode("utf-8")
     try:
         resp = _req(f"/v1/text-to-speech/{vid}/with-timestamps", data=body,
