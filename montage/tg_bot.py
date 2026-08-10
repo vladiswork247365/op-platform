@@ -77,6 +77,10 @@ try:
 except Exception:
     scriptwriter = factory_reel = None
 try:
+    import avatar_reel   # noqa: E402  — монтаж поверх говорящего аватара (свой голос + вставки)
+except Exception:
+    avatar_reel = None
+try:
     import previral      # noqa: E402  — предиктор виральности ДО публикации
 except Exception:
     previral = None
@@ -142,10 +146,12 @@ baskets = {}  # chat_id -> {files, job, brief, status, running}
 NEW_BTN = "🚀 Создать новый ролик на миллион"
 LOOK_BTN = "👁 Claude, посмотри сырьё"
 GET_SCRIPT_BTN = "📝 Получить сценарий для ролика"
+AVATAR_BTN = "🧑‍💻 Собрать из аватара (свой голос)"
 ENOUGH_BTN = "✅ Сырья достаточно"
 MAIN_KB = ReplyKeyboardMarkup([[KeyboardButton(NEW_BTN)]], resize_keyboard=True)
 COLLECT_KB = ReplyKeyboardMarkup([[KeyboardButton(LOOK_BTN)], [KeyboardButton(GET_SCRIPT_BTN)],
-                                  [KeyboardButton(NEW_BTN)]], resize_keyboard=True)
+                                  [KeyboardButton(AVATAR_BTN)], [KeyboardButton(NEW_BTN)]],
+                                 resize_keyboard=True)
 ENOUGH_KB = ReplyKeyboardMarkup([[KeyboardButton(ENOUGH_BTN)], [KeyboardButton(NEW_BTN)]],
                                 resize_keyboard=True)
 
@@ -943,6 +949,8 @@ async def cb_retry(client, cq):
         await _finalize(client, chat_id, m)
     elif action == "stitch":
         await _stitch_final(client, chat_id, m)
+    elif action == "avatar":
+        await _build_avatar(client, chat_id, m)
     elif str(action).startswith("buildpart:"):
         await _build_part(client, chat_id, m, int(action.split(":", 1)[1]))
     else:
@@ -1003,6 +1011,77 @@ async def _finalize(client, chat_id, m):
     await client.send_message(chat_id, "Как выложишь в Инсту — жми кнопку, уберу ролик в архив "
                               "(освобожу место, из списка пропадёт).", reply_markup=kb)
     baskets.pop(chat_id, None)
+
+
+async def _build_avatar(client, chat_id, m):
+    """Смонтировать ролик поверх говорящего аватара: его голос — основа (липсинк не трогаем),
+    субтитры по его речи, экранки — вставки. Сценарий/озвучка НЕ нужны."""
+    b = baskets.get(chat_id)
+    if not b or not b.get("job") or not os.path.isdir(b["job"]):
+        await m.reply("Сначала создай ролик и загрузи аватар (говорящий клип) + экранки панели.")
+        return
+    if not avatar_reel:
+        await m.reply("Модуль аватар-монтажа недоступен на этой сборке.")
+        return
+    if b.get("running"):
+        return
+    b["running"] = True
+    b["last_action"] = "avatar"
+    status = await m.reply("🧑‍💻 Собираю из аватара: его голос — как есть, субтитры по речи, "
+                           "экранки — вставками…")
+    loop = asyncio.get_event_loop()
+    rt = b.get("type") or reel_types.DEFAULT
+    out = reel_types.out_dir(rt)
+
+    def _sf(t):
+        try:
+            asyncio.run_coroutine_threadsafe(status.edit_text(t), loop)
+        except Exception:
+            pass
+    async with render_lock:
+        try:
+            reel = await loop.run_in_executor(
+                None, lambda: avatar_reel.build(b["job"], out, status_cb=_sf,
+                                                mood=_music_mood(b)))
+            if not reel:
+                await status.edit_text("❌ Не собралось. Нужен говорящий клип (аватар) со звуком "
+                                       "в сырье этого ролика.", reply_markup=_retry_kb())
+                return
+            b["reel"] = reel
+            try:
+                await status.delete()
+            except Exception:
+                pass
+        except Exception as e:
+            await status.edit_text(f"❌ Ошибка аватар-монтажа: {str(e)[:180]}",
+                                   reply_markup=_retry_kb())
+            return
+        finally:
+            b["running"] = False
+    reel_types.log_reel(rt, b.get("brief") or "", reel)
+    await client.send_video(chat_id, reel,
+        caption="✅ РОЛИК ИЗ АВАТАРА — твой голос сохранён, субтитры по речи (мимо лица), "
+                "экранки вставками, музыка под настроение. Залей в Instagram.",
+        reply_markup=MAIN_KB)
+    _last_reel[chat_id] = {"name": b.get("name"), "type": rt}
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton(
+        "✅ Опубликовано → в архив (освободить место)", callback_data="publish")]])
+    await client.send_message(chat_id, "Как выложишь в Инсту — жми кнопку, уберу ролик в архив.",
+                              reply_markup=kb)
+
+
+@app.on_message(filters.regex(f"^{re.escape(AVATAR_BTN)}$"))
+async def avatar_btn(client, m: "Message"):
+    if not allowed(m):
+        return
+    await _build_avatar(client, m.chat.id, m)
+
+
+@app.on_message(filters.command("avatar"))
+async def avatar_cmd(client, m: "Message"):
+    if not allowed(m):
+        return
+    await _build_avatar(client, m.chat.id, m)
 
 
 def _basket(chat_id):
@@ -1446,7 +1525,7 @@ async def on_voice(client, m: "Message"):
         await _prompt(b, m)
 
 
-@app.on_message(filters.text & ~filters.command(["go", "start", "tz", "new", "trends"]))
+@app.on_message(filters.text & ~filters.command(["go", "start", "tz", "new", "trends", "avatar"]))
 async def on_text(client, m: "Message"):
     if not allowed(m):
         return
