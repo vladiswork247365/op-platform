@@ -325,6 +325,54 @@ async def _look_footage(b, m, quiet=False):
 
 
 PROJECTS_DIR = os.path.join(HERE, "library", "projects")   # именованные ролики (сырьё хранится)
+PUBLISHED_LOG = os.path.join(HERE, "library", "published.jsonl")
+_last_reel = {}   # chat_id → {name, type} последнего собранного ролика (для архивации)
+
+
+def _dir_size(d):
+    total = 0
+    for root, _, files in os.walk(d):
+        for f in files:
+            try:
+                total += os.path.getsize(os.path.join(root, f))
+            except Exception:
+                pass
+    return total
+
+
+def _publish_archive(name, rtype):
+    """Опубликован → в архив: освобождаем место (удаляем папку проекта), пишем в лог.
+    Финальный ролик хранится отдельно (library/<тип>/out), он не трогается."""
+    src = os.path.join(PROJECTS_DIR, _safe_name(name or ""))
+    freed = _dir_size(src) if os.path.isdir(src) else 0
+    try:
+        os.makedirs(os.path.dirname(PUBLISHED_LOG), exist_ok=True)
+        with open(PUBLISHED_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M"),
+                                "name": name, "type": rtype or ""}, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+    shutil.rmtree(src, ignore_errors=True)
+    return freed
+
+
+@app.on_callback_query(filters.regex(r"^publish$"))
+async def cb_publish(client, cq):
+    if not _cq_allowed(cq):
+        return
+    info = _last_reel.get(cq.message.chat.id)
+    if not info or not info.get("name"):
+        await cq.answer("Нет ролика для архива", show_alert=True)
+        return
+    freed = _publish_archive(info["name"], info.get("type"))
+    await cq.answer("В архив ✅")
+    try:
+        await cq.message.edit_text(
+            f"📦 «{info['name']}» опубликован и убран в архив. Освободил ~{human(freed)}. "
+            "Финальный ролик и разбор через 6ч сохранены.")
+    except Exception:
+        pass
+    _last_reel.pop(cq.message.chat.id, None)
 
 
 def _safe_name(s, default="reel"):
@@ -375,7 +423,8 @@ async def _set_name(b, m, name):
         + have +
         "Кидай сырьё (просто файлы, подписывать не надо) — всё складываю в этот ролик и храню. "
         "Один и тот же клип повторно не анализирую.\n\n"
-        f"Дальше: «{LOOK_BTN}» → ТЗ → «{GET_SCRIPT_BTN}».",
+        f"Дальше: «{LOOK_BTN}» → ТЗ (+ссылка-референс) → «{GET_SCRIPT_BTN}».\n"
+        "🔥 На «Получить сценарий» я сам зайду в TrendSee (свежие тренды) и учту их в сценарии.",
         reply_markup=COLLECT_KB)
 
 
@@ -699,14 +748,18 @@ async def _finalize(client, chat_id, m):
         caption="✅ ФИНАЛЬНЫЙ РОЛИК — голос + субтитры, БЕЗ вшитой музыки (специально под "
                 "трендовый звук).\nЗалей в Instagram — панель подтянет статистику, через 6ч будет разбор.",
         reply_markup=MAIN_KB)
-    # какой трендовый звук добавить ВРУЧНУЮ в Инсте (моторика алгоритма)
+    # какой трендовый звук добавить ВРУЧНУЮ в Инсте (моторика алгоритма) + кнопка архива
     sound = (b.get("previral") or {}).get("sound")
     pace = (b.get("script") or {}).get("pace", "medium")
     msg = trending.recommend(_music_mood(b), rt, pace) if trending else ""
     if sound:
         msg = f"🎵 ЗВУК ДЛЯ ИНСТЫ — добавь ВРУЧНУЮ.\n• Под этот ролик: {sound}\n\n" + msg
-    if msg:
-        await client.send_message(chat_id, msg)
+    _last_reel[chat_id] = {"name": b.get("name"), "type": rt}
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton(
+        "✅ Опубликовано → в архив (освободить место)", callback_data="publish")]])
+    await client.send_message(chat_id, (msg + "\n\n" if msg else "")
+                              + "Как выложишь в Инсту — жми кнопку, уберу ролик в архив "
+                              "(освобожу место, из списка пропадёт).", reply_markup=kb)
     baskets.pop(chat_id, None)
 
 
