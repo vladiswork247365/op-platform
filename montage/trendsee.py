@@ -153,11 +153,17 @@ def _bank_posts():
 
 
 def digest(query: str = "", top: int = 15) -> str:
-    """Текст-ориентир для сценариста. Приоритет — банк трендов (500+ ключей), иначе
-    живой одиночный запрос. "" — если пусто/не настроено."""
-    items = _bank_posts()                 # готовый банк (собран /trends) — мгновенно
-    if not items:
-        items = fetch(query)              # фолбэк: живой запрос по нише
+    """Текст-ориентир для сценариста. КАЖДЫЙ раз делаем свежий запрос в TrendSee по нише
+    и объединяем с банком трендов (500+ ключей), сортируя по виральности. "" — если пусто."""
+    live = fetch(query, timeout=15)       # свежий заход в TrendSee — каждый раз
+    bank = _bank_posts()                  # широкий банк (собран /trends), если есть
+    merged = {}
+    for it in list(live) + list(bank):    # свежее в приоритете, дальше банк; дедуп
+        k = (it.get("url") or it.get("caption") or "")[:120]
+        if k and k not in merged:
+            merged[k] = it
+    items = sorted(merged.values(),
+                   key=lambda x: (x.get("viral") or 0, x.get("views") or 0), reverse=True)[:top]
     if not items:
         return ""
     lines = ["ЧТО ЗАХОДИТ У ДРУГИХ СЕЙЧАС (реальные залетевшие ролики из TrendSee — разбери, "
