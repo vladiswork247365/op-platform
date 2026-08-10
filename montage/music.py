@@ -18,16 +18,59 @@ import urllib.request
 API = "https://api.jamendo.com/v3.0/tracks/"
 KEY = os.environ.get("JAMENDO_CLIENT_ID")
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+LOCAL_DIR = os.path.join(HERE, "library", "music")   # твои бесплатные треки (без регистраций)
+AUDIO_EXT = {".mp3", ".m4a", ".wav", ".aac", ".ogg", ".opus"}
+
 # настроение → теги Jamendo
 MOODS = {
     "energetic": "energetic,corporate,upbeat",
     "calm": "calm,inspiring,ambient",
     "epic": "epic,motivational,powerful",
 }
+# синонимы настроения в именах файлов локальной библиотеки
+_MOOD_WORDS = {
+    "energetic": ("energetic", "energy", "upbeat", "drive", "драйв", "бодр", "хайп", "phonk", "фонк"),
+    "calm": ("calm", "chill", "lofi", "ambient", "спокой", "лёгк", "легк", "эмбиент"),
+    "epic": ("epic", "cinematic", "powerful", "эпик", "кино", "мощ", "пафос"),
+}
 
 
 def have_key() -> bool:
     return bool(os.environ.get("JAMENDO_CLIENT_ID"))
+
+
+def local_dir() -> str:
+    os.makedirs(LOCAL_DIR, exist_ok=True)
+    return LOCAL_DIR
+
+
+def _local_tracks() -> list:
+    d = local_dir()
+    out = []
+    for f in sorted(os.listdir(d)):
+        if f.startswith((".", "_")):
+            continue
+        if os.path.splitext(f)[1].lower() in AUDIO_EXT:
+            out.append(os.path.join(d, f))
+    return out
+
+
+def have_local() -> bool:
+    return bool(_local_tracks())
+
+
+def local_pick(mood: str = "energetic") -> str | None:
+    """Взять трек из своей библиотеки под настроение (по имени файла), иначе — самый свежий."""
+    ts = _local_tracks()
+    if not ts:
+        return None
+    words = _MOOD_WORDS.get((mood or "").lower(), ())
+    for t in ts:
+        name = os.path.basename(t).lower()
+        if any(w and w in name for w in words):
+            return t
+    return max(ts, key=os.path.getmtime)
 
 
 def get_track(out_path: str, mood: str = "energetic", max_dur: int = 120,

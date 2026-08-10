@@ -248,11 +248,14 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
     # нативно в Инсте. Музыку вшиваем ТОЛЬКО если явно попросили bake_bg=True.
     if bake_bg:
         mf = _user_music(footage_dir)                # трек автора — приоритет
+        if not mf and music and music.have_local():  # своя библиотека музыки (без регистраций)
+            _st("🎵 Беру музыку из библиотеки под настроение…")
+            mf = music.local_pick(mood)
         if not mf and trending and trending.have():
-            _st("🎵 Беру трендовый звук под настроение…")
+            _st("🎵 Беру трек под настроение…")
             mf = trending.pick(mood)
-        elif not mf and music and music.have_key():
-            _st("🎵 Подбираю музыку…")
+        if not mf and music and music.have_key():
+            _st("🎵 Подбираю музыку (Jamendo)…")
             mf = music.get_track(os.path.join(footage_dir, "_bg.mp3"), mood)
         if mf:
             _st("🎵 Накладываю музыку под голос…")
