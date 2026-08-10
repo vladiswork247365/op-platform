@@ -128,7 +128,13 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "", footage: st
         return None
     if isinstance(briefs, (list, tuple)):
         briefs = "\n".join(f"- {b}" for b in briefs if b)
-    sys_prompt = (kb.prompt("scenarist") if kb else "") or VIRALITY_PROMPT
+    # свой промпт на каждый тип: factory/prompts/scenarist_<тип>.md, иначе общий, иначе встроенный
+    sys_prompt = ""
+    if kb:
+        if reel_types and reel_types.valid(rtype_hint):
+            sys_prompt = kb.prompt(f"scenarist_{rtype_hint}")
+        sys_prompt = sys_prompt or kb.prompt("scenarist")
+    sys_prompt = sys_prompt or VIRALITY_PROMPT
     factory_ctx = (kb.context() if kb else "")
     # формат + его виральные механики (rtype_hint может быть ключом типа или названием)
     rt_title, rt_play = (rtype_hint or "продающий"), ""
