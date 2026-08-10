@@ -188,7 +188,7 @@ def _mix_bg(video: str, music_file: str, out: str, gain_db: int = -18) -> str:
 
 def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = None,
           gray: bool = False, mood: str = "energetic", fps: int = 30, status_cb=None,
-          rtype: str = "", bake_bg: bool = False):
+          rtype: str = "", bake_bg: bool = True):
     """Собрать полный ролик по сценарию. → путь к ролику или None (нет озвучки).
 
     bake_bg=False (по умолчанию): НЕ вшиваем фоновую музыку — экспорт «голос+субтитры»,

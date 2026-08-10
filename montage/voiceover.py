@@ -50,7 +50,8 @@ def _words_to_cues(words, t0: float, t1: float, per: int = 3, sub_y: float = 0.8
             "t0": round(max(0.0, ch[0]["start"] - t0), 2),
             "t1": round(min(t1, ch[-1]["end"]) - t0, 2),
             "lines": [" ".join(w["word"] for w in ch)],
-            "highlight": ch[-1]["word"].strip(auto_edl.STRIP),
+            "highlight": "",   # по умолчанию НИЧЕГО не подсвечиваем; красным — только
+                               # значимые слова (highlight_words от Opus), см. _apply_highlights
             "pos": "lower", "yf": sub_y,
         })
     return cues
