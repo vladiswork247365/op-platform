@@ -136,15 +136,19 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
     src_w, src_h = (0, 0) if is_image(src) else _dims(src)
     wide = bool(src_w and src_h and (src_w / src_h) >= 1.1)   # горизонтальная запись (экран/десктоп)
     if not is_image(src) and wide:
-        # экран/дашборд/десктоп-запись → вписываем ЦЕЛИКОМ в 9:16 + размытый фон, чтобы ничего
-        # не срезалось по бокам. Статично: для скринкаста зум/панч не нужны.
+        # экран/дашборд/десктоп-запись (горизонтальная) → ЗАПОЛНЯЕМ кадр читаемым куском +
+        # медленный зум-ин и вертикальный проезд (Ken Burns), чтобы было живо и крупно, а не
+        # чёрный кадр с крошечным дашбордом. Показываем верх интерфейса (шапка/цифры), а не центр.
         pts = f"setpts=PTS/{speed}," if speed != 1.0 else ""
+        frames = max(1, int(dur * fps))
+        big_w, big_h = even(W * 1.5), even(H * 1.5)
+        zexpr = "min(1.0+on*0.0006,1.16)"                       # плавный зум-ин до 1.16
+        ypan = f"(ih-ih/zoom)*(0.18+0.30*on/{max(1, frames)})"  # медленный проезд сверху вниз
         vchain = (
-            f"[0:v]{pts}{bc}fps={fps},split[bg][fg];"
-            f"[bg]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
-            f"gblur=sigma=22,eq=brightness=-0.10,format=yuv420p[bgb];"
-            f"[fg]scale={W}:{H}:force_original_aspect_ratio=decrease,format=yuv420p[fgs];"
-            f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2,setsar=1[vbase]")
+            f"[0:v]{pts}{bc}scale={big_w}:{big_h}:force_original_aspect_ratio=increase,"
+            f"crop={big_w}:{big_h},"
+            f"zoompan=z='{zexpr}':d=1:x='iw/2-(iw/zoom/2)':y='{ypan}':"
+            f"s={W}x{H}:fps={fps},format=yuv420p,setsar=1[vbase]")
     elif is_image(src):
         # Скрин/фото: НЕ дешёвый ползущий зум. Чистый статичный кадр + короткий «кик» на резе
         # (быстро оседает к 1.0 и держится), единый стиль с видео. Overscan лёгкий (1.12×) —
