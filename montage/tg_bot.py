@@ -345,11 +345,16 @@ def _publish_archive(name, rtype):
     Финальный ролик хранится отдельно (library/<тип>/out), он не трогается."""
     src = os.path.join(PROJECTS_DIR, _safe_name(name or ""))
     freed = _dir_size(src) if os.path.isdir(src) else 0
+    tz = []
+    try:
+        tz = json.load(open(os.path.join(src, "_tz.json"), encoding="utf-8")) or []
+    except Exception:
+        tz = []
     try:
         os.makedirs(os.path.dirname(PUBLISHED_LOG), exist_ok=True)
         with open(PUBLISHED_LOG, "a", encoding="utf-8") as f:
-            f.write(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M"),
-                                "name": name, "type": rtype or ""}, ensure_ascii=False) + "\n")
+            f.write(json.dumps({"ts": time.strftime("%Y-%m-%d %H:%M"), "name": name,
+                                "type": rtype or "", "tz": tz}, ensure_ascii=False) + "\n")
     except Exception:
         pass
     shutil.rmtree(src, ignore_errors=True)
@@ -414,10 +419,15 @@ async def _set_name(b, m, name):
     b["name"] = name.strip()[:60]
     b["job"] = _project_dir(b["name"])
     b["files"] = _project_files(b["job"])       # уже залитое раньше сырьё — подхватываем
+    b["tz_list"] = _load_proj_tz(b)             # и ранее данные ТЗ этого ролика
+    b["tz_count"] = len(b["tz_list"])
+    b["brief"] = " ".join(b["tz_list"])
     b["clips"] = []
     b["stage"] = "collect"
     cnt = len(b["files"])
-    have = (f"📁 В этом ролике уже {cnt} файлов сырья — можно сразу работать. " if cnt else "")
+    ntz = len(b["tz_list"])
+    have = (f"📁 В этом ролике уже {cnt} файлов сырья"
+            + (f" и {ntz} ТЗ (посмотреть/удалить — /tz)" if ntz else "") + ". " if cnt or ntz else "")
     await m.reply(
         f"✅ Ролик «{b['name']}» ({reel_types.title(b.get('type') or reel_types.DEFAULT)}).\n"
         + have +
@@ -428,19 +438,83 @@ async def _set_name(b, m, name):
         reply_markup=COLLECT_KB)
 
 
-@app.on_message(filters.regex(f"^{re.escape(LOOK_BTN)}$"))
-async def look_btn(client, m: "Message"):
-    if not allowed(m):
+async def _uploads_done(client, chat_id):
+    """Когда загрузка утихла — показать «загружено N» + кнопку «посмотри сырьё»."""
+    try:
+        await asyncio.sleep(DEBOUNCE)
+    except asyncio.CancelledError:
         return
-    b = _basket(m.chat.id)
+    b = baskets.get(chat_id)
+    if not b or not b.get("files") or b.get("stage") != "collect":
+        return
+    n = len(b["files"])
+    kb = InlineKeyboardMarkup([[InlineKeyboardButton(LOOK_BTN, callback_data="look")]])
+    await client.send_message(
+        chat_id, f"📥 Загружено {n} файл(ов) в ролик «{b.get('name') or '—'}». "
+        "Всё сырьё принято — жми, посмотрю его:", reply_markup=kb)
+
+
+def _schedule_uploads_done(client, chat_id):
+    b = baskets.get(chat_id)
+    if not b:
+        return
+    t = b.get("_upl_timer")
+    if t and not t.done():
+        t.cancel()
+    b["_upl_timer"] = asyncio.create_task(_uploads_done(client, chat_id))
+
+
+async def _look_and_propose(client, b, m):
+    """Claude смотрит сырьё → заходит в TrendSee → даёт свой вариант ролика (до ТЗ)."""
     if not b.get("files"):
-        await m.reply("Сначала кинь сырьё (видео/фото) — потом я его посмотрю.")
+        await m.reply("Сначала кинь сырьё (видео/фото) — потом посмотрю.")
         return
     if not (shots and os.environ.get("OPENROUTER_API_KEY")):
         await m.reply("Для просмотра сырья нужен OPENROUTER_API_KEY в montage/.env.")
         return
-    b["clips"] = []                             # смотрим заново по кнопке (кэш всё равно спасёт)
-    await _look_footage(b, m)
+    b["clips"] = []
+    clips = await _look_footage(b, m, quiet=True)     # анализ (без лишнего текста)
+    if not clips:
+        return
+    status, state, stop, task = await _live(m, "🔥 Захожу в TrendSee и придумываю вариант под ролик…")
+    loop = asyncio.get_event_loop()
+    rt = b.get("type") or reel_types.DEFAULT
+    footage = shots.catalog_text(clips) if shots else ""
+    try:
+        trends = ((await loop.run_in_executor(None, lambda: trendsee.digest()))
+                  if (trendsee and trendsee.available()) else "")
+        prop = ((await loop.run_in_executor(None, lambda: scriptwriter.propose(footage, trends, rt)))
+                if scriptwriter else "")
+    finally:
+        stop.set()
+        await task
+    b["proposal"] = prop
+    b["stage"] = "collect"
+    txt = "👁 Вот что вижу в сырье:\n" + _clips_summary(clips)
+    if prop:
+        txt += ("\n\n🔥 Тренды из TrendSee учёл.\n💡 МОЙ ВАРИАНТ под ролик (на что опереться):\n\n"
+                + prop)
+    txt += (f"\n\nТеперь дай ТЗ (текст/голос) — согласись с моим вариантом или скажи по-своему. "
+            f"Потом «{GET_SCRIPT_BTN}».")
+    try:
+        await status.edit_text(txt[:4090])
+    except Exception:
+        await m.reply(txt[:4090])
+
+
+@app.on_message(filters.regex(f"^{re.escape(LOOK_BTN)}$"))
+async def look_btn(client, m: "Message"):
+    if not allowed(m):
+        return
+    await _look_and_propose(client, _basket(m.chat.id), m)
+
+
+@app.on_callback_query(filters.regex(r"^look$"))
+async def cb_look(client, cq):
+    if not _cq_allowed(cq):
+        return
+    await cq.answer("Смотрю сырьё…")
+    await _look_and_propose(client, _basket(cq.message.chat.id), cq.message)
 
 
 @app.on_message(filters.regex(f"^{re.escape(GET_SCRIPT_BTN)}$"))
@@ -967,7 +1041,12 @@ async def on_media(client, m: "Message"):
             return
         b["files"].append(dst)
         b["clips"] = []                       # новое сырьё — пересоберём каталог (анализ из кэша)
-    await _prompt(b, m)
+    if b.get("stage") == "add_more":
+        await _prompt(b, m)
+        return
+    n = len(b["files"])
+    await _say(b, m, f"✅ Добавлено в ролик «{b.get('name') or '—'}»: {n} файл(ов)…")
+    _schedule_uploads_done(client, m.chat.id)   # когда загрузка утихнет — кнопка «посмотри сырьё»
 
 
 TZ_LOG = os.path.join(HERE, "library", "tz_history.jsonl")   # история ТЗ (gitignored)
@@ -985,11 +1064,37 @@ def _save_tz(chat_id, rtype, text, kind):
         pass
 
 
+def _proj_tz_path(b):
+    j = b.get("job")
+    return os.path.join(j, "_tz.json") if j else None
+
+
+def _save_proj_tz(b):
+    """Сохранить ТЗ ролика в его папку-проект (видно и можно удалять по /tz)."""
+    p = _proj_tz_path(b)
+    if not p:
+        return
+    try:
+        json.dump(b.get("tz_list", []), open(p, "w", encoding="utf-8"),
+                  ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def _load_proj_tz(b):
+    p = _proj_tz_path(b)
+    try:
+        return json.load(open(p, encoding="utf-8")) or []
+    except Exception:
+        return []
+
+
 def _add_tz(b, chat_id, text, kind):
-    """ТЗ в текущий ролик: в бриф, в счётчик, в список и на диск."""
+    """ТЗ в текущий ролик: в бриф, в счётчик, в список, в проект и в общий лог."""
     b["brief"] = (b["brief"] + " " + text).strip() if b["brief"] else text
     b["tz_count"] = b.get("tz_count", 0) + 1
     b.setdefault("tz_list", []).append(text)
+    _save_proj_tz(b)                          # ТЗ хранятся внутри проекта ролика
     _save_tz(chat_id, b.get("type") or "", text, kind)
 
 
@@ -1064,6 +1169,12 @@ async def cmd_trends(client, m: "Message"):
         await status.edit_text("Тренды не собрались — проверь доступ TrendSee (логин/пароль).")
 
 
+def _tz_kb(lst):
+    rows = [[InlineKeyboardButton(f"🗑 Удалить #{i + 1}", callback_data=f"deltz:{i}")]
+            for i in range(len(lst))]
+    return InlineKeyboardMarkup(rows) if rows else None
+
+
 @app.on_message(filters.command("tz"))
 async def show_tz(_, m: "Message"):
     if not allowed(m):
@@ -1072,14 +1183,42 @@ async def show_tz(_, m: "Message"):
     lst = (b or {}).get("tz_list") or []
     if lst:
         body = "\n".join(f"{i + 1}. {t}" for i, t in enumerate(lst))
-        await m.reply(f"📋 ТЗ по текущему ролику ({len(lst)} шт.):\n\n{body}")
+        name = (b or {}).get("name") or "текущий"
+        await m.reply(f"📋 ТЗ ролика «{name}» ({len(lst)} шт.) — можно удалять:\n\n{body}",
+                      reply_markup=_tz_kb(lst))
         return
     hist = _recent_tz()
     if hist:
-        await m.reply("📋 Последние ТЗ (сохранённые, из истории):\n\n" + hist)
+        await m.reply("📋 Последние ТЗ (из общей истории):\n\n" + hist)
     else:
-        await m.reply("Пока нет сохранённых ТЗ. Кидай ТЗ боту — они появятся здесь и сохранятся "
-                      "на диск (не потеряются при перезапуске).")
+        await m.reply("Пока нет ТЗ по этому ролику. Кидай ТЗ боту — они появятся здесь "
+                      "(хранятся внутри ролика, /tz покажет).")
+
+
+@app.on_callback_query(filters.regex(r"^deltz:"))
+async def cb_deltz(client, cq):
+    if not _cq_allowed(cq):
+        return
+    b = baskets.get(cq.message.chat.id)
+    lst = (b or {}).get("tz_list") or []
+    try:
+        i = int(cq.data.split(":", 1)[1])
+    except ValueError:
+        i = -1
+    if not (0 <= i < len(lst)):
+        await cq.answer("Уже удалено")
+        return
+    lst.pop(i)
+    b["tz_count"] = len(lst)
+    b["brief"] = " ".join(lst)
+    _save_proj_tz(b)
+    await cq.answer("Удалил ✅")
+    if lst:
+        body = "\n".join(f"{j + 1}. {t}" for j, t in enumerate(lst))
+        await cq.message.edit_text(f"📋 ТЗ ({len(lst)} шт.) — можно удалять:\n\n{body}",
+                                   reply_markup=_tz_kb(lst))
+    else:
+        await cq.message.edit_text("📋 ТЗ по ролику пусто. Кидай новые.")
 
 
 @app.on_message(filters.voice)
