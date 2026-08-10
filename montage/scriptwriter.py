@@ -307,6 +307,32 @@ def propose(footage: str = "", trends: str = "", rtype_hint: str = "",
         return ""
 
 
+def rewrite_part(part_text: str, edit: str, rtype_hint: str = "",
+                 api_key: str | None = None, timeout: int = 90) -> str:
+    """Переписать ОДНУ часть сценария с учётом правки автора. → новый текст (или старый)."""
+    key = api_key or os.environ.get("OPENROUTER_API_KEY")
+    if not key or not part_text:
+        return part_text
+    sys_p = ("Ты — сценарист виральных Reels. Перепиши ОДНУ часть сценария с учётом правки "
+             "автора. Сохрани разговорный стиль и длину (1–4 коротких рубленых фразы под "
+             "джампкат). Верни ТОЛЬКО новый текст части, без пояснений и кавычек.")
+    user = f"Текущая часть:\n{part_text}\n\nПравка автора:\n{edit}\n\nНовый текст части:"
+    body = json.dumps({"model": MODEL, "messages": [{"role": "system", "content": sys_p},
+                       {"role": "user", "content": user}], "temperature": 0.7,
+                       "max_tokens": 500}).encode("utf-8")
+    req = urllib.request.Request(
+        "https://openrouter.ai/api/v1/chat/completions", data=body,
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                 "HTTP-Referer": "https://systemop.pro", "X-Title": "OP Reels PartEdit"})
+    try:
+        r = json.load(urllib.request.urlopen(req, timeout=timeout))
+        out = (((r.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
+        return _clip(out.strip('"').strip(), 700) or part_text
+    except Exception as e:
+        sys.stderr.write(f"[rewrite_part] {type(e).__name__}: {str(e)[:120]}\n")
+        return part_text
+
+
 def as_text(s: dict) -> str:
     """Красиво собрать сценарий в текст для показа в Телеграме."""
     lines = [f"🎬 ХУК: {s['hook']}", "", f"1) {s['part1']}", "", f"2) {s['part2']}", "",

@@ -191,9 +191,10 @@ def build(footage_dir: str, script: dict, out_dir: str, voice_id: str | None = N
           rtype: str = "", bake_bg: bool = True):
     """Собрать полный ролик по сценарию. → путь к ролику или None (нет озвучки).
 
-    bake_bg=False (по умолчанию): НЕ вшиваем фоновую музыку — экспорт «голос+субтитры»,
-    чтобы трендовый звук ты наложил нативно в Инсте (алго-буст). Трек, присланный
-    автором, уважаем всегда. bake_bg=True — вшить фон (трендовый из библиотеки/Jamendo).
+    bake_bg=True (по умолчанию): музыка под настроение уже вшита в ролик (встроенные
+    биты assets/music или трек автора) — ноль ручной работы. bake_bg=False — экспорт
+    «голос+субтитры» без фона (для частей: музыку кладём один раз на склейке).
+    Трек, присланный автором, уважаем всегда.
     """
     def _st(t):
         if status_cb:
@@ -282,6 +283,79 @@ def _user_music(footage_dir: str):
     except Exception:
         pass
     return None
+
+
+def build_part(footage_dir: str, script: dict, idx: int, out_dir: str,
+               voice_id: str | None = None, gray: bool = False, mood: str = "energetic",
+               fps: int = 30, status_cb=None, rtype: str = ""):
+    """Собрать ОДНУ часть сценария (part{idx}) как отдельный ролик — для точечных правок.
+    Музыку не вшиваем (она добавляется на склейке). → путь к part{idx}.mp4 или None."""
+    text = (script.get(f"part{idx}") or "").strip()
+    if not text:
+        return None
+    sub = dict(script)
+    sub["part1"], sub["part2"], sub["part3"] = text, "", ""
+    sub["hook"] = script.get("hook", "") if idx == 1 else ""      # хук-плашка — только в 1-й части
+    cards = script.get("cards") or []
+    ncards = max(1, len(cards))
+    subc = []
+    for k, c in enumerate(cards):                                  # плашки этой трети (пересчёт at)
+        at = c.get("at")
+        frac = at if isinstance(at, (int, float)) else (k + 0.5) / ncards
+        if min(2, int(max(0.0, min(0.999, frac)) * 3)) + 1 == idx:
+            cc = dict(c)
+            if isinstance(at, (int, float)):
+                cc["at"] = max(0.0, min(1.0, frac * 3 - (idx - 1)))
+            subc.append(cc)
+    sub["cards"] = subc
+    reel = build(footage_dir, sub, out_dir, voice_id, gray, mood, fps, status_cb, rtype,
+                 bake_bg=False)
+    if not reel:
+        return None
+    dst = os.path.join(out_dir, f"part{idx}.mp4")
+    try:
+        os.replace(reel, dst)
+        return dst
+    except Exception:
+        return reel
+
+
+def stitch(part_files, out_dir: str, mood: str = "energetic", bake_bg: bool = True,
+           status_cb=None):
+    """Склеить готовые части в финальный ролик + фоновая музыка. → путь или None."""
+    files = [p for p in part_files if p and os.path.exists(p)]
+    if not files:
+        return None
+    os.makedirs(out_dir, exist_ok=True)
+    listf = os.path.join(out_dir, "_stitch.txt")
+    with open(listf, "w", encoding="utf-8") as f:
+        for p in files:
+            f.write("file '%s'\n" % os.path.abspath(p).replace("'", "'\\''"))
+    final = os.path.join(out_dir, f"reel_{time.strftime('%Y%m%d_%H%M%S')}.mp4")
+    try:
+        subprocess.run([FF, "-y", "-f", "concat", "-safe", "0", "-i", listf,
+                        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k",
+                        "-movflags", "+faststart", final], check=True, capture_output=True)
+    except Exception as e:
+        sys.stderr.write(f"[stitch] {type(e).__name__}: {str(e)[:150]}\n")
+        return None
+    if bake_bg:                                                   # музыка на весь ролик
+        mf = _user_music(out_dir) or (music.local_pick(mood) if (music and music.have_local())
+                                      else None)
+        if mf:
+            if status_cb:
+                try:
+                    status_cb("🎵 Накладываю музыку под голос…")
+                except Exception:
+                    pass
+            mixed = os.path.join(out_dir, "_final_mixed.mp4")
+            if _mix_bg(final, mf, mixed) == mixed:
+                try:
+                    os.replace(mixed, final)
+                except Exception:
+                    pass
+    return final
 
 
 def split_three(reel: str, out_dir: str):

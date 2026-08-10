@@ -159,9 +159,12 @@ def _types_kb():
 
 def _script_kb():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("✅ Утвердить и собрать (3 части)", callback_data="assemble")],
-        [InlineKeyboardButton("➕ Добавить сырьё", callback_data="addsrc")],
-        [InlineKeyboardButton("✏️ Изменить / добавить ТЗ", callback_data="recollect")]])
+        [InlineKeyboardButton("🔨 Собрать ч.1", callback_data="buildpart:1"),
+         InlineKeyboardButton("ч.2", callback_data="buildpart:2"),
+         InlineKeyboardButton("ч.3", callback_data="buildpart:3")],
+        [InlineKeyboardButton("🎬 Склеить финал (все 3 части)", callback_data="stitch")],
+        [InlineKeyboardButton("➕ Сырьё", callback_data="addsrc"),
+         InlineKeyboardButton("✏️ ТЗ", callback_data="recollect")]])
 
 
 def _parts_kb():
@@ -629,6 +632,7 @@ async def _make_script(client, chat_id, m):
                                reply_markup=_retry_kb())
         return
     b["script"] = script
+    b["part_files"] = {}          # новый сценарий → старые собранные части неактуальны
     b["stage"] = "review_script"
     await status.edit_text("📝 Сценарий готов:\n\n" + scriptwriter.as_text(script),
                            reply_markup=_script_kb())
@@ -640,6 +644,155 @@ async def cb_assemble(client, cq):
         return
     await cq.answer("Собираю ролик…")
     await _assemble(client, cq.message.chat.id, cq.message)
+
+
+def _part_kb(n):
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(f"✏️ Править ч.{n}", callback_data=f"editpart:{n}"),
+        InlineKeyboardButton(f"🔨 Пересобрать ч.{n}", callback_data=f"buildpart:{n}")]])
+
+
+async def _build_part(client, chat_id, m, n):
+    """Собрать ОДНУ часть сценария отдельным роликом — для точечной правки."""
+    b = baskets.get(chat_id)
+    if not b or not b.get("script"):
+        await m.reply("Сначала сценарий — жми «Получить сценарий».")
+        return
+    if not ((b.get("script") or {}).get(f"part{n}") or "").strip():
+        await m.reply(f"В сценарии нет части {n}.")
+        return
+    if not (factory_reel and eleven and eleven.have_key() and eleven.default_voice()):
+        await m.reply("Для сборки нужен ElevenLabs (ELEVEN_KEY + ELEVEN_VOICE_ID).")
+        return
+    if b.get("running"):
+        return
+    b["running"] = True
+    b["last_action"] = f"buildpart:{n}"
+    status = await m.reply(f"🔨 Собираю ЧАСТЬ {n}/3: озвучка + твои кадры + субтитры + плашки…")
+    loop = asyncio.get_event_loop()
+    gray = bool(re.search(GRAY_RE, b.get("brief") or "", re.I))
+    rtype = b.get("type") or reel_types.DEFAULT
+    out = os.path.join(b["job"], "_parts")
+    os.makedirs(out, exist_ok=True)
+    vid = eleven.default_voice()
+
+    def _sf(t):
+        try:
+            asyncio.run_coroutine_threadsafe(status.edit_text(t), loop)
+        except Exception:
+            pass
+    async with render_lock:
+        try:
+            part = await loop.run_in_executor(
+                None, lambda: factory_reel.build_part(b["job"], b["script"], n, out, vid,
+                                                      gray, _music_mood(b), FPS, _sf, rtype))
+            if not part:
+                await status.edit_text(f"❌ Часть {n} не собралась (проверь озвучку/баланс).",
+                                       reply_markup=_retry_kb())
+                return
+            b.setdefault("part_files", {})[n] = part
+            done = sum(1 for k in (1, 2, 3) if b["part_files"].get(k))
+            await status.edit_text(f"✅ Часть {n}/3 готова. Собрано: {done}/3.")
+            await client.send_video(chat_id, part, caption=f"Часть {n}/3", reply_markup=_part_kb(n))
+            if done == 3:
+                await client.send_message(chat_id, "Все 3 части готовы 🎬 Правь любую или "
+                                          "жми «Склеить финал».", reply_markup=_script_kb())
+        except Exception as e:
+            await status.edit_text(f"❌ Ошибка части {n}: {str(e)[:180]}", reply_markup=_retry_kb())
+        finally:
+            b["running"] = False
+
+
+@app.on_callback_query(filters.regex(r"^buildpart:"))
+async def cb_buildpart(client, cq):
+    if not _cq_allowed(cq):
+        return
+    n = int(cq.data.split(":", 1)[1])
+    await cq.answer(f"Собираю часть {n}…")
+    await _build_part(client, cq.message.chat.id, cq.message, n)
+
+
+@app.on_callback_query(filters.regex(r"^editpart:"))
+async def cb_editpart(client, cq):
+    if not _cq_allowed(cq):
+        return
+    n = int(cq.data.split(":", 1)[1])
+    b = _basket(cq.message.chat.id)
+    b["await_partedit"] = n
+    await cq.answer(f"Правка части {n}")
+    await client.send_message(cq.message.chat.id,
+        f"✏️ Напиши или наговори, что поменять в ЧАСТИ {n} (смысл, слова, подача).")
+
+
+async def _apply_part_edit(client, chat_id, m, n, text):
+    """Переписать текст части n по правке автора и пересобрать её."""
+    b = baskets.get(chat_id)
+    if not b or not b.get("script"):
+        return
+    status = await m.reply(f"✏️ Переписываю часть {n} и пересобираю…")
+    loop = asyncio.get_event_loop()
+    rt = b.get("type") or reel_types.DEFAULT
+    old = (b["script"].get(f"part{n}") or "")
+    new = await loop.run_in_executor(None, lambda: scriptwriter.rewrite_part(old, text, rt))
+    b["script"][f"part{n}"] = new or old
+    try:
+        await status.edit_text(f"Часть {n} обновлена:\n«{(new or old)[:200]}»\nСобираю…")
+    except Exception:
+        pass
+    await _build_part(client, chat_id, m, n)
+
+
+@app.on_callback_query(filters.regex(r"^stitch$"))
+async def cb_stitch(client, cq):
+    if not _cq_allowed(cq):
+        return
+    await cq.answer("Склеиваю финал…")
+    await _stitch_final(client, cq.message.chat.id, cq.message)
+
+
+async def _stitch_final(client, chat_id, m):
+    b = baskets.get(chat_id)
+    pf = (b or {}).get("part_files") or {}
+    ready = [pf.get(1), pf.get(2), pf.get(3)]
+    if not all(ready):
+        miss = [str(i) for i in (1, 2, 3) if not pf.get(i)]
+        await m.reply(f"Сначала собери все 3 части. Нет: {', '.join(miss)}.")
+        return
+    if b.get("running"):
+        return
+    b["running"] = True
+    b["last_action"] = "stitch"
+    status = await m.reply("🎬 Склеиваю 3 части в финальный ролик + музыка…")
+    loop = asyncio.get_event_loop()
+    rt = b.get("type") or reel_types.DEFAULT
+    out = reel_types.out_dir(rt)
+
+    def _sf(t):
+        try:
+            asyncio.run_coroutine_threadsafe(status.edit_text(t), loop)
+        except Exception:
+            pass
+    async with render_lock:
+        try:
+            reel = await loop.run_in_executor(
+                None, lambda: factory_reel.stitch(ready, out, _music_mood(b), True, _sf))
+            if not reel:
+                await status.edit_text("❌ Не склеилось.", reply_markup=_retry_kb())
+                return
+            b["reel"] = reel
+            if previral and os.environ.get("OPENROUTER_API_KEY"):
+                _sf("🔮 Оцениваю виральность финала…")
+                b["previral"] = (await loop.run_in_executor(
+                    None, lambda: previral.check(reel, b["script"], rt))) or {}
+            await status.delete()
+        except Exception as e:
+            await status.edit_text(f"❌ Ошибка склейки: {str(e)[:180]}", reply_markup=_retry_kb())
+            return
+        finally:
+            b["running"] = False
+    if b.get("previral"):
+        await client.send_message(chat_id, previral.as_text(b["previral"]))
+    await _finalize(client, chat_id, m)
 
 
 async def _polish(b, out, vid, gray, rtype, sf, loop):
@@ -777,8 +930,10 @@ async def cb_retry(client, cq):
     if not action:
         await cq.answer("Нечего продолжать 🤔", show_alert=True)
         return
-    labels = {"make_script": "сценарий", "assemble": "сборку", "finalize": "финал"}
-    await cq.answer(f"Продолжаю {labels.get(action, '')}…")
+    labels = {"make_script": "сценарий", "assemble": "сборку", "finalize": "финал",
+              "stitch": "склейку финала"}
+    lbl = labels.get(action) or ("сборку части" if str(action).startswith("buildpart:") else "")
+    await cq.answer(f"Продолжаю {lbl}…")
     chat_id, m = cq.message.chat.id, cq.message
     if action == "make_script":
         await _make_script(client, chat_id, m)
@@ -786,6 +941,10 @@ async def cb_retry(client, cq):
         await _assemble(client, chat_id, m)
     elif action == "finalize":
         await _finalize(client, chat_id, m)
+    elif action == "stitch":
+        await _stitch_final(client, chat_id, m)
+    elif str(action).startswith("buildpart:"):
+        await _build_part(client, chat_id, m, int(action.split(":", 1)[1]))
     else:
         await client.send_message(chat_id, "Не знаю, что продолжить. Начни заново кнопкой.")
 
@@ -855,6 +1014,8 @@ def _basket(chat_id):
                                 "name": None,             # имя ролика (проект-папка с сырьём)
                                 "stage": None,            # await_name / collect / review_script / …
                                 "await_edit": None,       # ждём правку к части N (голосом/текстом)
+                                "await_partedit": None,   # ждём правку к части сценария (пересборка)
+                                "part_files": {},         # собранные части {1:путь,2:..,3:..}
                                 "tz_count": 0,            # сколько ТЗ принято
                                 "tz_list": [],            # тексты всех ТЗ по этому ролику (/tz)
                                 "clips": [],              # что Claude увидел в сырье (смотрит 1 раз)
@@ -1258,6 +1419,12 @@ async def on_voice(client, m: "Message"):
         await note.delete()
         await _set_name(b, m, text)
         return
+    if b.get("await_partedit"):                   # правка части сценария → пересборка (голосом)
+        n = b["await_partedit"]
+        b["await_partedit"] = None
+        await note.delete()
+        await _apply_part_edit(client, m.chat.id, m, n, text)
+        return
     if b.get("await_edit"):                       # правка к части (голосом)
         n = b["await_edit"]
         b["edits"].append((n, text))
@@ -1289,6 +1456,11 @@ async def on_text(client, m: "Message"):
     text = (m.text or "").strip()
     if b.get("stage") == "await_name":            # имя ролика — текстом
         await _set_name(b, m, text)
+        return
+    if b.get("await_partedit"):                   # правка части сценария → пересборка (текстом)
+        n = b["await_partedit"]
+        b["await_partedit"] = None
+        await _apply_part_edit(client, m.chat.id, m, n, text)
         return
     if b.get("await_edit"):                       # правка к части (текстом)
         n = b["await_edit"]
