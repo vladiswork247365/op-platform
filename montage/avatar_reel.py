@@ -36,6 +36,10 @@ try:
     import music as _music
 except Exception:
     _music = None
+try:
+    import cards as _cards_mod
+except Exception:
+    _cards_mod = None
 
 FF = imageio_ffmpeg.get_ffmpeg_exe()
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -190,6 +194,61 @@ def plan_inserts(base_dur: float, cues, inserts, max_frac: float = 0.4,
     return plan
 
 
+def plan_cards(cues, base_dur, timeout: int = 60):
+    """Opus вытаскивает 3–5 сильных коротких фраз-акцентов из речи → плашки сверху кадра
+    (как в топ-роликах: «АНАЛИЗ 100% ЗВОНКОВ», «КОНТЕКСТ ЖИВ»). → [{text,t0,t1}] или []."""
+    if os.environ.get("CARDS", "on").strip().lower() in ("off", "0", "no", "false"):
+        return []
+    key = os.environ.get("OPENROUTER_API_KEY")
+    text = " ".join(c["text"] for c in (cues or [])).strip()
+    if not key or not text or base_dur <= 0:
+        return []
+    import json
+    import urllib.request
+    model = os.environ.get("OPENROUTER_MODEL") or "anthropic/claude-opus-4.5"
+    sys_p = ("Ты — монтажёр виральных Reels. Из РАСШИФРОВКИ речи выбери 3–5 самых сильных "
+             "коротких фраз-АКЦЕНТОВ (1–3 слова, КАПСОМ, как крупная плашка сверху кадра: "
+             "«АНАЛИЗ 100% ЗВОНКОВ», «КОНТЕКСТ ЖИВ», «ЗДОРОВЬЕ СДЕЛКИ»). Каждая — на своём "
+             "моменте ролика. Верни СТРОГО JSON без пояснений: "
+             '{"cards":[{"text":"КОРОТКАЯ ФРАЗА","at":0.0}]} где at — доля ролика 0..1.')
+    body = json.dumps({"model": model, "temperature": 0.5, "max_tokens": 600,
+                       "response_format": {"type": "json_object"},
+                       "messages": [{"role": "system", "content": sys_p},
+                                    {"role": "user", "content": "РАСШИФРОВКА:\n" + text[:2000]}]
+                       }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://openrouter.ai/api/v1/chat/completions", data=body,
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                 "HTTP-Referer": "https://systemop.pro", "X-Title": "OP Reels Avatar Cards"})
+    try:
+        r = json.load(urllib.request.urlopen(req, timeout=timeout))
+        raw = ((r.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+        raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw.strip())
+        data = json.loads(raw)
+    except Exception as e:
+        sys.stderr.write(f"[avatar_reel.cards] {type(e).__name__}: {str(e)[:120]}\n")
+        return []
+    out, taken = [], []
+    starts = [c["t0"] for c in cues]
+    for cd in (data.get("cards") or [])[:5]:
+        txt = (cd.get("text") or "").strip()
+        if not txt:
+            continue
+        try:
+            frac = max(0.0, min(1.0, float(cd.get("at", 0.5))))
+        except (TypeError, ValueError):
+            frac = 0.5
+        target = frac * base_dur
+        t0 = min(starts, key=lambda s: abs(s - target)) if starts else target
+        if any(abs(t0 - t) < 1.6 for t in taken):        # не наслаивать плашки
+            continue
+        taken.append(t0)
+        out.append({"text": txt[:40], "t0": round(t0, 2),
+                    "t1": round(min(base_dur, t0 + 2.0), 2)})
+    out.sort(key=lambda x: x["t0"])
+    return out
+
+
 _ASS_HEAD = """[Script Info]
 ScriptType: v4.00+
 PlayResX: {W}
@@ -310,11 +369,28 @@ def build(footage_dir: str, out_dir: str, script: dict | None = None, status_cb=
     if inserts:
         _st(f"🖥 Врезаю экранки: {len(iplan)} вставок(и) по смыслу")
 
-    # рендер: база + оверлеи-экранки + ASS-субтитры, звук аватара — как есть
-    _st("🎨 Собираю картинку (кат-эвеи + субтитры)…")
+    # плашки-акценты из речи (как в референсе): Opus вытаскивает сильные короткие фразы
+    cplan = plan_cards(cues, base_dur) if cues else []
+    cpngs = []
+    if cplan and _cards_mod:
+        for i, cd in enumerate(cplan):
+            png = os.path.join(tmp, f"card_{i}.png")
+            try:
+                _cards_mod.render_card(cd["text"], out_path=png, w=W, h=H, y_frac=0.11)
+                cpngs.append({"png": png, "t0": cd["t0"], "t1": cd["t1"]})
+            except Exception:
+                pass
+    if cpngs:
+        _st(f"🟥 Плашки-акценты: {len(cpngs)}")
+
+    # рендер: база + экранки-кат-эвеи + плашки + субтитры, звук аватара — как есть
+    _st("🎨 Собираю картинку (кат-эвеи + плашки + субтитры)…")
     inputs = ["-i", normed]
     for it in iplan:
         inputs += ["-i", it["path"]]
+    card_base = 1 + len(iplan)                          # индекс первого инпута-плашки
+    for cp in cpngs:
+        inputs += ["-loop", "1", "-t", f"{base_dur:.3f}", "-i", cp["png"]]
     parts, cur = [], "[0:v]"
     for k, it in enumerate(iplan, start=1):
         parts.append(
@@ -324,6 +400,13 @@ def build(footage_dir: str, out_dir: str, script: dict | None = None, status_cb=
     for k, it in enumerate(iplan, start=1):
         nxt = f"[v{k}]"
         parts.append(f"{cur}[ins{k}]overlay=0:0:enable='between(t,{it['t0']},{it['t1']})'"
+                     f":eof_action=pass{nxt}")
+        cur = nxt
+    for j, cp in enumerate(cpngs):                      # плашки поверх (верх кадра)
+        idx = card_base + j
+        parts.append(f"[{idx}:v]format=rgba[cin{j}]")
+        nxt = f"[c{j}]"
+        parts.append(f"{cur}[cin{j}]overlay=0:0:enable='between(t,{cp['t0']},{cp['t1']})'"
                      f":eof_action=pass{nxt}")
         cur = nxt
     ass = build_ass(cues, os.path.join(tmp, "subs.ass"), yf) if cues else None
