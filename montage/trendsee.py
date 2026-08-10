@@ -24,6 +24,21 @@ import urllib.request
 from datetime import date, timedelta
 from urllib.parse import urlencode
 
+
+def _load_env():
+    """Подхватить montage/.env при запуске напрямую (бот грузит .env сам, но CLI — нет)."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    for p in (os.path.join(here, ".env"), os.path.join(os.path.dirname(here), ".env")):
+        if os.path.exists(p):
+            for line in open(p, encoding="utf-8"):
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip())
+
+
+_load_env()
+
 API_URL = os.environ.get("TRENDSEE_API_URL", "https://api.trendsee.io/api/v1")
 QUERY = os.environ.get("TRENDSEE_QUERY", "")
 _CONFIG = os.path.expanduser(
