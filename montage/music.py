@@ -19,7 +19,8 @@ API = "https://api.jamendo.com/v3.0/tracks/"
 KEY = os.environ.get("JAMENDO_CLIENT_ID")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LOCAL_DIR = os.path.join(HERE, "library", "music")   # твои бесплатные треки (без регистраций)
+LOCAL_DIR = os.path.join(HERE, "library", "music")     # твои треки (приоритет), можно кидать свои
+ASSETS_DIR = os.path.join(HERE, "assets", "music")     # встроенные дорожки — работают из коробки
 AUDIO_EXT = {".mp3", ".m4a", ".wav", ".aac", ".ogg", ".opus"}
 
 # настроение → теги Jamendo
@@ -45,23 +46,30 @@ def local_dir() -> str:
     return LOCAL_DIR
 
 
-def _local_tracks() -> list:
-    d = local_dir()
+def _scan(d) -> list:
     out = []
-    for f in sorted(os.listdir(d)):
-        if f.startswith((".", "_")):
-            continue
-        if os.path.splitext(f)[1].lower() in AUDIO_EXT:
-            out.append(os.path.join(d, f))
+    try:
+        for f in sorted(os.listdir(d)):
+            if f.startswith((".", "_")):
+                continue
+            if os.path.splitext(f)[1].lower() in AUDIO_EXT:
+                out.append(os.path.join(d, f))
+    except Exception:
+        pass
     return out
 
 
+def _local_tracks() -> list:
+    # приоритет — твоя папка (library/music); если пусто — встроенные (assets/music)
+    return _scan(local_dir()) or _scan(ASSETS_DIR)
+
+
 def have_local() -> bool:
-    return bool(_local_tracks())
+    return bool(_local_tracks())          # встроенные всегда есть → музыка работает из коробки
 
 
 def local_pick(mood: str = "energetic") -> str | None:
-    """Взять трек из своей библиотеки под настроение (по имени файла), иначе — самый свежий."""
+    """Трек под настроение: сначала твои (library/music), иначе встроенные (assets/music)."""
     ts = _local_tracks()
     if not ts:
         return None
@@ -70,7 +78,7 @@ def local_pick(mood: str = "energetic") -> str | None:
         name = os.path.basename(t).lower()
         if any(w and w in name for w in words):
             return t
-    return max(ts, key=os.path.getmtime)
+    return ts[0]
 
 
 def get_track(out_path: str, mood: str = "energetic", max_dur: int = 120,
