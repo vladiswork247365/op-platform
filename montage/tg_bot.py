@@ -476,28 +476,39 @@ async def _look_and_propose(client, b, m):
     clips = await _look_footage(b, m, quiet=True)     # анализ (без лишнего текста)
     if not clips:
         return
-    status, state, stop, task = await _live(m, "🔥 Захожу в TrendSee и придумываю вариант под ролик…")
+    have_ts = bool(trendsee and trendsee.available())
+    trends = ""
+    if have_ts:
+        status, state, stop, task = await _live(m, "🔥 Захожу в TrendSee — смотрю, что залетает в нише…")
+        loop = asyncio.get_event_loop()
+        try:
+            trends = await loop.run_in_executor(None, lambda: trendsee.digest())
+        finally:
+            stop.set()
+            await task
+        line = trendsee.status_line() if trends else "🔥 TrendSee: свежих трендов не пришло (проверь доступ)."
+        await status.edit_text(line)          # ВИДИМЫЙ подробный статус проверки TrendSee
+    else:
+        await m.reply("ℹ️ TrendSee не подключён (TRENDSEE_EMAIL/PASSWORD в .env) — придумаю без трендов.")
+    st2, s2, stop2, task2 = await _live(m, "💡 Придумываю вариант под ролик (кадры + тренды)…")
     loop = asyncio.get_event_loop()
     rt = b.get("type") or reel_types.DEFAULT
     footage = shots.catalog_text(clips) if shots else ""
     try:
-        trends = ((await loop.run_in_executor(None, lambda: trendsee.digest()))
-                  if (trendsee and trendsee.available()) else "")
         prop = ((await loop.run_in_executor(None, lambda: scriptwriter.propose(footage, trends, rt)))
                 if scriptwriter else "")
     finally:
-        stop.set()
-        await task
+        stop2.set()
+        await task2
     b["proposal"] = prop
     b["stage"] = "collect"
     txt = "👁 Вот что вижу в сырье:\n" + _clips_summary(clips)
     if prop:
-        txt += ("\n\n🔥 Тренды из TrendSee учёл.\n💡 МОЙ ВАРИАНТ под ролик (на что опереться):\n\n"
-                + prop)
+        txt += ("\n\n💡 МОЙ ВАРИАНТ под ролик (учёл кадры + тренды) — на что опереться:\n\n" + prop)
     txt += (f"\n\nТеперь дай ТЗ (текст/голос) — согласись с моим вариантом или скажи по-своему. "
             f"Потом «{GET_SCRIPT_BTN}».")
     try:
-        await status.edit_text(txt[:4090])
+        await st2.edit_text(txt[:4090])
     except Exception:
         await m.reply(txt[:4090])
 
@@ -596,6 +607,11 @@ async def _make_script(client, chat_id, m):
         if trendsee and trendsee.available():
             state["stage"] = "🔥 Смотрю тренды: что заходит у других (TrendSee)…"
             trends = await loop.run_in_executor(None, lambda: trendsee.digest())
+            if trends:
+                try:
+                    await m.reply(trendsee.status_line())   # видимый статус проверки
+                except Exception:
+                    pass
         state["stage"] = "🧠 Захожу в панель — работа над ошибками…"
         await asyncio.sleep(0.4)
         state["stage"] = "✍️ Пишу виральный сценарий (тренды + сырьё + ТЗ + прошлые ролики, Opus)…"
@@ -819,20 +835,13 @@ async def _finalize(client, chat_id, m):
     rt = b.get("type") or reel_types.DEFAULT
     reel_types.log_reel(rt, b.get("brief") or "", reel)
     await client.send_video(chat_id, reel,
-        caption="✅ ФИНАЛЬНЫЙ РОЛИК — голос + субтитры, БЕЗ вшитой музыки (специально под "
-                "трендовый звук).\nЗалей в Instagram — панель подтянет статистику, через 6ч будет разбор.",
+        caption="✅ ФИНАЛЬНЫЙ РОЛИК — голос + субтитры + музыка под настроение (уже в ролике).\n"
+                "Залей в Instagram — панель подтянет статистику, через 6ч будет разбор.",
         reply_markup=MAIN_KB)
-    # какой трендовый звук добавить ВРУЧНУЮ в Инсте (моторика алгоритма) + кнопка архива
-    sound = (b.get("previral") or {}).get("sound")
-    pace = (b.get("script") or {}).get("pace", "medium")
-    msg = trending.recommend(_music_mood(b), rt, pace) if trending else ""
-    if sound:
-        msg = f"🎵 ЗВУК ДЛЯ ИНСТЫ — добавь ВРУЧНУЮ.\n• Под этот ролик: {sound}\n\n" + msg
     _last_reel[chat_id] = {"name": b.get("name"), "type": rt}
     kb = InlineKeyboardMarkup([[InlineKeyboardButton(
         "✅ Опубликовано → в архив (освободить место)", callback_data="publish")]])
-    await client.send_message(chat_id, (msg + "\n\n" if msg else "")
-                              + "Как выложишь в Инсту — жми кнопку, уберу ролик в архив "
+    await client.send_message(chat_id, "Как выложишь в Инсту — жми кнопку, уберу ролик в архив "
                               "(освобожу место, из списка пропадёт).", reply_markup=kb)
     baskets.pop(chat_id, None)
 

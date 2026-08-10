@@ -288,10 +288,15 @@ def concat(segs, durs, transes, tmp, out, fps=30):
 
 
 def add_music(video, music, gain_db, tmp, out, total_dur):
+    # ВАЖНО: не обрезать голос. Голос (music, gain 0) может быть длиннее видео из-за
+    # перекрытий переходов — тогда держим последний кадр и играем голос до конца.
     run([FFMPEG, "-y", "-i", video, "-i", music, "-filter_complex",
-         f"[1:a]volume={gain_db}dB,afade=out:st={max(0,total_dur-1.2)}:d=1.2[m];"
-         f"[0:a][m]amix=inputs=2:duration=first:dropout_transition=0,dynaudnorm[a]",
-         "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", out])
+         f"[0:v]tpad=stop_mode=clone:stop_duration=12[v];"
+         f"[1:a]volume={gain_db}dB[m];"
+         f"[0:a][m]amix=inputs=2:duration=longest:dropout_transition=0,dynaudnorm[a]",
+         "-map", "[v]", "-map", "[a]", "-shortest", "-c:v", "libx264", "-preset", "veryfast",
+         "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k",
+         "-movflags", "+faststart", out])
 
 
 def mix_sfx(video, cut_times, out, sfx="whoosh.wav"):

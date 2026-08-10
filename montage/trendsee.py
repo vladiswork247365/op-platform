@@ -152,9 +152,24 @@ def _bank_posts():
         return []
 
 
+LAST_STATS = {}   # статистика последнего захода (для показа в боте)
+
+
+def status_line() -> str:
+    """Короткий человекочитаемый статус последнего захода в TrendSee (для ТГ)."""
+    s = LAST_STATS
+    if not s:
+        return ""
+    top = f", лучший вирал ×{int(s['top'])}" if s.get("top") else ""
+    ex = f"\nПример: «{s['example'][:70]}»" if s.get("example") else ""
+    return (f"🔥 TrendSee проверил: {s.get('live', 0)} свежих трендов "
+            f"+ {s.get('bank', 0)} из банка → взял топ-{s.get('shown', 0)} по виральности{top}.{ex}")
+
+
 def digest(query: str = "", top: int = 15) -> str:
     """Текст-ориентир для сценариста. КАЖДЫЙ раз делаем свежий запрос в TrendSee по нише
     и объединяем с банком трендов (500+ ключей), сортируя по виральности. "" — если пусто."""
+    global LAST_STATS
     live = fetch(query, timeout=15)       # свежий заход в TrendSee — каждый раз
     bank = _bank_posts()                  # широкий банк (собран /trends), если есть
     merged = {}
@@ -164,6 +179,9 @@ def digest(query: str = "", top: int = 15) -> str:
             merged[k] = it
     items = sorted(merged.values(),
                    key=lambda x: (x.get("viral") or 0, x.get("views") or 0), reverse=True)[:top]
+    LAST_STATS = {"live": len(live), "bank": len(bank), "shown": len(items),
+                  "top": (items[0].get("viral") if items else None),
+                  "example": (items[0].get("caption") if items else "")}
     if not items:
         return ""
     lines = ["ЧТО ЗАХОДИТ У ДРУГИХ СЕЙЧАС (реальные залетевшие ролики из TrendSee — разбери, "
