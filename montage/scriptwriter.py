@@ -259,6 +259,48 @@ def write_script(briefs, transcript: str = "", rtype_hint: str = "", footage: st
     }
 
 
+PROPOSE_SYS = (
+    "Ты — виральный продюсер коротких вертикальных Reels для русскоязычной аудитории "
+    "(собственники бизнеса, РОПы). На основе того, ЧТО ЕСТЬ В КАДРАХ автора, актуальных "
+    "ТРЕНДОВ и формата — предложи автору 1–2 КОНКРЕТНЫХ варианта ролика ДО того, как он даст "
+    "ТЗ. По каждому варианту: угол, ХУК (первая фраза), короткая структура (3–4 шага), почему "
+    "зайдёт. Коротко, по-русски, без воды. Опирайся на реальные кадры и тренды, не выдумывай "
+    "фактов о продукте. В конце — одна строка: на что автору опереться."
+)
+
+
+def propose(footage: str = "", trends: str = "", rtype_hint: str = "",
+            api_key: str | None = None, timeout: int = 120) -> str:
+    """Предложение автору (угол+хук+структура) по кадрам+трендам ДО ТЗ. "" — если недоступно."""
+    key = api_key or os.environ.get("OPENROUTER_API_KEY")
+    if not key:
+        return ""
+    title = (reel_types.title(rtype_hint) if (reel_types and reel_types.valid(rtype_hint))
+             else (rtype_hint or "ролик"))
+    play = (reel_types.script_play(rtype_hint) if (reel_types and reel_types.valid(rtype_hint)) else "")
+    user = (f"ФОРМАТ: {title}\n" + (f"Механика формата: {play}\n" if play else "")
+            + (f"\nЧТО ЕСТЬ В КАДРАХ:\n{_clip(footage, 2500)}\n" if footage else "")
+            + (f"\n{_clip(trends, 2000)}\n" if trends else "")
+            + "\nПредложи 1–2 варианта ролика (угол, хук, структура, почему зайдёт).")
+    body = json.dumps({
+        "model": MODEL,
+        "messages": [{"role": "system", "content": PROPOSE_SYS},
+                     {"role": "user", "content": user}],
+        "temperature": 0.7,
+        "max_tokens": 900,
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://openrouter.ai/api/v1/chat/completions", data=body,
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                 "HTTP-Referer": "https://systemop.pro", "X-Title": "OP Reels Proposal"})
+    try:
+        r = json.load(urllib.request.urlopen(req, timeout=timeout))
+        return (((r.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()[:1600]
+    except Exception as e:
+        sys.stderr.write(f"[propose] {type(e).__name__}: {str(e)[:120]}\n")
+        return ""
+
+
 def as_text(s: dict) -> str:
     """Красиво собрать сценарий в текст для показа в Телеграме."""
     lines = [f"🎬 ХУК: {s['hook']}", "", f"1) {s['part1']}", "", f"2) {s['part2']}", "",
