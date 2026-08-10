@@ -12,7 +12,18 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-MODEL = os.path.join(ROOT, "studio", "engine", "yunet.onnx")
+
+
+def _find_model():
+    """Модель YuNet: studio/engine (основное) или montage/assets/engine (её тянет обновлятор)."""
+    for p in (os.path.join(ROOT, "studio", "engine", "yunet.onnx"),
+              os.path.join(HERE, "assets", "engine", "yunet.onnx")):
+        if os.path.exists(p):
+            return p
+    return os.path.join(ROOT, "studio", "engine", "yunet.onnx")
+
+
+MODEL = _find_model()
 
 _HALF = 0.065     # половина высоты блока субтитров (≈2 строки) в долях кадра
 _MARGIN = 0.05    # зазор от лица (больше — субтитры точно не «липнут» к подбородку)
