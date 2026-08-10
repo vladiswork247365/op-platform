@@ -52,7 +52,15 @@ def _beat_starts(beats):
 
 
 def _inject_cards(edl: dict, script: dict):
-    """Плашки: хук — на вход, остальные — на момент 'at' (доля ролика) от режиссёра."""
+    """Плашки: хук — на вход, остальные — на момент 'at' (доля ролика) от режиссёра.
+
+    В minimal-стиле (по умолчанию) плашек НЕТ — чистая говорящая голова + субтитры, как в
+    топ-референсах. Вернуть плашки: SUB_STYLE=bold или CARDS=on.
+    """
+    style = os.environ.get("SUB_STYLE", "minimal").strip().lower()
+    cards_on = os.environ.get("CARDS", "").strip().lower() in ("on", "1", "yes", "true")
+    if style in ("minimal", "min", "clean", "premium") and not cards_on:
+        return
     beats = edl.get("beats") or []
     if not beats:
         return
