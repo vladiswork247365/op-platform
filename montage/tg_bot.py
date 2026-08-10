@@ -141,11 +141,13 @@ baskets = {}  # chat_id -> {files, job, brief, status, running}
 
 NEW_BTN = "🚀 Создать новый ролик на миллион"
 LOOK_BTN = "👁 Claude, посмотри сырьё"
+LIB_BTN = "📁 Взять сырьё из библиотеки"
 GET_SCRIPT_BTN = "📝 Получить сценарий для ролика"
 ENOUGH_BTN = "✅ Сырья достаточно"
 MAIN_KB = ReplyKeyboardMarkup([[KeyboardButton(NEW_BTN)]], resize_keyboard=True)
-COLLECT_KB = ReplyKeyboardMarkup([[KeyboardButton(LOOK_BTN)], [KeyboardButton(GET_SCRIPT_BTN)],
-                                  [KeyboardButton(NEW_BTN)]], resize_keyboard=True)
+COLLECT_KB = ReplyKeyboardMarkup([[KeyboardButton(LOOK_BTN)], [KeyboardButton(LIB_BTN)],
+                                  [KeyboardButton(GET_SCRIPT_BTN)], [KeyboardButton(NEW_BTN)]],
+                                 resize_keyboard=True)
 ENOUGH_KB = ReplyKeyboardMarkup([[KeyboardButton(ENOUGH_BTN)], [KeyboardButton(NEW_BTN)]],
                                 resize_keyboard=True)
 
@@ -275,10 +277,13 @@ async def pick_type(client, cq):
     await client.send_message(
         cq.message.chat.id,
         "📥 Порядок:\n"
-        "1) Кидай СЫРЬЁ (видео/фото за день, сколько угодно).\n"
-        f"2) Жми «{LOOK_BTN}» — я посмотрю кадры и скажу, что вижу (смотрю 1 раз, запоминаю).\n"
-        "3) Дай ТЗ (текст/голос) — можно и ссылку-референс, я её прочитаю как ориентир.\n"
-        f"4) Жми «{GET_SCRIPT_BTN}» — напишу сценарий под твои кадры + ТЗ + референс.",
+        "1) Кидай СЫРЬЁ (видео/фото). Можешь ПОДПИСАТЬ каждый файл — подпись станет его "
+        "НАЗВАНИЕМ (напр. «говорящая голова про ОП»), чтобы я понимал, что это.\n"
+        f"   Уже загружал раньше? Жми «{LIB_BTN}» — возьму из библиотеки без повторной загрузки.\n"
+        f"2) Жми «{LOOK_BTN}» — посмотрю кадры (1 раз, запоминаю; один и тот же клип повторно "
+        "не анализирую).\n"
+        "3) Дай ТЗ (текст/голос) — можно и ссылку-референс.\n"
+        f"4) Жми «{GET_SCRIPT_BTN}» — напишу сценарий под твои кадры + ТЗ + референс + тренды.",
         reply_markup=COLLECT_KB)
 
 
@@ -318,6 +323,74 @@ async def _look_footage(b, m, quiet=False):
         await status.edit_text("👁 Посмотрел сырьё, вот что вижу:\n\n" + _clips_summary(clips)
                                + f"\n\nТеперь дай ТЗ (текст/голос) — и жми «{GET_SCRIPT_BTN}».")
     return clips
+
+
+def _safe_name(s, default="clip"):
+    """Подпись → безопасное имя файла (буквы/цифры/пробелы → _). Латиница+кириллица."""
+    s = re.sub(r"[^\w\sа-яёА-ЯЁ-]", "", (s or "").strip(), flags=re.U)
+    s = re.sub(r"\s+", "_", s).strip("_")
+    return s[:50] or default
+
+
+def _content_hash8(path):
+    import hashlib
+    try:
+        h = hashlib.md5()
+        with open(path, "rb") as f:
+            h.update(f.read(262144))
+        return h.hexdigest()[:8]
+    except Exception:
+        return "00000000"
+
+
+def _archive_to_library(b, src, label, ext):
+    """Сложить именованный файл в библиотеку типа (для повторного использования без загрузки)."""
+    try:
+        rt = b.get("type") or reel_types.DEFAULT
+        lib = reel_types.sources_dir(rt)
+        dst = os.path.join(lib, f"{label}_{_content_hash8(src)}{ext}")  # хэш = дедуп по содержимому
+        if not os.path.exists(dst):
+            shutil.copy2(src, dst)
+    except Exception:
+        pass
+
+
+@app.on_message(filters.regex(f"^{re.escape(LIB_BTN)}$"))
+async def lib_btn(client, m: "Message"):
+    if not allowed(m):
+        return
+    b = _basket(m.chat.id)
+    rt = b.get("type") or reel_types.DEFAULT
+    lib = reel_types.sources_dir(rt)
+    try:
+        libfiles = [f for f in sorted(os.listdir(lib)) if not f.startswith("_")
+                    and os.path.splitext(f)[1].lower() in (VIDEO_EXT | IMAGE_EXT)]
+    except Exception:
+        libfiles = []
+    if not libfiles:
+        await m.reply("В библиотеке этого типа пока пусто. Загрузи сырьё с подписью-названием — "
+                      "оно сюда сложится и потом можно брать без повторной загрузки.",
+                      reply_markup=COLLECT_KB)
+        return
+    os.makedirs(b["job"], exist_ok=True)
+    have = {os.path.basename(x).split("_", 1)[-1] for x in b["files"]}
+    added = 0
+    for f in libfiles:
+        if f in have:
+            continue
+        idx = len(b["files"])
+        dst = os.path.join(b["job"], f"{idx:02d}_{f}")
+        try:
+            shutil.copy2(os.path.join(lib, f), dst)
+            b["files"].append(dst)
+            added += 1
+        except Exception:
+            pass
+    b["clips"] = []
+    names = "\n".join(f"• {os.path.splitext(f)[0].rsplit('_', 1)[0]}" for f in libfiles[:15])
+    await m.reply(f"📁 Добавил из библиотеки: {added} файлов (повторный анализ не нужен — уже "
+                  f"разобраны). Всего в ролике: {len(b['files'])}.\n\nВ библиотеке «{reel_types.title(rt)}»:\n"
+                  + names, reply_markup=COLLECT_KB)
 
 
 @app.on_message(filters.regex(f"^{re.escape(LOOK_BTN)}$"))
@@ -825,29 +898,30 @@ async def on_media(client, m: "Message"):
         await m.reply("⏳ Уже монтирую — дождись ролика.")
         return
     if m.photo:
-        kind, base, size = "фото", "photo.jpg", getattr(m.photo, "file_size", 0) or 0
+        ext, kind, size, orig = ".jpg", "фото", getattr(m.photo, "file_size", 0) or 0, ""
     else:
         media = m.video or m.document or m.animation
-        base = getattr(media, "file_name", None) or "clip.mp4"
-        ext = os.path.splitext(base)[1].lower()
-        if m.document and ext and ext not in VIDEO_EXT and ext not in IMAGE_EXT:
+        orig_full = getattr(media, "file_name", None) or "clip.mp4"
+        ext = os.path.splitext(orig_full)[1].lower() or ".mp4"
+        if m.document and ext not in VIDEO_EXT and ext not in IMAGE_EXT:
             await m.reply(f"Пропускаю: {ext} — нужно видео или фото.")
             return
-        kind, size = "видео", getattr(media, "file_size", 0) or 0
-    if m.caption and not b["brief"]:
-        _add_tz(b, m.chat.id, m.caption.strip(), "подпись")
-    # сериализуем скачивание (альбом = несколько сообщений разом) — уникальный номер и папка
+        kind, size, orig = "видео", getattr(media, "file_size", 0) or 0, os.path.splitext(orig_full)[0]
+    # ИМЯ файла — из подписи (если есть), иначе из оригинала. Подпись = НАЗВАНИЕ, не ТЗ.
+    label = _safe_name(m.caption or orig, "clip")
     async with b["lock"]:
         os.makedirs(b["job"], exist_ok=True)
         idx = len(b["files"])
-        dst = os.path.join(b["job"], f"{idx:02d}_{os.path.basename(base)}")
-        await _say(b, m, f"📥 Качаю {kind} #{idx + 1} ({human(size)})…")
+        dst = os.path.join(b["job"], f"{idx:02d}_{label}{ext}")
+        await _say(b, m, f"📥 Качаю {kind} #{idx + 1}: «{label}» ({human(size)})…")
         try:
             await m.download(file_name=dst)
         except Exception as e:
             await _say(b, m, f"❌ Не смог скачать: {str(e)[:120]}")
             return
         b["files"].append(dst)
+        b["clips"] = []                       # новое сырьё — пересоберём каталог (анализ из кэша)
+        _archive_to_library(b, dst, label, ext)   # копия в библиотеку типа (для повторного использования)
     await _prompt(b, m)
 
 
