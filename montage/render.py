@@ -133,7 +133,19 @@ def build_beat(i, beat, srcdir, tmp, W, H, fps, font):
     # сперва срезаем вшитые чёрные полосы (letterbox), потом заполняем 9:16
     bc = "" if is_image(src) else bars_crop(src)
     fill = f"{bc}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}"
-    if is_image(src):
+    src_w, src_h = (0, 0) if is_image(src) else _dims(src)
+    wide = bool(src_w and src_h and (src_w / src_h) >= 1.1)   # горизонтальная запись (экран/десктоп)
+    if not is_image(src) and wide:
+        # экран/дашборд/десктоп-запись → вписываем ЦЕЛИКОМ в 9:16 + размытый фон, чтобы ничего
+        # не срезалось по бокам. Статично: для скринкаста зум/панч не нужны.
+        pts = f"setpts=PTS/{speed}," if speed != 1.0 else ""
+        vchain = (
+            f"[0:v]{pts}{bc}fps={fps},split[bg][fg];"
+            f"[bg]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+            f"gblur=sigma=22,eq=brightness=-0.10,format=yuv420p[bgb];"
+            f"[fg]scale={W}:{H}:force_original_aspect_ratio=decrease,format=yuv420p[fgs];"
+            f"[bgb][fgs]overlay=(W-w)/2:(H-h)/2,setsar=1[vbase]")
+    elif is_image(src):
         # Скрин/фото: НЕ дешёвый ползущий зум. Чистый статичный кадр + короткий «кик» на резе
         # (быстро оседает к 1.0 и держится), единый стиль с видео. Overscan лёгкий (1.12×) —
         # текст на скринах остаётся резким (без прежнего 2× апскейла-мыла).
