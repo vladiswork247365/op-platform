@@ -67,9 +67,14 @@ def _inject_cards(edl: dict, script: dict):
                 idx = j
         return idx
 
+    def beat_dur(idx):
+        return (starts[idx + 1] - starts[idx]) if idx + 1 < n else max(0.4, total - starts[idx])
+
     hook = (script.get("hook") or "").strip()
     if hook:
+        # хук держим весь первый бит — это вход, он должен «зацепить»
         beats[0]["card"] = {"headline": hook, "label": "", "sub": "", "color": "red", "yf": 0.13}
+    card_secs = float(os.environ.get("CARD_SECS", "2.2"))   # плашка-акцент — короткий панч, не висит
     cards = script.get("cards") or []
     for k, c in enumerate(cards):
         at = c.get("at")
@@ -78,8 +83,11 @@ def _inject_cards(edl: dict, script: dict):
             bi = min(n - 1, 1)          # не затирать хук
         while bi < n - 1 and beats[bi].get("card"):
             bi += 1                     # не класть две плашки на один бит
+        # тайм-бокс: плашка вспыхивает на ключевой фразе и уходит — субтитры не спорят с ней
+        t1 = round(min(beat_dur(bi), card_secs), 2)
         beats[bi]["card"] = {"label": c.get("label", ""), "headline": c.get("headline", ""),
-                             "sub": c.get("sub", ""), "color": c.get("color", "yellow"), "yf": 0.13}
+                             "sub": c.get("sub", ""), "color": c.get("color", "yellow"),
+                             "yf": 0.13, "t0": 0.0, "t1": t1}
 
 
 _STRIP = ".,!?—:;«»\"'()"
