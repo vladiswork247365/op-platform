@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-13T11:12:05Z",
+  "updatedAt": "2026-08-13T13:50:38Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -828,7 +828,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 393,
+        "views": 395,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -882,20 +882,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 384,
+        "views": 386,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 8,
+        "likes": 9,
         "comments": 0,
         "source": "instagram",
         "published": "2026-07-05",
         "published_at": "2026-07-05T16:58:15+0000",
         "permalink": "https://www.instagram.com/reel/DaazB_wizoD/",
-        "avg_watch_s": 6.7,
+        "avg_watch_s": 6.8,
         "estimated": false
       },
       "review": {
@@ -936,7 +936,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 476,
+        "views": 479,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -949,7 +949,7 @@
         "published": "2026-07-04",
         "published_at": "2026-07-04T19:06:04+0000",
         "permalink": "https://www.instagram.com/reel/DaYc1PCK1_x/",
-        "avg_watch_s": 11.6,
+        "avg_watch_s": 11.5,
         "estimated": false
       },
       "review": {
@@ -988,7 +988,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 537,
+        "views": 540,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1001,7 +1001,7 @@
         "published": "2026-07-04",
         "published_at": "2026-07-04T11:33:00+0000",
         "permalink": "https://www.instagram.com/reel/DaXo_FUCBOX/",
-        "avg_watch_s": 8.3,
+        "avg_watch_s": 8.4,
         "estimated": false
       },
       "review": {
@@ -1042,7 +1042,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 330,
+        "views": 331,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
