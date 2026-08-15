@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-15T04:49:03Z",
+  "updatedAt": "2026-08-15T06:59:23Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -828,7 +828,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 403,
+        "views": 404,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -882,7 +882,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 396,
+        "views": 397,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -936,7 +936,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 487,
+        "views": 489,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -949,7 +949,7 @@
         "published": "2026-07-04",
         "published_at": "2026-07-04T19:06:04+0000",
         "permalink": "https://www.instagram.com/reel/DaYc1PCK1_x/",
-        "avg_watch_s": 11.5,
+        "avg_watch_s": 11.6,
         "estimated": false
       },
       "review": {
@@ -988,7 +988,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 550,
+        "views": 552,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1001,7 +1001,7 @@
         "published": "2026-07-04",
         "published_at": "2026-07-04T11:33:00+0000",
         "permalink": "https://www.instagram.com/reel/DaXo_FUCBOX/",
-        "avg_watch_s": 8.4,
+        "avg_watch_s": 8.5,
         "estimated": false
       },
       "review": {
@@ -1042,7 +1042,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 338,
+        "views": 340,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
