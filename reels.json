@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-25T07:10:11Z",
+  "updatedAt": "2026-08-25T09:01:47Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -828,7 +828,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 422,
+        "views": 423,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1361,20 +1361,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 186,
+        "views": 287,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 2,
+        "likes": 5,
         "comments": 0,
         "source": "instagram",
         "published": "2026-08-25",
         "published_at": "2026-08-25T06:17:25+0000",
         "permalink": "https://www.instagram.com/reel/Dcc-MjAyMoC/",
-        "avg_watch_s": 6.2,
+        "avg_watch_s": 6.6,
         "estimated": false
       }
     },
@@ -1389,7 +1389,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 329,
+        "views": 367,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
