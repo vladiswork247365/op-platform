@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-26T07:15:30Z",
+  "updatedAt": "2026-08-26T09:04:55Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -828,7 +828,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 428,
+        "views": 431,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -882,7 +882,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 410,
+        "views": 412,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -936,7 +936,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 504,
+        "views": 507,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -949,7 +949,7 @@
         "published": "2026-07-04",
         "published_at": "2026-07-04T19:06:04+0000",
         "permalink": "https://www.instagram.com/reel/DaYc1PCK1_x/",
-        "avg_watch_s": 11.6,
+        "avg_watch_s": 11.8,
         "estimated": false
       },
       "review": {
@@ -988,7 +988,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 567,
+        "views": 571,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1042,7 +1042,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 355,
+        "views": 357,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1096,7 +1096,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 551,
+        "views": 554,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1109,7 +1109,7 @@
         "published": "2026-07-02",
         "published_at": "2026-07-02T15:44:18+0000",
         "permalink": "https://www.instagram.com/reel/DaS8MDbCxw4/",
-        "avg_watch_s": 7.4,
+        "avg_watch_s": 7.5,
         "estimated": false
       },
       "review": {
@@ -1149,7 +1149,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 363,
+        "views": 364,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1202,7 +1202,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 378,
+        "views": 379,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1215,7 +1215,7 @@
         "published": "2026-06-30",
         "published_at": "2026-06-30T08:48:38+0000",
         "permalink": "https://www.instagram.com/reel/DaNC4oYiA6P/",
-        "avg_watch_s": 9.6,
+        "avg_watch_s": 9.5,
         "estimated": false
       },
       "review": {
@@ -1255,7 +1255,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 825,
+        "views": 828,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1309,7 +1309,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 548,
+        "views": 551,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 377,
+        "views": 385,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1413,7 +1413,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 461,
+        "views": 467,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,21 +1465,46 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 551,
+        "views": 718,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 1,
         "shares": 0,
-        "likes": 17,
+        "likes": 19,
         "comments": 9,
         "source": "instagram",
         "published": "2026-08-26",
         "published_at": "2026-08-26T02:23:35+0000",
         "permalink": "https://www.instagram.com/reel/DcfIEQkSmf8/",
-        "avg_watch_s": 9.9,
+        "avg_watch_s": 9.3,
         "estimated": false
+      },
+      "review": {
+        "read": "просмотры 718; среднее время 9.3 сек; сохранения 1; репосты 0; лайки 19; комменты 9",
+        "score": 3,
+        "hook": "Хук 'арестовали' — провокационный, но ОБМАНКА: зритель ждёт историю ареста, а получает оффер в шапку. Кликбейт без payoff = разочарование и быстрый свайп. 9.3 сек среднего досмотра говорит, что большинство уходит сразу после хука, не дождавшись сути.",
+        "retention": "9.3 сек — это провал удержания (вероятно <40% досмотра). Причина: после интригующего хука нет РАСКРЫТИЯ истории ареста. Зритель понимает, что его 'развели', и уходит. Нет эмоциональной середины, которая бы держала.",
+        "engagement": "Лайки 19 на 718 просмотров (2.6%) — ниже среднего. Сохранения 1, репосты 0 — КРИТИЧНО: алгоритм не получил сигнала виральности. 9 комментов — возможно негатив/вопросы 'где арест?'. Подписки/переходы не указаны, но при таком удержании вряд ли высокие.",
+        "mistakes": [
+          "Кликбейт-хук без реального payoff — зритель чувствует себя обманутым",
+          "Нет истории ареста или хотя бы метафоры — пустое обещание",
+          "Оффер 'в шапке профиля' слишком рано/резко — нет прогрева",
+          "Отсутствует эмоциональная середина: конфликт, поворот, драма",
+          "Нет причины сохранять/репостить — ролик не даёт ценности или эмоции"
+        ],
+        "fixes": [
+          "Если используешь 'арестовали' — расскажи РЕАЛЬНУЮ историю (хотя бы 15 сек), потом мост к офферу",
+          "Замени кликбейт на честную интригу: 'Эта штука чуть не стоила мне бизнеса — теперь она в шапке'",
+          "Добавь середину с конфликтом: 'Мне говорили это незаконно / не сработает / я сумасшедший'",
+          "CTA в конце, после ценности: сначала покажи результат, потом 'забирай в шапке'",
+          "Вставь 1 конкретную цифру или кейс в первые 5 сек — это держит внимание",
+          "Сделай 'сохраняемый' элемент: чек-лист, формула, фраза — чтобы был повод сохранить"
+        ],
+        "verdict": "Кликбейт без payoff убил удержание и виральность. Следующий ролик: честная интрига + история + оффер в конце.",
+        "generated_at": "2026-08-26T09:04:55Z",
+        "age_hours": 6.7
       }
     }
   ],
