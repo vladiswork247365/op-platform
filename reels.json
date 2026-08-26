@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-26T01:59:54Z",
+  "updatedAt": "2026-08-26T03:26:31Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 364,
+        "views": 367,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1369,12 +1369,12 @@
         "saves": 0,
         "shares": 0,
         "likes": 9,
-        "comments": 1,
+        "comments": 2,
         "source": "instagram",
         "published": "2026-08-25",
         "published_at": "2026-08-25T06:17:25+0000",
         "permalink": "https://www.instagram.com/reel/Dcc-MjAyMoC/",
-        "avg_watch_s": 6.9,
+        "avg_watch_s": 7.0,
         "estimated": false
       },
       "review": {
@@ -1452,6 +1452,34 @@
         "verdict": "Ролик не зацепил ни алгоритм, ни аудиторию: хук без контекста, ноль ценности для ЦА, ноль виральных сигналов. Следующий ролик — жёсткий хук на боль + польза + CTA.",
         "generated_at": "2026-08-25T13:14:20Z",
         "age_hours": 7.3
+      }
+    },
+    {
+      "id": "ig_DcfIEQkSmf8",
+      "title": "Творение,из-за которого меня арестовали,находится в шапке профиля",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcfIEQkSmf8",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 238,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 1,
+        "shares": 0,
+        "likes": 7,
+        "comments": 4,
+        "source": "instagram",
+        "published": "2026-08-26",
+        "published_at": "2026-08-26T02:23:35+0000",
+        "permalink": "https://www.instagram.com/reel/DcfIEQkSmf8/",
+        "avg_watch_s": 8.9,
+        "estimated": false
       }
     }
   ],
