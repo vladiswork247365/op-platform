@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-27T09:53:07Z",
+  "updatedAt": "2026-08-27T20:33:24Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -828,7 +828,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 438,
+        "views": 442,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -882,7 +882,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 416,
+        "views": 420,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -895,7 +895,7 @@
         "published": "2026-07-05",
         "published_at": "2026-07-05T16:58:15+0000",
         "permalink": "https://www.instagram.com/reel/DaazB_wizoD/",
-        "avg_watch_s": 7.0,
+        "avg_watch_s": 7.1,
         "estimated": false
       },
       "review": {
@@ -936,7 +936,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 510,
+        "views": 511,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -988,7 +988,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 573,
+        "views": 575,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1042,7 +1042,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 358,
+        "views": 359,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1055,7 +1055,7 @@
         "published": "2026-07-02",
         "published_at": "2026-07-02T16:05:33+0000",
         "permalink": "https://www.instagram.com/reel/DaS-jkuiuLf/",
-        "avg_watch_s": 9.8,
+        "avg_watch_s": 9.9,
         "estimated": false
       },
       "review": {
@@ -1096,7 +1096,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 555,
+        "views": 557,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1149,7 +1149,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 364,
+        "views": 365,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1202,7 +1202,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 380,
+        "views": 381,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1255,7 +1255,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 829,
+        "views": 830,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1309,7 +1309,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 552,
+        "views": 554,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1361,20 +1361,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 415,
+        "views": 431,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 9,
+        "likes": 11,
         "comments": 2,
         "source": "instagram",
         "published": "2026-08-25",
         "published_at": "2026-08-25T06:17:25+0000",
         "permalink": "https://www.instagram.com/reel/Dcc-MjAyMoC/",
-        "avg_watch_s": 7.0,
+        "avg_watch_s": 6.9,
         "estimated": false
       },
       "review": {
@@ -1413,14 +1413,14 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 499,
+        "views": 516,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 4,
+        "likes": 5,
         "comments": 0,
         "source": "instagram",
         "published": "2026-08-25",
@@ -1465,7 +1465,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5419,
+        "views": 5472,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1518,21 +1518,45 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 458,
+        "views": 683,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 1,
-        "likes": 21,
-        "comments": 17,
+        "likes": 27,
+        "comments": 19,
         "source": "instagram",
         "published": "2026-08-27",
         "published_at": "2026-08-27T06:52:54+0000",
         "permalink": "https://www.instagram.com/reel/DciL3kWSc1W/",
-        "avg_watch_s": 8.5,
+        "avg_watch_s": 8.3,
         "estimated": false
+      },
+      "review": {
+        "read": "просмотры 683; ср. досмотр 8.3 сек; сохранения 0; репосты 1; лайки 27; комменты 19",
+        "score": 4,
+        "hook": "Хук 'И лишь одно всегда поднимает настроение...' — интригует, но слишком мягкий и размытый. Нет боли, нет конкретики, нет причины остаться. Для B2B-аудитории (РОПы, собственники) это звучит как лирика, а не как обещание пользы. Первые секунды скорее всего не удержали — 8.3 сек среднего досмотра при таком хуке говорит о быстром отвале.",
+        "retention": "8.3 сек — это провал удержания (если ролик 15+ сек, досмотр <50%). Люди уходят сразу после хука: не понимают, зачем смотреть дальше. 'Панель управления для Р...' — обрезанный текст, непонятно что за продукт. Нет эскалации интереса, нет 'а что дальше'.",
+        "engagement": "Лайки 27 при 683 просмотрах (~4%) — нормально для лояльной базы. Комменты 19 — хороший сигнал вовлечённости, но скорее от существующих подписчиков (нужно смотреть содержание). СОХРАНЕНИЯ 0 — критично: контент не несёт ценности, которую хотят сохранить. Репост 1 — виральность нулевая. Алгоритм не получил сигнала 'раскатывать'.",
+        "mistakes": [
+          "Хук без конкретной боли/выгоды — 'поднимает настроение' не цепляет B2B",
+          "Нет понятного обещания в первые 2 сек: что я получу, досмотрев?",
+          "Продукт назван размыто ('панель управления') — не триггерит узнавание",
+          "Отсутствие сохранений = нет практической ценности или инсайта",
+          "Вероятно, нет чёткого CTA или оффера — 19 комментов, но 0 сохранений"
+        ],
+        "fixes": [
+          "Хук переделать на боль: 'РОП, если твоя CRM не показывает ЭТО — ты теряешь сделки'",
+          "Первые 2 сек — конкретика + визуальный стоппер (экран с цифрами, красная метка)",
+          "Добавить 1 практический инсайт, который хочется сохранить ('вот эта метрика решает')",
+          "В конце — чёткий CTA: 'сохрани, чтобы не потерять' или 'напиши ПАНЕЛЬ — скину доступ'",
+          "Тестировать более агрессивный заход: провокация, вопрос, контраст 'до/после'"
+        ],
+        "verdict": "Ролик собрал лояльную базу (комменты, лайки), но не зацепил новых — 0 сохранений и 1 репост убили виральность. Нужен жёсткий хук с болью и практическая ценность внутри.",
+        "generated_at": "2026-08-27T20:33:24Z",
+        "age_hours": 13.7
       }
     }
   ],
