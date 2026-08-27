@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-26T23:37:18Z",
+  "updatedAt": "2026-08-27T09:53:07Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -828,7 +828,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 431,
+        "views": 438,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -841,7 +841,7 @@
         "published": "2026-07-15",
         "published_at": "2026-07-15T09:17:36+0000",
         "permalink": "https://www.instagram.com/reel/DazuPi9i_Qi/",
-        "avg_watch_s": 7.8,
+        "avg_watch_s": 7.9,
         "estimated": false
       },
       "review": {
@@ -882,7 +882,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 412,
+        "views": 416,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -936,7 +936,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 507,
+        "views": 510,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -988,7 +988,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 571,
+        "views": 573,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1042,7 +1042,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 357,
+        "views": 358,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1096,7 +1096,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 554,
+        "views": 555,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1109,7 +1109,7 @@
         "published": "2026-07-02",
         "published_at": "2026-07-02T15:44:18+0000",
         "permalink": "https://www.instagram.com/reel/DaS8MDbCxw4/",
-        "avg_watch_s": 7.5,
+        "avg_watch_s": 7.4,
         "estimated": false
       },
       "review": {
@@ -1309,7 +1309,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 551,
+        "views": 552,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 399,
+        "views": 415,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1374,7 +1374,7 @@
         "published": "2026-08-25",
         "published_at": "2026-08-25T06:17:25+0000",
         "permalink": "https://www.instagram.com/reel/Dcc-MjAyMoC/",
-        "avg_watch_s": 7.1,
+        "avg_watch_s": 7.0,
         "estimated": false
       },
       "review": {
@@ -1413,7 +1413,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 481,
+        "views": 499,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1426,7 +1426,7 @@
         "published": "2026-08-25",
         "published_at": "2026-08-25T05:58:13+0000",
         "permalink": "https://www.instagram.com/reel/Dcc8DKXy1o_/",
-        "avg_watch_s": 5.9,
+        "avg_watch_s": 6.0,
         "estimated": false
       },
       "review": {
@@ -1465,14 +1465,14 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5008,
+        "views": 5419,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
-        "saves": 3,
-        "shares": 13,
-        "likes": 45,
+        "saves": 4,
+        "shares": 14,
+        "likes": 48,
         "comments": 10,
         "source": "instagram",
         "published": "2026-08-26",
@@ -1505,6 +1505,34 @@
         "verdict": "Кликбейт без payoff убил удержание и виральность. Следующий ролик: честная интрига + история + оффер в конце.",
         "generated_at": "2026-08-26T09:04:55Z",
         "age_hours": 6.7
+      }
+    },
+    {
+      "id": "ig_DciL3kWSc1W",
+      "title": "И лишь одно всегда поднимает настроение: наша родненькая панель управления для Р",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DciL3kWSc1W",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 458,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 1,
+        "likes": 21,
+        "comments": 17,
+        "source": "instagram",
+        "published": "2026-08-27",
+        "published_at": "2026-08-27T06:52:54+0000",
+        "permalink": "https://www.instagram.com/reel/DciL3kWSc1W/",
+        "avg_watch_s": 8.5,
+        "estimated": false
       }
     }
   ],
