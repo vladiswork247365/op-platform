@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-29T11:07:57Z",
+  "updatedAt": "2026-08-29T16:44:58Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -936,7 +936,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 512,
+        "views": 513,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -949,7 +949,7 @@
         "published": "2026-07-04",
         "published_at": "2026-07-04T19:06:04+0000",
         "permalink": "https://www.instagram.com/reel/DaYc1PCK1_x/",
-        "avg_watch_s": 11.8,
+        "avg_watch_s": 11.7,
         "estimated": false
       },
       "review": {
@@ -1096,7 +1096,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 558,
+        "views": 559,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1109,7 +1109,7 @@
         "published": "2026-07-02",
         "published_at": "2026-07-02T15:44:18+0000",
         "permalink": "https://www.instagram.com/reel/DaS8MDbCxw4/",
-        "avg_watch_s": 7.5,
+        "avg_watch_s": 7.4,
         "estimated": false
       },
       "review": {
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 441,
+        "views": 442,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,7 +1465,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5502,
+        "views": 5506,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1518,7 +1518,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 857,
+        "views": 862,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1531,7 +1531,7 @@
         "published": "2026-08-27",
         "published_at": "2026-08-27T06:52:54+0000",
         "permalink": "https://www.instagram.com/reel/DciL3kWSc1W/",
-        "avg_watch_s": 8.4,
+        "avg_watch_s": 8.3,
         "estimated": false
       },
       "review": {
@@ -1557,6 +1557,62 @@
         "verdict": "Ролик собрал лояльную базу (комменты, лайки), но не зацепил новых — 0 сохранений и 1 репост убили виральность. Нужен жёсткий хук с болью и практическая ценность внутри.",
         "generated_at": "2026-08-27T20:33:24Z",
         "age_hours": 13.7
+      }
+    },
+    {
+      "id": "ig_DcoLeP1yRuJ",
+      "title": "Ссылка в моей шапке профиля всё еще может спасти ваш отдел продаж😉",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcoLeP1yRuJ",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 285,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 2,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-08-29",
+        "published_at": "2026-08-29T14:44:36+0000",
+        "permalink": "https://www.instagram.com/reel/DcoLeP1yRuJ/",
+        "avg_watch_s": 7.4,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DcoLM9UyFy8",
+      "title": "Ссылка в моей шапке профиля всё еще может спасти ваш отдел продаж😉",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcoLM9UyFy8",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 129,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-08-29",
+        "published_at": "2026-08-29T14:42:21+0000",
+        "permalink": "https://www.instagram.com/reel/DcoLM9UyFy8/",
+        "avg_watch_s": 5.4,
+        "estimated": false
       }
     }
   ],
