@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-30T08:20:35Z",
+  "updatedAt": "2026-08-30T14:53:06Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 443,
+        "views": 448,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,14 +1465,14 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5516,
+        "views": 5523,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 4,
         "shares": 14,
-        "likes": 49,
+        "likes": 50,
         "comments": 10,
         "source": "instagram",
         "published": "2026-08-26",
@@ -1518,14 +1518,14 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 868,
+        "views": 873,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 2,
         "shares": 2,
-        "likes": 36,
+        "likes": 37,
         "comments": 19,
         "source": "instagram",
         "published": "2026-08-27",
@@ -1570,14 +1570,14 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 366,
+        "views": 379,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 5,
+        "likes": 6,
         "comments": 0,
         "source": "instagram",
         "published": "2026-08-29",
@@ -1665,6 +1665,62 @@
         "verdict": "Ролик убит хуком-рекламой. Переделать: сначала боль и ценность, CTA — только в конце.",
         "generated_at": "2026-08-29T20:58:19Z",
         "age_hours": 6.3
+      }
+    },
+    {
+      "id": "ig_DcqoGL9SWUq",
+      "title": "Готов поспорить на штуку баксов,что не найдет он аналогов по глубине анализа отд",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcqoGL9SWUq",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 290,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 8,
+        "comments": 2,
+        "source": "instagram",
+        "published": "2026-08-30",
+        "published_at": "2026-08-30T13:34:25+0000",
+        "permalink": "https://www.instagram.com/reel/DcqoGL9SWUq/",
+        "avg_watch_s": 8.9,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DcqnjXCyPA7",
+      "title": "Готов штуку баксов поставить: не найдет он аналог по глубине анализа отдела прод",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcqnjXCyPA7",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 163,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-08-30",
+        "published_at": "2026-08-30T13:31:08+0000",
+        "permalink": "https://www.instagram.com/reel/DcqnjXCyPA7/",
+        "avg_watch_s": 6.8,
+        "estimated": false
       }
     }
   ],
