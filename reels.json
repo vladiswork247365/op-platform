@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-30T14:53:06Z",
+  "updatedAt": "2026-08-30T19:19:53Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 448,
+        "views": 451,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1374,7 +1374,7 @@
         "published": "2026-08-25",
         "published_at": "2026-08-25T06:17:25+0000",
         "permalink": "https://www.instagram.com/reel/Dcc-MjAyMoC/",
-        "avg_watch_s": 6.9,
+        "avg_watch_s": 6.8,
         "estimated": false
       },
       "review": {
@@ -1413,7 +1413,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 528,
+        "views": 530,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,7 +1465,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5523,
+        "views": 5530,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1518,7 +1518,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 873,
+        "views": 880,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1570,7 +1570,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 379,
+        "views": 385,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1678,7 +1678,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 290,
+        "views": 391,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1691,7 +1691,7 @@
         "published": "2026-08-30",
         "published_at": "2026-08-30T13:34:25+0000",
         "permalink": "https://www.instagram.com/reel/DcqoGL9SWUq/",
-        "avg_watch_s": 8.9,
+        "avg_watch_s": 9.0,
         "estimated": false
       }
     },
@@ -1706,20 +1706,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 163,
+        "views": 262,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 0,
+        "likes": 1,
         "comments": 0,
         "source": "instagram",
         "published": "2026-08-30",
         "published_at": "2026-08-30T13:31:08+0000",
         "permalink": "https://www.instagram.com/reel/DcqnjXCyPA7/",
-        "avg_watch_s": 6.8,
+        "avg_watch_s": 7.1,
         "estimated": false
       }
     }
