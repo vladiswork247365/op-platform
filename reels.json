@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-30T22:47:23Z",
+  "updatedAt": "2026-08-31T05:40:24Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 452,
+        "views": 453,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,7 +1465,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5532,
+        "views": 5533,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1518,7 +1518,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 882,
+        "views": 884,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1570,14 +1570,14 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 389,
+        "views": 396,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 6,
+        "likes": 7,
         "comments": 0,
         "source": "instagram",
         "published": "2026-08-29",
@@ -1678,20 +1678,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 401,
+        "views": 428,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 8,
+        "likes": 11,
         "comments": 2,
         "source": "instagram",
         "published": "2026-08-30",
         "published_at": "2026-08-30T13:34:25+0000",
         "permalink": "https://www.instagram.com/reel/DcqoGL9SWUq/",
-        "avg_watch_s": 9.0,
+        "avg_watch_s": 9.1,
         "estimated": false
       },
       "review": {
@@ -1732,14 +1732,14 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 885,
+        "views": 1153,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 1,
+        "likes": 2,
         "comments": 0,
         "source": "instagram",
         "published": "2026-08-30",
