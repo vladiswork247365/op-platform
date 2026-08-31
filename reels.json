@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-31T05:40:24Z",
+  "updatedAt": "2026-08-31T13:56:26Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 453,
+        "views": 454,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,7 +1465,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5533,
+        "views": 5537,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1518,7 +1518,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 884,
+        "views": 890,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1570,7 +1570,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 396,
+        "views": 403,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1583,7 +1583,7 @@
         "published": "2026-08-29",
         "published_at": "2026-08-29T14:44:36+0000",
         "permalink": "https://www.instagram.com/reel/DcoLeP1yRuJ/",
-        "avg_watch_s": 7.5,
+        "avg_watch_s": 7.6,
         "estimated": false
       },
       "review": {
@@ -1678,7 +1678,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 428,
+        "views": 464,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1691,7 +1691,7 @@
         "published": "2026-08-30",
         "published_at": "2026-08-30T13:34:25+0000",
         "permalink": "https://www.instagram.com/reel/DcqoGL9SWUq/",
-        "avg_watch_s": 9.1,
+        "avg_watch_s": 8.9,
         "estimated": false
       },
       "review": {
@@ -1732,7 +1732,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 1153,
+        "views": 1161,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
