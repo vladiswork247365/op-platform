@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-02T11:22:41Z",
+  "updatedAt": "2026-09-02T16:36:53Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1361,7 +1361,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 458,
+        "views": 462,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1413,7 +1413,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 531,
+        "views": 536,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,7 +1465,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5541,
+        "views": 5545,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1518,7 +1518,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 893,
+        "views": 895,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1570,7 +1570,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 410,
+        "views": 416,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1583,7 +1583,7 @@
         "published": "2026-08-29",
         "published_at": "2026-08-29T14:44:36+0000",
         "permalink": "https://www.instagram.com/reel/DcoLeP1yRuJ/",
-        "avg_watch_s": 7.6,
+        "avg_watch_s": 7.5,
         "estimated": false
       },
       "review": {
@@ -1678,7 +1678,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 480,
+        "views": 484,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1691,7 +1691,7 @@
         "published": "2026-08-30",
         "published_at": "2026-08-30T13:34:25+0000",
         "permalink": "https://www.instagram.com/reel/DcqoGL9SWUq/",
-        "avg_watch_s": 8.7,
+        "avg_watch_s": 8.6,
         "estimated": false
       },
       "review": {
@@ -1773,6 +1773,146 @@
         "verdict": "Хук не сработал, удержание провалено, вовлечение нулевое — ролик не дал алгоритму ни одного сигнала. Нужен полный пересмотр захода: ясный хук с болью, визуальный стоп-сигнал и хотя бы один инсайт для сохранения.",
         "generated_at": "2026-08-30T22:47:23Z",
         "age_hours": 9.3
+      }
+    },
+    {
+      "id": "ig_DcyiE0oynI0",
+      "title": "Как считаете: прав я или нет?",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcyiE0oynI0",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 91,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 1,
+        "shares": 0,
+        "likes": 3,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-02",
+        "published_at": "2026-09-02T15:17:33+0000",
+        "permalink": "https://www.instagram.com/reel/DcyiE0oynI0/",
+        "avg_watch_s": 13.1,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DcyhkqSSDmA",
+      "title": "Как считаете: прав я или нет?",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcyhkqSSDmA",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 3,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-02",
+        "published_at": "2026-09-02T15:13:27+0000",
+        "permalink": "https://www.instagram.com/reel/DcyhkqSSDmA/",
+        "avg_watch_s": 5.1,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DcygBw6SDAd",
+      "title": "Как считаете: прав я или нет?",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcygBw6SDAd",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 0,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-02",
+        "published_at": "2026-09-02T14:59:05+0000",
+        "permalink": "https://www.instagram.com/reel/DcygBw6SDAd/",
+        "avg_watch_s": 68.2,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DcyOnyDywsh",
+      "title": "И это ведь только 1 кейс,когда внедрили и отдел продаж реально начал работать.Сс",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcyOnyDywsh",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 106,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 1,
+        "shares": 0,
+        "likes": 4,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-02",
+        "published_at": "2026-09-02T12:25:19+0000",
+        "permalink": "https://www.instagram.com/reel/DcyOnyDywsh/",
+        "avg_watch_s": 7.6,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DcyN0TryVts",
+      "title": "И это ведь только 1 кейс,когда внедрили и отдел продаж реально начал работать.Сс",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DcyN0TryVts",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 19,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 1,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-02",
+        "published_at": "2026-09-02T12:18:13+0000",
+        "permalink": "https://www.instagram.com/reel/DcyN0TryVts/",
+        "avg_watch_s": 7.6,
+        "estimated": false
       }
     }
   ],
