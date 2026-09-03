@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-03T07:12:18Z",
+  "updatedAt": "2026-09-03T12:50:47Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -828,7 +828,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 446,
+        "views": 447,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1465,7 +1465,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 5554,
+        "views": 5555,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1518,7 +1518,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 902,
+        "views": 903,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1570,7 +1570,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 427,
+        "views": 428,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1583,7 +1583,7 @@
         "published": "2026-08-29",
         "published_at": "2026-08-29T14:44:36+0000",
         "permalink": "https://www.instagram.com/reel/DcoLeP1yRuJ/",
-        "avg_watch_s": 7.5,
+        "avg_watch_s": 7.4,
         "estimated": false
       },
       "review": {
@@ -1678,7 +1678,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 494,
+        "views": 495,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1786,20 +1786,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 190,
+        "views": 230,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 1,
         "shares": 1,
-        "likes": 11,
+        "likes": 12,
         "comments": 0,
         "source": "instagram",
         "published": "2026-09-02",
         "published_at": "2026-09-02T15:17:33+0000",
         "permalink": "https://www.instagram.com/reel/DcyiE0oynI0/",
-        "avg_watch_s": 19.6,
+        "avg_watch_s": 17.6,
         "estimated": false
       },
       "review": {
@@ -1839,7 +1839,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 48,
+        "views": 57,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1852,7 +1852,7 @@
         "published": "2026-09-02",
         "published_at": "2026-09-02T15:13:27+0000",
         "permalink": "https://www.instagram.com/reel/DcyhkqSSDmA/",
-        "avg_watch_s": 6.4,
+        "avg_watch_s": 5.7,
         "estimated": false
       },
       "review": {
@@ -1891,7 +1891,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 13,
+        "views": 18,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1904,7 +1904,7 @@
         "published": "2026-09-02",
         "published_at": "2026-09-02T14:59:05+0000",
         "permalink": "https://www.instagram.com/reel/DcygBw6SDAd/",
-        "avg_watch_s": 7.4,
+        "avg_watch_s": 6.3,
         "estimated": false
       },
       "review": {
@@ -1944,20 +1944,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 170,
+        "views": 192,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 1,
         "shares": 0,
-        "likes": 5,
+        "likes": 6,
         "comments": 0,
         "source": "instagram",
         "published": "2026-09-02",
         "published_at": "2026-09-02T12:25:19+0000",
         "permalink": "https://www.instagram.com/reel/DcyOnyDywsh/",
-        "avg_watch_s": 7.3,
+        "avg_watch_s": 7.1,
         "estimated": false
       },
       "review": {
@@ -2037,6 +2037,62 @@
         "verdict": "Ролик не зацепил ни алгоритм, ни людей — слабый хук без конкретики, нулевые сигналы виральности. Нужен полный пересмотр захода: цифры в первые 2 сек и чёткая структура боль→решение→CTA",
         "generated_at": "2026-09-02T21:08:04Z",
         "age_hours": 8.8
+      }
+    },
+    {
+      "id": "ig_Dc0Ry2QSzJw",
+      "title": "Время халявщиков закончилось,а скоро и вовсе будет замена живых людей на ИИ-робо",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Dc0Ry2QSzJw",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 151,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 5,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-03",
+        "published_at": "2026-09-03T07:30:38+0000",
+        "permalink": "https://www.instagram.com/reel/Dc0Ry2QSzJw/",
+        "avg_watch_s": 10.3,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_Dc0RgJhyhiO",
+      "title": "Время халявщиков закончилось,а скоро и вовсе будет замена живых людей на ИИ-робо",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Dc0RgJhyhiO",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 20,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-03",
+        "published_at": "2026-09-03T07:28:03+0000",
+        "permalink": "https://www.instagram.com/reel/Dc0RgJhyhiO/",
+        "avg_watch_s": 4.3,
+        "estimated": false
       }
     }
   ],
