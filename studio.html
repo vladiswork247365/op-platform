@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>АСП Студия — заказ роликов</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0C; --panel:#141419; --panel2:#1B1B22; --bdr:rgba(255,255,255,.09);
+    --bdr2:rgba(255,255,255,.16); --text:#F2F2F5; --t2:#A2A2AE; --t3:#6C6C79;
+    --red:#E8000A; --red2:#FF1F3D; --rdim:rgba(232,0,10,.13); --grn:#12B76A; --fld:#0F0F13;
+  }
+  @media (prefers-color-scheme:light){
+    :root{--bg:#F4F4F6;--panel:#FFFFFF;--panel2:#FAFAFA;--bdr:rgba(10,10,15,.10);--bdr2:rgba(10,10,15,.18);
+      --text:#15151A;--t2:#5A5A66;--t3:#8A8A96;--red:#D40009;--red2:#E8000A;--rdim:rgba(212,0,9,.08);--grn:#0E9E5C;--fld:#FFFFFF;}
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Montserrat',system-ui,sans-serif;background:var(--bg);color:var(--text);
+    min-height:100vh;padding:28px 18px 64px;display:flex;flex-direction:column;align-items:center;gap:20px;-webkit-font-smoothing:antialiased}
+  .col{width:100%;max-width:720px;display:flex;flex-direction:column;gap:20px}
+  .head{display:flex;align-items:center;gap:13px}
+  .mark{width:40px;height:40px;border-radius:9px;background:linear-gradient(135deg,var(--red),var(--red2));
+    display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 16px var(--rdim)}
+  .mark span{font-family:'Bebas Neue',sans-serif;color:#fff;font-size:22px;letter-spacing:1px}
+  .htxt h1{font-size:20px;font-weight:800;letter-spacing:.3px}
+  .htxt p{font-size:12.5px;color:var(--t2);margin-top:2px}
+  .card{background:var(--panel);border:1px solid var(--bdr);border-radius:15px;padding:20px}
+  .lbl{margin-bottom:4px}
+  .step{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--red2);
+    background:var(--rdim);padding:3px 8px;border-radius:6px}
+  .card h2{font-size:16px;font-weight:700;margin-top:8px}
+  .hint{margin-top:8px;font-size:12.5px;line-height:1.5;color:var(--t2)}
+  .hint b{color:var(--text);font-weight:600}
+  .banner{margin-top:14px;font-size:12.5px;line-height:1.5;padding:11px 13px;border-radius:9px;
+    background:var(--rdim);border:1px solid var(--bdr2);color:var(--text);display:none}
+  .banner.show{display:block}
+  .dz{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+  .bigbtn{display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;
+    background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;font-weight:700;font-size:15px;padding:16px;
+    border-radius:11px;border:none;cursor:pointer;transition:filter .15s;box-shadow:0 6px 20px var(--rdim)}
+  .bigbtn:hover{filter:brightness(1.08)}
+  .subrow{display:flex;gap:10px;flex-wrap:wrap}
+  .ghost{flex:1;min-width:150px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;
+    background:var(--panel2);color:var(--text);font-weight:600;font-size:13px;padding:11px;border-radius:9px;border:1px solid var(--bdr2);transition:border-color .15s}
+  .ghost:hover{border-color:var(--red2)}
+  .chips{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-family:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--panel2);
+    border:1px solid var(--bdr2);border-radius:20px;padding:8px 13px;cursor:pointer;transition:border-color .15s}
+  .chip:hover{border-color:var(--red2)}
+  .chip .vc{color:var(--red2);font-weight:800}
+  form{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .f{display:flex;flex-direction:column;gap:6px}
+  .f.full{grid-column:1 / -1}
+  label{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t2)}
+  .input-wrap{position:relative;display:flex}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--text);background:var(--fld);
+    border:1px solid var(--bdr2);border-radius:9px;padding:11px 12px;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+  .has-mic input,.has-mic textarea{padding-right:44px}
+  input:focus,select:focus,textarea:focus{border-color:var(--red2);box-shadow:0 0 0 3px var(--rdim)}
+  textarea{resize:vertical;min-height:120px;line-height:1.5}
+  select{appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--t2) 50%),linear-gradient(135deg,var(--t2) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 18px,calc(100% - 13px) 18px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .micbtn{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:7px;border:1px solid var(--bdr2);
+    background:var(--panel2);color:var(--text);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:border-color .15s,background .15s;z-index:2}
+  .micbtn:hover{border-color:var(--red2)}
+  .micbtn.rec{background:var(--red);color:#fff;border-color:var(--red);animation:pulse 1.3s infinite}
+  .micbtn:disabled{opacity:.4;cursor:not-allowed}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,0,10,.5)}100%{box-shadow:0 0 0 12px rgba(232,0,10,0)}}
+  .cehp{font-size:12px;color:var(--t2);min-height:16px}.cehp b{color:var(--red2)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .btn{flex:1;min-width:140px;font-family:inherit;font-weight:700;font-size:14px;padding:13px;border-radius:10px;cursor:pointer;
+    border:1px solid var(--bdr2);background:var(--panel2);color:var(--text);transition:border-color .15s,filter .15s}
+  .btn:hover{border-color:var(--red2)}
+  .btn.primary{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border:none}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .out{margin-top:16px;display:none}.out.show{display:block}
+  .obar{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:10px;flex-wrap:wrap}
+  .obar span{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--grn);display:flex;align-items:center;gap:7px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--grn)}
+  .mini{display:flex;gap:8px}
+  .mini button{font-family:inherit;font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--bdr2);background:var(--panel2);color:var(--text)}
+  .mini button:hover{border-color:var(--red2)}
+  pre#brief{white-space:pre-wrap;word-break:break-word;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;
+    color:var(--text);background:var(--fld);border:1px solid var(--bdr);border-radius:11px;padding:16px;max-height:320px;overflow:auto}
+  .foot{font-size:11.5px;color:var(--t3);text-align:center;line-height:1.6;max-width:640px}
+  .foot code{color:var(--t2);font-family:'JetBrains Mono',monospace}
+  @media (max-width:560px){form{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  :focus-visible{outline:2px solid var(--red2);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="col">
+
+  <div class="head">
+    <div class="mark"><span>АСП</span></div>
+    <div class="htxt"><h1>АСП Студия</h1><p>Пульт заказа роликов · сериал «200 компаний»</p></div>
+  </div>
+
+  <div class="banner" id="micbanner"></div>
+
+  <section class="card">
+    <div class="lbl"><span class="step">Шаг 1</span></div>
+    <h2>Залить исходник</h2>
+    <p class="hint">Съёмки — в <b>Google Drive</b>, тянет <b>500 МБ и больше</b>. Открой папку и перетащи видео.</p>
+    <div class="dz">
+      <a class="bigbtn" href="https://drive.google.com/drive/folders/1QuNqWxBNxhrhvetf13cJLoTQLLHTLbGw" target="_blank" rel="noopener">⬆ Открыть «Исходники» в Google Drive</a>
+      <div class="subrow">
+        <a class="ghost" href="https://drive.google.com/drive/folders/1eeEmi-aqqPR3up05Ia9pfbQYro4QKI-s" target="_blank" rel="noopener">📁 Весь хаб</a>
+        <a class="ghost" href="https://drive.google.com/drive/folders/1PlwYzMJG0CYJxz-0Dkfn9Lrp4K2Ntomc" target="_blank" rel="noopener">🎬 Готовые ролики</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="lbl"><span class="step">Шаг 2</span></div>
+    <h2>Наговорить материал</h2>
+    <p class="hint">Жми <b>🎙 в поле</b> и говори — речь распознаётся в текст (русский). Микрофон есть у каждого текстового поля.</p>
+    <div class="f full" style="margin-top:14px">
+      <label for="material">Материал ролика</label>
+      <div class="input-wrap has-mic">
+        <textarea id="material" data-mic placeholder="Нажми 🎙 и расскажи: что за компания, что нашли, какой результат. Я соберу из этого сценарий."></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="lbl"><span class="step">Шаг 3</span></div>
+    <h2>Идеи из трендов и детали</h2>
+    <p class="hint">Хук и сценарий <b>подбираю я</b>. Ниже — направления из трендов trendsee (число = во сколько раз пример перевыполнил норму). Тапни — подставится в тему.</p>
+    <div class="chips" id="chips"></div>
+
+    <form id="tz" autocomplete="off">
+      <div class="f">
+        <label for="num">Компания № (из 200)</label>
+        <div class="input-wrap"><input id="num" type="number" min="1" max="200" placeholder="1" inputmode="numeric"></div>
+      </div>
+      <div class="f">
+        <label for="type">Тип выпуска</label>
+        <div class="input-wrap"><select id="type">
+          <option value="Кейс онбординга">Кейс онбординга</option>
+          <option value="Закулисье">Закулисье панели</option>
+          <option value="Инсайт">Инсайт / ошибка ОП</option>
+          <option value="Веха">Веха (10/50/100/200)</option>
+        </select></div>
+      </div>
+      <div class="f full"><div class="cehp" id="cehp"></div></div>
+      <div class="f full">
+        <label for="theme">Тема / направление</label>
+        <div class="input-wrap has-mic"><input id="theme" type="text" data-mic placeholder="Тапни идею выше, впиши или наговори"></div>
+      </div>
+      <div class="f full">
+        <label for="src">Исходник — файл / ссылка в Drive</label>
+        <div class="input-wrap has-mic"><input id="src" type="text" data-mic placeholder="Эпизод 01 / автосалон.mp4"></div>
+      </div>
+    </form>
+
+    <div class="actions">
+      <button type="button" class="btn primary" id="build">Собрать ТЗ</button>
+      <button type="button" class="btn" id="clear">Очистить</button>
+    </div>
+
+    <div class="out" id="out">
+      <div class="obar">
+        <span><i class="dot"></i>ТЗ готово</span>
+        <div class="mini"><button type="button" id="copy">Копировать</button><button type="button" id="dl">Скачать .txt</button></div>
+      </div>
+      <pre id="brief"></pre>
+    </div>
+  </section>
+
+  <p class="foot">Файлы — в Google Drive (500 МБ+), надиктовка и ТЗ — здесь. Черновик сохраняется в браузере.<br>Готовый бриф вставляй в чат Claude — хук и сценарий подберу сам.</p>
+
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var fields=["num","type","theme","src","material"];
+  var KEY="asp_studio_v1";
+
+  var IDEAS=[
+    {t:"Ошибка, из-за которой клиент уходит вечером",vc:"219×"},
+    {t:"3 цифры, которые убивают отдел продаж",vc:"219×"},
+    {t:"Как за 3 часа найти, где ОП теряет деньги",vc:"89×"},
+    {t:"9 из 10 РОП-ов не видят этого в диалогах",vc:"89×"},
+    {t:"Что показала панель в первый день",vc:"46×"},
+    {t:"Почему заявка есть, а продажи нет",vc:"41×"}
+  ];
+  IDEAS.forEach(function(it){
+    var b=document.createElement("button"); b.type="button"; b.className="chip";
+    b.innerHTML='<span class="vc">'+it.vc+'</span> &nbsp;'+it.t;
+    b.onclick=function(){ $("theme").value=it.t; save(); $("theme").focus(); };
+    $("chips").appendChild(b);
+  });
+
+  var cehpMap={"Кейс онбординга":'Цех <b>A — свои съёмки</b> (монтирую я).',
+    "Закулисье":'Цех <b>A — свои съёмки</b> экрана/панели.',
+    "Инсайт":'Цех <b>B — ИИ Higgsfield</b> (снимать не надо).',
+    "Веха":'Цех <b>B — ИИ Higgsfield</b> (графика цифр).'};
+  function updateCehp(){ $("cehp").innerHTML=cehpMap[$("type").value]||""; }
+
+  try{ var s=JSON.parse(localStorage.getItem(KEY)||"{}"); fields.forEach(function(f){ if(s[f]!=null&&$(f)) $(f).value=s[f]; }); }catch(e){}
+  updateCehp();
+  function save(){ var o={}; fields.forEach(function(f){o[f]=$(f).value}); try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){} }
+  fields.forEach(function(f){ var el=$(f); if(el){el.addEventListener("input",save);el.addEventListener("change",save);} });
+  $("type").addEventListener("change",updateCehp);
+
+  // ---- voice dictation attached to EVERY [data-mic] field ----
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  var micBtns=[], activeTarget=null, activeBtn=null, rec=null, base="";
+  function showBanner(msg){ var b=$("micbanner"); b.textContent=msg; b.classList.add("show"); }
+
+  document.querySelectorAll("[data-mic]").forEach(function(field){
+    var btn=document.createElement("button");
+    btn.type="button"; btn.className="micbtn"; btn.innerHTML="🎙"; btn.setAttribute("aria-label","Наговорить");
+    field.parentNode.appendChild(btn);
+    micBtns.push(btn);
+    btn.addEventListener("click",function(){ toggle(field,btn); });
+    if(!SR) btn.disabled=true;
+  });
+
+  if(!SR){
+    showBanner("Голосовой ввод не поддерживается этим браузером. Открой в Chrome или Safari — либо используй микрофон экранной клавиатуры (на телефоне он есть у любого поля).");
+  } else {
+    rec=new SR(); rec.lang="ru-RU"; rec.continuous=true; rec.interimResults=true;
+    rec.onend=function(){ if(activeBtn){activeBtn.classList.remove("rec");} activeBtn=null; activeTarget=null; save(); };
+    rec.onerror=function(e){
+      if(e.error==="not-allowed"||e.error==="service-not-allowed"){
+        showBanner("Микрофон заблокирован. Разреши доступ к микрофону для сайта в адресной строке (значок 🔒) и попробуй снова.");
+      } else if(e.error==="no-speech"){ showBanner("Не расслышал — нажми 🎙 и попробуй ещё раз."); }
+    };
+    rec.onresult=function(ev){
+      if(!activeTarget) return;
+      var fin="",interim="";
+      for(var i=ev.resultIndex;i<ev.results.length;i++){ var r=ev.results[i]; if(r.isFinal) fin+=r[0].transcript; else interim+=r[0].transcript; }
+      if(fin) base=(base+fin).replace(/\s+/g," ")+" ";
+      activeTarget.value=(base+interim).trim(); save();
+    };
+  }
+  function toggle(field,btn){
+    if(!SR) return;
+    if(activeBtn===btn){ rec.stop(); return; }
+    if(activeBtn){ try{rec.stop();}catch(e){} }
+    activeTarget=field; activeBtn=btn; base=field.value?field.value.replace(/\s+$/,"")+" ":"";
+    micBtns.forEach(function(b){b.classList.remove("rec")}); btn.classList.add("rec");
+    try{ rec.start(); }catch(e){ setTimeout(function(){ try{rec.start()}catch(_){} },250); }
+  }
+
+  function v(id,def){ var x=$(id).value.trim(); return x||def; }
+  function buildBrief(){
+    var num=v("num","—"),type=$("type").value;
+    var cehp=(type==="Инсайт"||type==="Веха")?"B — ИИ Higgsfield":"A — свои съёмки";
+    return ["ТЗ НА РОЛИК — АСП «200 компаний»","════════════════════════════",
+      "Компания:      "+num+" из 200","Тип выпуска:   "+type,"Цех сборки:    "+cehp,
+      "Формат:        вертикаль 9:16, ~30–45 сек","","ТЕМА / НАПРАВЛЕНИЕ:","  "+v("theme","(на усмотрение Claude — из трендов)"),
+      "","МАТЕРИАЛ (надиктовка):","  "+v("material","(не указан)"),"","ИСХОДНИК:       "+v("src","(в Drive / приложу)"),
+      "","ХУК И СЦЕНАРИЙ: подбирает Claude на основе трендов trendsee.",
+      "CTA: platform.systemop.top · плашка «Компания "+num+" из 200»"].join("\n");
+  }
+  $("build").onclick=function(){ $("brief").textContent=buildBrief(); $("out").classList.add("show"); $("out").scrollIntoView({behavior:"smooth",block:"nearest"}); };
+  $("copy").onclick=function(){ var b=$("copy"); navigator.clipboard.writeText($("brief").textContent).then(function(){b.textContent="Скопировано ✓";setTimeout(function(){b.textContent="Копировать"},1600);},function(){b.textContent="Выдели вручную";}); };
+  $("dl").onclick=function(){ var num=v("num","X"); var bl=new Blob([$("brief").textContent],{type:"text/plain;charset=utf-8"}); var a=document.createElement("a"); a.href=URL.createObjectURL(bl); a.download="ТЗ_компания_"+num+".txt"; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},100); };
+  $("clear").onclick=function(){ fields.forEach(function(f){$(f).value=""}); try{localStorage.removeItem(KEY)}catch(e){} updateCehp(); $("out").classList.remove("show"); };
+})();
+</script>
+</body>
+</html>
