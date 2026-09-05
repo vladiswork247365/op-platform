@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-05T15:16:51Z",
+  "updatedAt": "2026-09-05T18:20:25Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1786,7 +1786,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 250,
+        "views": 251,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1799,7 +1799,7 @@
         "published": "2026-09-02",
         "published_at": "2026-09-02T15:17:33+0000",
         "permalink": "https://www.instagram.com/reel/DcyiE0oynI0/",
-        "avg_watch_s": 16.8,
+        "avg_watch_s": 16.6,
         "estimated": false
       },
       "review": {
@@ -2050,7 +2050,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 262,
+        "views": 264,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2156,7 +2156,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 265,
+        "views": 273,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2262,7 +2262,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 1266,
+        "views": 1272,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2355,6 +2355,62 @@
         "verdict": "Ролик не зацепил ни хуком, ни содержанием — 0 сохранений/репостов это приговор. Нужен конкретный кейс с цифрой в первые 2 секунды, иначе алгоритм не разгонит.",
         "generated_at": "2026-09-04T11:22:50Z",
         "age_hours": 6.7
+      }
+    },
+    {
+      "id": "ig_Dc6eM-DyF3Z",
+      "title": "Кому надо 5,000 контактов обзвонить,чтобы получить 300 свежих заявок?😏 Панель уп",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Dc6eM-DyF3Z",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 43,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 1,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-05",
+        "published_at": "2026-09-05T17:13:58+0000",
+        "permalink": "https://www.instagram.com/reel/Dc6eM-DyF3Z/",
+        "avg_watch_s": 12.0,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_Dc6ddjzSUR-",
+      "title": "Кому надо 5,000 контактов обзвонить,чтобы получить 300 свежих заявок?😏 Панель уп",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Dc6ddjzSUR-",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 4,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-05",
+        "published_at": "2026-09-05T17:07:24+0000",
+        "permalink": "https://www.instagram.com/reel/Dc6ddjzSUR-/",
+        "avg_watch_s": 1.9,
+        "estimated": false
       }
     }
   ],
