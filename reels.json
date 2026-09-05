@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-05T18:20:25Z",
+  "updatedAt": "2026-09-05T22:04:09Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1678,7 +1678,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 510,
+        "views": 511,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1786,7 +1786,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 251,
+        "views": 252,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1799,7 +1799,7 @@
         "published": "2026-09-02",
         "published_at": "2026-09-02T15:17:33+0000",
         "permalink": "https://www.instagram.com/reel/DcyiE0oynI0/",
-        "avg_watch_s": 16.6,
+        "avg_watch_s": 16.7,
         "estimated": false
       },
       "review": {
@@ -2050,7 +2050,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 264,
+        "views": 265,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2156,7 +2156,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 273,
+        "views": 275,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2169,7 +2169,7 @@
         "published": "2026-09-04",
         "published_at": "2026-09-04T05:00:22+0000",
         "permalink": "https://www.instagram.com/reel/Dc2lcnuyfrG/",
-        "avg_watch_s": 7.9,
+        "avg_watch_s": 8.0,
         "estimated": false
       },
       "review": {
@@ -2262,7 +2262,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 1272,
+        "views": 1274,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2314,7 +2314,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 781,
+        "views": 782,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2368,20 +2368,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 43,
+        "views": 88,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 1,
+        "likes": 3,
         "comments": 0,
         "source": "instagram",
         "published": "2026-09-05",
         "published_at": "2026-09-05T17:13:58+0000",
         "permalink": "https://www.instagram.com/reel/Dc6eM-DyF3Z/",
-        "avg_watch_s": 12.0,
+        "avg_watch_s": 10.3,
         "estimated": false
       }
     },
@@ -2396,7 +2396,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 4,
+        "views": 41,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2409,7 +2409,63 @@
         "published": "2026-09-05",
         "published_at": "2026-09-05T17:07:24+0000",
         "permalink": "https://www.instagram.com/reel/Dc6ddjzSUR-/",
-        "avg_watch_s": 1.9,
+        "avg_watch_s": 8.7,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_Dc6qLZsylKq",
+      "title": "Вот и весь секрет продуктивности на отдыхе 🏖️",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Dc6qLZsylKq",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 305,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 4,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-05",
+        "published_at": "2026-09-05T18:58:33+0000",
+        "permalink": "https://www.instagram.com/reel/Dc6qLZsylKq/",
+        "avg_watch_s": 5.9,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_Dc6qAgAyNiQ",
+      "title": "Вот и весь секрет продуктивности на отдыхе 🏖️",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Dc6qAgAyNiQ",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 187,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 2,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-05",
+        "published_at": "2026-09-05T18:57:00+0000",
+        "permalink": "https://www.instagram.com/reel/Dc6qAgAyNiQ/",
+        "avg_watch_s": 4.4,
         "estimated": false
       }
     }
