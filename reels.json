@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-06T11:01:03Z",
+  "updatedAt": "2026-09-06T15:30:05Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1786,7 +1786,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 256,
+        "views": 259,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -1799,7 +1799,7 @@
         "published": "2026-09-02",
         "published_at": "2026-09-02T15:17:33+0000",
         "permalink": "https://www.instagram.com/reel/DcyiE0oynI0/",
-        "avg_watch_s": 16.9,
+        "avg_watch_s": 16.7,
         "estimated": false
       },
       "review": {
@@ -2156,7 +2156,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 285,
+        "views": 286,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2368,7 +2368,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 134,
+        "views": 143,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2381,7 +2381,7 @@
         "published": "2026-09-05",
         "published_at": "2026-09-05T17:13:58+0000",
         "permalink": "https://www.instagram.com/reel/Dc6eM-DyF3Z/",
-        "avg_watch_s": 9.6,
+        "avg_watch_s": 9.5,
         "estimated": false
       },
       "review": {
@@ -2475,7 +2475,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 583,
+        "views": 662,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
