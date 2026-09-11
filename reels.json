@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-11T11:25:54Z",
+  "updatedAt": "2026-09-11T16:30:59Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -2050,7 +2050,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 296,
+        "views": 297,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2262,7 +2262,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 1321,
+        "views": 1322,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2568,6 +2568,62 @@
         "verdict": "Ролик не зацепил: хук-вывод вместо хука-интриги, нулевая виральность. Нужен конфликт в первой секунде и конкретная польза для сохранения.",
         "generated_at": "2026-09-06T04:44:58Z",
         "age_hours": 9.8
+      }
+    },
+    {
+      "id": "ig_DdJySoKq5mC",
+      "title": "Даже во время экспресс-аудита можно понять,насколько все печально в отделе прода",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DdJySoKq5mC",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 51,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 5,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-11",
+        "published_at": "2026-09-11T15:58:39+0000",
+        "permalink": "https://www.instagram.com/reel/DdJySoKq5mC/",
+        "avg_watch_s": 19.5,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DdJyFb3Cv30",
+      "title": "Подробности в шапке профиля 😉",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DdJyFb3Cv30",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 0,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-11",
+        "published_at": "2026-09-11T15:56:29+0000",
+        "permalink": "https://www.instagram.com/reel/DdJyFb3Cv30/",
+        "avg_watch_s": 39.3,
+        "estimated": false
       }
     }
   ],
