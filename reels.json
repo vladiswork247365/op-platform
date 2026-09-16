@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-16T00:24:21Z",
+  "updatedAt": "2026-09-16T07:43:02Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1518,7 +1518,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 914,
+        "views": 915,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
