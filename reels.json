@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-19T17:18:01Z",
+  "updatedAt": "2026-09-19T20:43:43Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -2156,7 +2156,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 324,
+        "views": 325,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2169,7 +2169,7 @@
         "published": "2026-09-04",
         "published_at": "2026-09-04T05:00:22+0000",
         "permalink": "https://www.instagram.com/reel/Dc2lcnuyfrG/",
-        "avg_watch_s": 8.1,
+        "avg_watch_s": 8.0,
         "estimated": false
       },
       "review": {
@@ -2675,6 +2675,62 @@
         "verdict": "Ролик не взлетел из-за антивирального хука. Переделать заголовок на боль/интригу, убрать CTA из начала — и перезалить.",
         "generated_at": "2026-09-12T00:21:22Z",
         "age_hours": 8.4
+      }
+    },
+    {
+      "id": "ig_Ddel7Q4qoVu",
+      "title": "Ассоциация системных продаж",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Ddel7Q4qoVu",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 83,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 2,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-19",
+        "published_at": "2026-09-19T17:55:02+0000",
+        "permalink": "https://www.instagram.com/reel/Ddel7Q4qoVu/",
+        "avg_watch_s": 12.7,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DdeluEfCHks",
+      "title": "Ассоциация системных продаж 3.0",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DdeluEfCHks",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 0,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-19",
+        "published_at": "2026-09-19T17:52:31+0000",
+        "permalink": "https://www.instagram.com/reel/DdeluEfCHks/",
+        "avg_watch_s": null,
+        "estimated": false
       }
     }
   ],
