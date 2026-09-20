@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-20T04:56:51Z",
+  "updatedAt": "2026-09-20T11:28:35Z",
   "brand": {
     "author": "Влад",
     "niche": "Системные продажи и усиление отделов продаж — метрики, ОКК, аналитика диалогов, AI для РОП-ов",
@@ -1786,7 +1786,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 292,
+        "views": 293,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2262,7 +2262,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 1331,
+        "views": 1334,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2581,7 +2581,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 220,
+        "views": 222,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2594,7 +2594,7 @@
         "published": "2026-09-11",
         "published_at": "2026-09-11T15:58:39+0000",
         "permalink": "https://www.instagram.com/reel/DdJySoKq5mC/",
-        "avg_watch_s": 11.2,
+        "avg_watch_s": 11.1,
         "estimated": false
       },
       "review": {
@@ -2688,20 +2688,20 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 101,
+        "views": 129,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
         "curve": null,
         "saves": 0,
         "shares": 0,
-        "likes": 4,
+        "likes": 5,
         "comments": 1,
         "source": "instagram",
         "published": "2026-09-19",
         "published_at": "2026-09-19T17:55:02+0000",
         "permalink": "https://www.instagram.com/reel/Ddel7Q4qoVu/",
-        "avg_watch_s": 13.0,
+        "avg_watch_s": 12.2,
         "estimated": false
       },
       "review": {
@@ -2740,7 +2740,7 @@
         "desc": "Импорт из Instagram"
       },
       "actual": {
-        "views": 0,
+        "views": 2,
         "hook3s": null,
         "avg_watch_pct": null,
         "completion": null,
@@ -2753,7 +2753,7 @@
         "published": "2026-09-19",
         "published_at": "2026-09-19T17:52:31+0000",
         "permalink": "https://www.instagram.com/reel/DdeluEfCHks/",
-        "avg_watch_s": null,
+        "avg_watch_s": 10.5,
         "estimated": false
       },
       "review": {
@@ -2780,6 +2780,146 @@
         "verdict": "Ролик не взлетел — 0 просмотров. Главная проблема: абстрактный хук + отсутствие посева. Следующий ролик: конкретный боль-хук + обложка + разгон через сторис.",
         "generated_at": "2026-09-20T00:10:59Z",
         "age_hours": 6.3
+      }
+    },
+    {
+      "id": "ig_DdgUSudCkW4",
+      "title": "Меня повязали из-за ИИ-панели!!!!",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DdgUSudCkW4",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 322,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 1,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-20",
+        "published_at": "2026-09-20T09:58:36+0000",
+        "permalink": "https://www.instagram.com/reel/DdgUSudCkW4/",
+        "avg_watch_s": 5.6,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DdgUIskKBO2",
+      "title": "Хотите посмотреть из-за чего меня повязали?Ссылка в шапке профиля,там эта панель",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DdgUIskKBO2",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 10,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-20",
+        "published_at": "2026-09-20T09:57:18+0000",
+        "permalink": "https://www.instagram.com/reel/DdgUIskKBO2/",
+        "avg_watch_s": 1.9,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_DdgTqsmCax9",
+      "title": "Ссылка на эту панель,из-за которой меня повязали,в шапке профиля 😑",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/DdgTqsmCax9",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 149,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-20",
+        "published_at": "2026-09-20T09:53:38+0000",
+        "permalink": "https://www.instagram.com/reel/DdgTqsmCax9/",
+        "avg_watch_s": 3.9,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_Ddf71rqivaw",
+      "title": "Пиши на WA,добавлю в ассоциацию,ссылка в шапке профиля 📎",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Ddf71rqivaw",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 97,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 1,
+        "shares": 0,
+        "likes": 3,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-20",
+        "published_at": "2026-09-20T06:25:33+0000",
+        "permalink": "https://www.instagram.com/reel/Ddf71rqivaw/",
+        "avg_watch_s": 9.8,
+        "estimated": false
+      }
+    },
+    {
+      "id": "ig_Ddf7fUliNtO",
+      "title": "Пиши на WA,добавлю в ассоциацию,ссылка в шапке профиля 📎",
+      "status": "scored",
+      "sample": false,
+      "platform": "reels",
+      "source": {
+        "permalink": "https://www.instagram.com/reel/Ddf7fUliNtO",
+        "desc": "Импорт из Instagram"
+      },
+      "actual": {
+        "views": 12,
+        "hook3s": null,
+        "avg_watch_pct": null,
+        "completion": null,
+        "curve": null,
+        "saves": 0,
+        "shares": 0,
+        "likes": 0,
+        "comments": 0,
+        "source": "instagram",
+        "published": "2026-09-20",
+        "published_at": "2026-09-20T06:22:08+0000",
+        "permalink": "https://www.instagram.com/reel/Ddf7fUliNtO/",
+        "avg_watch_s": 4.0,
+        "estimated": false
       }
     }
   ],
