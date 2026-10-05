@@ -1,24 +1,6 @@
 {
-  "api_ok": true,
-  "checked": "2026-09-28T14:54:16Z",
-  "system": {
-    "ok": true,
-    "checks": [
-      {
-        "name": "PostgreSQL",
-        "ok": true
-      },
-      {
-        "name": "Redis",
-        "ok": true
-      },
-      {
-        "name": "Celery",
-        "ok": true,
-        "error": null
-      }
-    ],
-    "env": "production",
-    "ts": "2026-09-28T14:54:34Z"
-  }
+  "api_ok": false,
+  "checked": "2026-10-05T15:30:49Z",
+  "system": null,
+  "note": "ping не прошёл: URLError: <urlopen error timed out>"
 }
