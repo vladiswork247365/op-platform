@@ -1,6 +1,6 @@
 {
   "api_ok": false,
-  "checked": "2026-10-05T15:30:49Z",
+  "checked": "2026-10-12T16:26:37Z",
   "system": null,
   "note": "ping не прошёл: URLError: <urlopen error timed out>"
 }
